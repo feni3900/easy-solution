@@ -612,7 +612,7 @@ export function PurchasesClient({
                   Create a new product. Selling price is calculated automatically from cost + profit %.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4">
+              <div className="grid max-h-[60vh] gap-4 overflow-y-auto pr-1">
                 <div className="grid gap-2">
                   <Label>Product Name *</Label>
                   <Input
