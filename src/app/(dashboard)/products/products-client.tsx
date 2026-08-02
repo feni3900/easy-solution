@@ -247,40 +247,38 @@ export function ProductsClient({
 
   const columns: ColumnDef<ProductRow>[] = [
     {
-      id: "image",
-      header: "",
-      cell: ({ row }) =>
-        row.original.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={row.original.image}
-            alt={row.original.name}
-            className="size-14 rounded-md border object-cover"
-          />
-        ) : (
-          <div className="flex size-14 items-center justify-center rounded-md border bg-muted text-lg text-muted-foreground">
-            📦
-          </div>
-        ),
-    },
-    { accessorKey: "name", header: "Product", cell: ({ row }) => (
-      <button
-        className="text-left font-medium underline-offset-2 hover:text-primary hover:underline"
-        onClick={() => addToCart(row.original)}
-      >
-        {row.original.name}
-      </button>
-    ) },
-    {
-      accessorKey: "sku",
-      header: "SKU",
+      id: "product",
+      header: "Product",
       cell: ({ row }) => (
-        <span className="font-mono text-xs">{row.original.sku ?? "—"}</span>
+        <div className="flex items-center gap-3">
+          {row.original.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={row.original.image}
+              alt={row.original.name}
+              className="size-12 rounded-md border object-cover"
+            />
+          ) : (
+            <div className="flex size-12 items-center justify-center rounded-md border bg-muted text-lg text-muted-foreground">
+              📦
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">
+              {row.original.categories?.name ?? "—"}
+              {row.original.brands?.name ? ` · ${row.original.brands.name}` : ""}
+            </p>
+            <button
+              className="block max-w-[16rem] truncate text-left font-medium underline-offset-2 hover:text-primary hover:underline"
+              onClick={() => addToCart(row.original)}
+              title={row.original.name}
+            >
+              {row.original.name}
+            </button>
+            <p className="font-mono text-xs text-muted-foreground">{row.original.sku ?? "—"}</p>
+          </div>
+        </div>
       ),
-    },
-    {
-      header: "Brand",
-      cell: ({ row }) => row.original.brands?.name ?? "—",
     },
     {
       accessorKey: "selling_price",
