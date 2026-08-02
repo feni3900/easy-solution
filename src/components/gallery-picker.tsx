@@ -58,36 +58,44 @@ export function GalleryPicker({ open, onOpenChange, onSelect, title = "Image Gal
   }, [open, loaded, supabase]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Please choose an image file.");
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    if (files.some((f) => !f.type.startsWith("image/"))) {
+      setError("Please choose image files only.");
       return;
     }
     setUploading(true);
     setError("");
-    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-    const path = `${crypto.randomUUID()}.${ext}`;
-    const { error: upError } = await supabase.storage
-      .from("gallery")
-      .upload(path, file, { contentType: file.type, upsert: false });
-    if (upError) {
-      console.error(upError);
-      setError("Upload failed.");
-      setUploading(false);
-      return;
+    let ok = 0;
+    let failed = 0;
+    for (const file of files) {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: upError } = await supabase.storage
+        .from("gallery")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upError) {
+        console.error(upError);
+        failed += 1;
+        continue;
+      }
+      const { data: urlData } = supabase.storage.from("gallery").getPublicUrl(path);
+      const { error: insertError } = await supabase
+        .from("image_gallery")
+        .insert({ url: urlData.publicUrl, file_name: file.name, mime_type: file.type, size: file.size });
+      if (insertError) {
+        console.error(insertError);
+        failed += 1;
+      } else {
+        ok += 1;
+      }
     }
-    const { data: urlData } = supabase.storage.from("gallery").getPublicUrl(path);
-    const { error: insertError } = await supabase
-      .from("image_gallery")
-      .insert({ url: urlData.publicUrl, file_name: file.name, mime_type: file.type, size: file.size });
-    if (insertError) {
-      console.error(insertError);
-      setError("Upload succeeded but could not be saved to gallery.");
-    } else {
-      await load();
+    if (failed > 0) {
+      setError(`${ok} uploaded, ${failed} failed.`);
     }
+    await load();
     setUploading(false);
+    if (fileRef.current) fileRef.current.value = "";
   };
 
   const load = async () => {
@@ -126,12 +134,13 @@ export function GalleryPicker({ open, onOpenChange, onSelect, title = "Image Gal
             ref={fileRef}
             type="file"
             accept="image/*"
+            multiple
             className="hidden"
             onChange={handleUpload}
           />
           <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
             {uploading ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-            {uploading ? "Uploading..." : "Upload Image"}
+            {uploading ? "Uploading..." : "Upload Images"}
           </Button>
           {error && <span className="text-xs text-red-500">{error}</span>}
         </div>

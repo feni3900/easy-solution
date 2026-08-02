@@ -18,6 +18,7 @@ export function GalleryClient({ initialImages }: { initialImages: GalleryImage[]
   const supabase = createClient();
   const [images, setImages] = useState<GalleryImage[]>(initialImages);
   const [uploading, setUploading] = useState(false);
+  const [uploadedCount, setUploadedCount] = useState(0);
   const [error, setError] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -30,37 +31,47 @@ export function GalleryClient({ initialImages }: { initialImages: GalleryImage[]
     if (data) setImages(data);
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Please choose an image file.");
-      return;
-    }
-    setUploading(true);
-    setError("");
+  const uploadOne = async (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "png";
     const path = `${crypto.randomUUID()}.${ext}`;
     const { error: upError } = await supabase.storage
       .from("gallery")
       .upload(path, file, { contentType: file.type, upsert: false });
-    if (upError) {
-      console.error(upError);
-      setError("Upload failed.");
-      setUploading(false);
-      return;
-    }
+    if (upError) throw upError;
     const { data: urlData } = supabase.storage.from("gallery").getPublicUrl(path);
     const { error: insertError } = await supabase
       .from("image_gallery")
       .insert({ url: urlData.publicUrl, file_name: file.name, mime_type: file.type, size: file.size });
-    if (insertError) {
-      console.error(insertError);
-      setError("Upload succeeded but could not be saved to gallery.");
-    } else {
-      await reload();
-      router.refresh();
+    if (insertError) throw insertError;
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    if (files.some((f) => !f.type.startsWith("image/"))) {
+      setError("Please choose image files only.");
+      return;
     }
+    setUploading(true);
+    setError("");
+    setUploadedCount(0);
+    let ok = 0;
+    let failed = 0;
+    for (const file of files) {
+      try {
+        await uploadOne(file);
+        ok += 1;
+        setUploadedCount(ok);
+      } catch (err) {
+        console.error(err);
+        failed += 1;
+      }
+    }
+    if (failed > 0) {
+      setError(`${ok} uploaded, ${failed} failed.`);
+    }
+    await reload();
+    router.refresh();
     setUploading(false);
     if (fileRef.current) fileRef.current.value = "";
   };
@@ -91,12 +102,13 @@ export function GalleryClient({ initialImages }: { initialImages: GalleryImage[]
           ref={fileRef}
           type="file"
           accept="image/*"
+          multiple
           className="hidden"
           onChange={handleUpload}
         />
         <Button onClick={() => fileRef.current?.click()} disabled={uploading}>
           {uploading ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-          {uploading ? "Uploading..." : "Upload Image"}
+          {uploading ? `Uploading ${uploadedCount}...` : "Upload Images"}
         </Button>
         {error && <span className="text-xs text-red-500">{error}</span>}
       </div>
