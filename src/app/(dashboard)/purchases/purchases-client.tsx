@@ -164,6 +164,7 @@ export function PurchasesClient({
 
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryForIndex, setGalleryForIndex] = useState<number | null>(null);
+  const [galleryForProduct, setGalleryForProduct] = useState(false);
 
   const calculatedSell = Number(newProduct.cost_price || 0) * (1 + Number(newProduct.profit_pct || 0) / 100);
 
@@ -621,12 +622,26 @@ export function PurchasesClient({
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label>Image URL</Label>
-                  <Input
-                    value={newProduct.image}
-                    onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
-                    placeholder="https://example.com/image.jpg"
-                  />
+                  <Label>Image</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newProduct.image}
+                      onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                      placeholder="Image URL or pick from gallery"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      title="Pick from gallery"
+                      onClick={() => {
+                        setGalleryForProduct(true);
+                        setGalleryOpen(true);
+                      }}
+                    >
+                      <ImagePlus className="size-4" />
+                    </Button>
+                  </div>
                   {newProduct.image && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -958,9 +973,18 @@ export function PurchasesClient({
 
           <GalleryPicker
             open={galleryOpen}
-            onOpenChange={setGalleryOpen}
+            onOpenChange={(o) => {
+              setGalleryOpen(o);
+              if (!o) {
+                setGalleryForProduct(false);
+                setGalleryForIndex(null);
+              }
+            }}
             onSelect={(url) => {
-              if (galleryForIndex !== null) {
+              if (galleryForProduct) {
+                setNewProduct({ ...newProduct, image: url });
+                setGalleryForProduct(false);
+              } else if (galleryForIndex !== null) {
                 setCart(cart.map((x, j) => (j === galleryForIndex ? { ...x, image: url } : x)));
               }
               setGalleryForIndex(null);
