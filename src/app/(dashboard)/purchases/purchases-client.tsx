@@ -30,10 +30,19 @@ interface Purchase {
   id: string;
   purchase_no: string | null;
   total: number;
+  paid_amount: number;
   status: string;
   purchase_date: string;
+  supplier_id: string | null;
+  branch_id: string | null;
   suppliers?: { name: string }[] | { name: string } | null;
   branches?: { name: string }[] | { name: string } | null;
+  purchase_items?: {
+    product_id: string;
+    quantity: number;
+    unit_price: number;
+    total: number;
+  }[];
 }
 
 interface Supplier {
@@ -61,7 +70,7 @@ const getName = (v: { name?: string }[] | { name?: string } | null | undefined) 
   return v?.name ?? "—";
 };
 
-const columns: ColumnDef<Purchase>[] = [
+const buildColumns = (onEdit: (p: Purchase) => void): ColumnDef<Purchase>[] => [
   {
     accessorKey: "purchase_no",
     header: "No.",
@@ -88,6 +97,17 @@ const columns: ColumnDef<Purchase>[] = [
     accessorKey: "purchase_date",
     header: "Date",
     cell: ({ row }) => new Date(row.original.purchase_date).toLocaleString(),
+  },
+  {
+    id: "actions",
+    header: "",
+    cell: ({ row }) => (
+      <div className="flex justify-end gap-1">
+        <Button variant="ghost" size="sm" onClick={() => onEdit(row.original)}>
+          <Pencil className="size-3.5" />
+        </Button>
+      </div>
+    ),
   },
 ];
 
@@ -124,6 +144,7 @@ export function PurchasesClient({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState<Purchase | null>(null);
   const [form, setForm] = useState({
     supplier_id: "",
     branch_id: branches[0]?.id ?? "",
@@ -166,6 +187,40 @@ export function PurchasesClient({
   const [galleryForProduct, setGalleryForProduct] = useState(false);
 
   const calculatedSell = Number(newProduct.cost_price || 0) * (1 + Number(newProduct.profit_pct || 0) / 100);
+
+  const openNew = () => {
+    setEditing(null);
+    setForm({ supplier_id: "", branch_id: branches[0]?.id ?? "", status: "received" });
+    setCart([]);
+    setOpen(true);
+  };
+
+  const openEdit = (p: Purchase) => {
+    const items = (p.purchase_items ?? []).map((it) => {
+      const product = products.find((x) => x.id === it.product_id);
+      return {
+        product_id: it.product_id,
+        name: product?.name ?? it.product_id,
+        quantity: Number(it.quantity),
+        unit_price: Number(it.unit_price),
+        image: "",
+        selling_price: product?.selling_price ?? 0,
+        profit_pct:
+          Number(it.unit_price) > 0
+            ? Math.round(((product?.selling_price ?? 0) - Number(it.unit_price)) / Number(it.unit_price) * 100)
+            : 0,
+        newly_created: false,
+      };
+    });
+    setEditing(p);
+    setForm({
+      supplier_id: p.supplier_id ?? "",
+      branch_id: p.branch_id ?? branches[0]?.id ?? "",
+      status: p.status,
+    });
+    setCart(items);
+    setOpen(true);
+  };
 
   const addProduct = (p: Product) => {
     const existing = cart.find((c) => c.product_id === p.id);
@@ -418,31 +473,47 @@ export function PurchasesClient({
   const handleSave = async () => {
     setSaving(true);
     const supabase = createClient();
-    const { data: purchase, error } = await supabase
-      .from("purchases")
-      .insert([
-        {
-          supplier_id: form.supplier_id || null,
-          branch_id: form.branch_id || null,
-          subtotal: total,
-          discount: 0,
-          tax: 0,
-          total,
-          paid_amount: 0,
-          status: form.status,
-        },
-      ])
-      .select("id")
-      .single();
+    const payload = {
+      supplier_id: form.supplier_id || null,
+      branch_id: form.branch_id || null,
+      subtotal: total,
+      discount: 0,
+      tax: 0,
+      total,
+      status: form.status,
+    };
 
-    if (error) {
-      console.error(error);
+    let purchaseId = editing?.id;
+    if (editing) {
+      const { error } = await supabase.from("purchases").update(payload).eq("id", editing.id);
+      if (error) {
+        console.error(error);
+        setSaving(false);
+        return;
+      }
+      const { error: delError } = await supabase.from("purchase_items").delete().eq("purchase_id", editing.id);
+      if (delError) console.error(delError);
+    } else {
+      const { data, error } = await supabase
+        .from("purchases")
+        .insert([{ ...payload, paid_amount: 0 }])
+        .select("id")
+        .single();
+      if (error) {
+        console.error(error);
+        setSaving(false);
+        return;
+      }
+      purchaseId = data.id;
+    }
+
+    if (!purchaseId) {
       setSaving(false);
       return;
     }
 
     const items = cart.map((c) => ({
-      purchase_id: purchase.id,
+      purchase_id: purchaseId,
       product_id: c.product_id,
       quantity: c.quantity,
       unit_price: c.unit_price,
@@ -464,19 +535,20 @@ export function PurchasesClient({
     setSaving(false);
     setOpen(false);
     setCart([]);
+    setEditing(null);
     router.refresh();
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Button onClick={() => setOpen(true)}>
+        <Button onClick={openNew}>
           <Plus className="size-4" />
           New Purchase
         </Button>
       </div>
       <DataTable
-        columns={columns}
+        columns={buildColumns(openEdit)}
         data={purchases}
         searchKey="purchase_no"
         searchPlaceholder="Search purchases..."
@@ -485,7 +557,7 @@ export function PurchasesClient({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>New Purchase</DialogTitle>
+            <DialogTitle>{editing ? `Edit Purchase ${editing.purchase_no ?? ""}` : "New Purchase"}</DialogTitle>
             <DialogDescription>
               Stock is added to the inventory ledger automatically when status is received.
             </DialogDescription>
@@ -634,12 +706,19 @@ export function PurchasesClient({
           </Card>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOpen(false);
+                setEditing(null);
+                setCart([]);
+              }}
+            >
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={saving || cart.length === 0}>
               {saving && <Loader2 className="size-4 animate-spin" />}
-              Save Purchase
+              {editing ? "Save Changes" : "Save Purchase"}
             </Button>
           </DialogFooter>
 

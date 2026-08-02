@@ -19,7 +19,7 @@ export default async function PurchasesPage() {
   ] = await Promise.all([
     supabase
       .from("purchases")
-      .select("*, suppliers(name), branches(name)")
+      .select("*, suppliers(name), branches(name), purchase_items(product_id, quantity, unit_price, total)")
       .order("purchase_date", { ascending: false })
       .limit(500),
     supabase.from("suppliers").select("id, name").order("name"),
