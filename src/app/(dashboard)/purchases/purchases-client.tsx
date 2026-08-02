@@ -141,7 +141,6 @@ export function PurchasesClient({
     name: "",
     image: "",
     sku: "",
-    barcode: "",
     category_id: "",
     brand_id: "",
     unit_id: "",
@@ -301,6 +300,48 @@ export function PurchasesClient({
     setSupplierForm({ name: "", mobile: "", address: "" });
   };
 
+  const code = (name: string, fallback: string) =>
+    name ? name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 3).toUpperCase() || fallback : fallback;
+
+  const variantNumber = (variantName: string) => {
+    const n = Number((variantName.match(/\d+(\.\d+)?/) ?? [""])[0]);
+    return Number.isFinite(n) ? String(Math.round(n)).padStart(3, "0") : "000";
+  };
+
+  const generateSku = async (opts: { categoryId?: string; brandId?: string; variantName?: string }) => {
+    const supabase = createClient();
+    const cat = catList.find((c) => c.id === opts.categoryId)?.name ?? "";
+    const brand = brandList.find((b) => b.id === opts.brandId)?.name ?? "";
+    const catCode = code(cat, "PRD");
+    const brandCode = code(brand, "GEN");
+    const varCode = variantNumber(opts.variantName ?? "");
+    const prefix = `${catCode}-${brandCode}-${varCode}-`;
+    const { data } = await supabase
+      .from("products")
+      .select("sku")
+      .ilike("sku", `${prefix}%`);
+    let max = 0;
+    for (const p of data ?? []) {
+      const m = (p.sku ?? "").match(/(\d+)$/);
+      if (m) max = Math.max(max, Number(m[1]));
+    }
+    return `${prefix}${String(max + 1).padStart(6, "0")}`;
+  };
+
+  const refreshSku = (changes: { categoryId?: string; brandId?: string; variantName?: string }) => {
+    generateSku({
+      categoryId: changes.categoryId ?? (newProduct.category_id || undefined),
+      brandId: changes.brandId ?? (newProduct.brand_id || undefined),
+      variantName: changes.variantName ?? newProduct.variant_name,
+    }).then((sku) => setNewProduct((prev) => ({ ...prev, sku })));
+  };
+
+  const openProductDialog = async () => {
+    const sku = await generateSku({ categoryId: undefined });
+    setNewProduct((prev) => ({ ...prev, sku }));
+    setProductDialog(true);
+  };
+
   const handleCreateProduct = async () => {
     if (!newProduct.name.trim()) return;
     setProductSaving(true);
@@ -315,7 +356,6 @@ export function PurchasesClient({
           name: newProduct.name.trim().toUpperCase(),
           image: newProduct.image.trim() || null,
           sku: newProduct.sku.trim() || null,
-          barcode: newProduct.barcode.trim() || null,
           category_id: newProduct.category_id || null,
           brand_id: newProduct.brand_id || null,
           unit_id: newProduct.unit_id || null,
@@ -363,7 +403,6 @@ export function PurchasesClient({
       name: "",
       image: "",
       sku: "",
-      barcode: "",
       category_id: "",
       brand_id: "",
       unit_id: "",
@@ -506,7 +545,7 @@ export function PurchasesClient({
               <Plus className="size-4" />
               Add Purchase Product
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setProductDialog(true)}>
+            <Button variant="outline" size="sm" onClick={openProductDialog}>
               <Plus className="size-4" />
               Add New Product
             </Button>
@@ -653,19 +692,11 @@ export function PurchasesClient({
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="grid gap-2">
-                    <Label>SKU</Label>
+                    <Label>SKU (auto)</Label>
                     <Input
                       value={newProduct.sku}
                       onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
-                      placeholder="SKU-001"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Barcode</Label>
-                    <Input
-                      value={newProduct.barcode}
-                      onChange={(e) => setNewProduct({ ...newProduct, barcode: e.target.value })}
-                      placeholder="8901234567890"
+                      placeholder="AUTO-GENERATED"
                     />
                   </div>
                 </div>
@@ -676,7 +707,10 @@ export function PurchasesClient({
                       <select
                         className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                         value={newProduct.category_id}
-                        onChange={(e) => setNewProduct({ ...newProduct, category_id: e.target.value })}
+                        onChange={(e) => {
+                          setNewProduct({ ...newProduct, category_id: e.target.value });
+                          refreshSku({ categoryId: e.target.value });
+                        }}
                       >
                         <option value="">None</option>
                         {catList.map((c) => (
@@ -696,7 +730,10 @@ export function PurchasesClient({
                       <select
                         className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                         value={newProduct.brand_id}
-                        onChange={(e) => setNewProduct({ ...newProduct, brand_id: e.target.value })}
+                        onChange={(e) => {
+                          setNewProduct({ ...newProduct, brand_id: e.target.value });
+                          refreshSku({ brandId: e.target.value });
+                        }}
                       >
                         <option value="">None</option>
                         {brandList.map((b) => (
@@ -738,7 +775,10 @@ export function PurchasesClient({
                       <Input
                         list="variant-options"
                         value={newProduct.variant_name}
-                        onChange={(e) => setNewProduct({ ...newProduct, variant_name: e.target.value })}
+                        onChange={(e) => {
+                          setNewProduct({ ...newProduct, variant_name: e.target.value });
+                          refreshSku({ variantName: e.target.value });
+                        }}
                         placeholder="e.g. 500ml"
                         className="h-8 text-sm"
                       />

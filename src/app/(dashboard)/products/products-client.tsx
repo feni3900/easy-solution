@@ -107,7 +107,6 @@ export function ProductsClient({
   const [form, setForm] = useState({
     name: "",
     sku: "",
-    barcode: "",
     brand_id: "",
     category_id: "",
     unit_id: "",
@@ -124,7 +123,6 @@ export function ProductsClient({
     setForm({
       name: p.name,
       sku: p.sku ?? "",
-      barcode: p.barcode ?? "",
       brand_id: p.brands?.id ?? "",
       category_id: p.categories?.id ?? "",
       unit_id: p.units?.id ?? "",
@@ -144,7 +142,6 @@ export function ProductsClient({
     const payload = {
       name: form.name.toUpperCase(),
       sku: form.sku || null,
-      barcode: form.barcode || null,
       brand_id: form.brand_id || null,
       category_id: form.category_id || null,
       unit_id: form.unit_id || null,
@@ -373,23 +370,13 @@ export function ProductsClient({
                 placeholder="https://example.com/image.jpg"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-2">
-                <Label>SKU *</Label>
-                <Input
-                  value={form.sku}
-                  onChange={(e) => setForm({ ...form, sku: e.target.value })}
-                  placeholder="SKU-001"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Barcode *</Label>
-                <Input
-                  value={form.barcode}
-                  onChange={(e) => setForm({ ...form, barcode: e.target.value })}
-                  placeholder="8901234567890"
-                />
-              </div>
+            <div className="grid gap-2">
+              <Label>SKU</Label>
+              <Input
+                value={form.sku}
+                onChange={(e) => setForm({ ...form, sku: e.target.value })}
+                placeholder="SKU-001"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
