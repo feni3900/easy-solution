@@ -52,14 +52,16 @@ export default async function StorefrontHome() {
 
   return (
     <div>
-      <section className="bg-gradient-to-br from-primary/10 via-background to-background">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 px-4 py-16 text-center sm:py-24">
-          <h1 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl">
-            {active.shopName} — <span className="text-primary">Pay on Delivery.</span>
+      <section className="relative bg-cover bg-center" style={{ backgroundImage: "url(/images/home-banner.png)" }}>
+        <div className="absolute inset-0 bg-black/60" />
+        <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-6 px-4 py-16 text-center sm:py-24">
+          <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-5xl">
+            Discover Premium Fragrances &amp; Smart Gadgets
           </h1>
-          <p className="max-w-xl text-muted-foreground">
-            Perfume, electronics and stationery — delivered to your door. Bulk
-            discounts on every order and cash on delivery across all products.
+          <p className="max-w-xl text-gray-200">
+            Explore our exclusive collection of oil-based perfumes, spray
+            perfumes, mobile gadgets, speakers, and premium accessories—all in
+            one place.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
@@ -68,12 +70,6 @@ export default async function StorefrontHome() {
             >
               Shop Now
               <ArrowRight className="size-4" />
-            </Link>
-            <Link
-              href="/about"
-              className="inline-flex items-center gap-2 rounded-lg border px-6 py-3 text-sm font-medium hover:bg-muted"
-            >
-              About Us
             </Link>
           </div>
         </div>

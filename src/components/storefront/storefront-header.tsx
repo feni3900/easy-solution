@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, X, ShoppingCart, Store, LayoutDashboard, LogIn, Loader2 } from "lucide-react";
+import { Menu, X, ShoppingCart, Store, LayoutDashboard, LogIn } from "lucide-react";
 import { getCart } from "@/app/cart/cart-storage";
 import type { StoreBranch } from "@/lib/store";
 
@@ -14,9 +14,9 @@ const NAV = [
   { label: "Contact Us", href: "/contact" },
 ];
 
-const FLAGS: Record<string, { flag: string; label: string }> = {
-  Bangladesh: { flag: "🇧🇩", label: "Bangladesh" },
-  Greece: { flag: "🇬🇷", label: "Greece" },
+const FLAGS: Record<string, { src: string; label: string }> = {
+  Bangladesh: { src: "https://flagcdn.com/w40/bd.png", label: "Bangladesh" },
+  Greece: { src: "https://flagcdn.com/w40/gr.png", label: "Greece" },
 };
 
 export function StorefrontHeader({
@@ -41,15 +41,15 @@ export function StorefrontHeader({
   }, []);
 
   const switchStore = async (branchId: string) => {
-    if (branchId === active.id) return;
+    if (branchId === active.id || switching) return;
     setSwitching(true);
     try {
-      await fetch("/api/store", {
+      const res = await fetch("/api/store", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ branchId }),
       });
-      router.refresh();
+      if (res.ok) router.refresh();
     } finally {
       setSwitching(false);
     }
@@ -80,7 +80,7 @@ export function StorefrontHeader({
         <div className="ml-auto flex items-center gap-2">
           <div className="flex items-center gap-1 rounded-full border p-1" role="group" aria-label="Select store">
             {branches.map((b) => {
-              const f = FLAGS[b.country] ?? { flag: "🏳️", label: b.shopName };
+              const f = FLAGS[b.country] ?? { src: "", label: b.shopName };
               const isActive = b.id === active.id;
               return (
                 <button
@@ -90,18 +90,21 @@ export function StorefrontHeader({
                   disabled={switching}
                   title={`${b.shopName} (${f.label})`}
                   aria-pressed={isActive}
-                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm transition-colors ${
+                  className={`flex size-8 items-center justify-center overflow-hidden rounded-full transition-all ${
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
+                      ? "ring-2 ring-primary ring-offset-1"
+                      : "opacity-70 hover:opacity-100"
                   }`}
                 >
-                  <span aria-hidden>{f.flag}</span>
-                  <span className="hidden sm:inline">{b.shopName}</span>
+                  {f.src ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={f.src} alt={f.label} className="size-8 object-cover" />
+                  ) : (
+                    <span className="text-lg">🏳️</span>
+                  )}
                 </button>
               );
             })}
-            {switching && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
           </div>
 
           <Link
@@ -150,7 +153,7 @@ export function StorefrontHeader({
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-1 rounded-full border p-1" role="group" aria-label="Select store">
               {branches.map((b) => {
-                const f = FLAGS[b.country] ?? { flag: "🏳️", label: b.shopName };
+                const f = FLAGS[b.country] ?? { src: "", label: b.shopName };
                 const isActive = b.id === active.id;
                 return (
                   <button
@@ -159,12 +162,16 @@ export function StorefrontHeader({
                     onClick={() => switchStore(b.id)}
                     disabled={switching}
                     aria-pressed={isActive}
-                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-2.5 py-1 text-sm transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                    className={`flex size-9 items-center justify-center overflow-hidden rounded-full transition-all ${
+                      isActive ? "ring-2 ring-primary ring-offset-1" : "opacity-70 hover:opacity-100"
                     }`}
                   >
-                    <span aria-hidden>{f.flag}</span>
-                    <span>{b.shopName}</span>
+                    {f.src ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={f.src} alt={f.label} className="size-9 object-cover" />
+                    ) : (
+                      <span className="text-lg">🏳️</span>
+                    )}
                   </button>
                 );
               })}
