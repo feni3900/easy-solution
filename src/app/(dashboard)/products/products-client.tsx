@@ -247,7 +247,7 @@ export function ProductsClient({
 
   const columns: ColumnDef<ProductRow>[] = [
     {
-      id: "product",
+      accessorKey: "name",
       header: "Product",
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
