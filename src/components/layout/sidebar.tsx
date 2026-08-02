@@ -18,6 +18,7 @@ import {
   Settings,
   ChevronDown,
   Store,
+  Image,
 } from "lucide-react";
 import { NAV_ITEMS, type NavItem } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   BarChart3,
   Globe,
   Settings,
+  Image,
 };
 
 function SidebarLink({ item }: { item: NavItem }) {

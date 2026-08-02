@@ -127,6 +127,11 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    title: "Gallery",
+    href: "/gallery",
+    icon: "Image",
+  },
+  {
     title: "Accounts",
     href: "/accounts",
     icon: "Wallet",
