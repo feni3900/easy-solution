@@ -247,8 +247,9 @@ export function ProductsClient({
 
   const columns: ColumnDef<ProductRow>[] = [
     {
-      accessorKey: "name",
+      id: "product",
       header: "Product",
+      accessorFn: (row) => `${row.name} ${row.sku ?? ""}`,
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           {row.original.image ? (
@@ -324,8 +325,7 @@ export function ProductsClient({
         columns={columns}
         data={filteredProducts}
         searchColumns={[
-          { key: "name", placeholder: "Search by name..." },
-          { key: "sku", placeholder: "Search by SKU..." },
+          { key: "product", placeholder: "Search by name or SKU..." },
         ]}
         filterControls={
           <select
