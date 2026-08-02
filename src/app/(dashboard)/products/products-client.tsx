@@ -142,7 +142,7 @@ export function ProductsClient({
     setSaving(true);
     const supabase = createClient();
     const payload = {
-      name: form.name,
+      name: form.name.toUpperCase(),
       sku: form.sku || null,
       barcode: form.barcode || null,
       brand_id: form.brand_id || null,
@@ -361,7 +361,7 @@ export function ProductsClient({
               <Label>Product Name *</Label>
               <Input
                 value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onChange={(e) => setForm({ ...form, name: e.target.value.toUpperCase() })}
                 required
               />
             </div>

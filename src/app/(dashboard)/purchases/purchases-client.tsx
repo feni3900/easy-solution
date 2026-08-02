@@ -312,7 +312,7 @@ export function PurchasesClient({
       .from("products")
       .insert([
         {
-          name: newProduct.name.trim(),
+          name: newProduct.name.trim().toUpperCase(),
           image: newProduct.image.trim() || null,
           sku: newProduct.sku.trim() || null,
           barcode: newProduct.barcode.trim() || null,
@@ -617,7 +617,7 @@ export function PurchasesClient({
                   <Label>Product Name *</Label>
                   <Input
                     value={newProduct.name}
-                    onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                    onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value.toUpperCase() })}
                     placeholder="Product name"
                   />
                 </div>
