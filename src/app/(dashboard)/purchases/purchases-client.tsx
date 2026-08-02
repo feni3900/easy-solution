@@ -23,7 +23,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, ImagePlus } from "lucide-react";
+import { GalleryPicker } from "@/components/gallery-picker";
 
 interface Purchase {
   id: string;
@@ -160,6 +161,9 @@ export function PurchasesClient({
   const [supplierSaving, setSupplierSaving] = useState(false);
   const [supplierList, setSupplierList] = useState(suppliers);
   const [supplierForm, setSupplierForm] = useState({ name: "", mobile: "", address: "" });
+
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryForIndex, setGalleryForIndex] = useState<number | null>(null);
 
   const calculatedSell = Number(newProduct.cost_price || 0) * (1 + Number(newProduct.profit_pct || 0) / 100);
 
@@ -548,14 +552,18 @@ export function PurchasesClient({
                       </Button>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Input
-                        value={c.image}
-                        onChange={(e) =>
-                          setCart(cart.map((x, j) => (j === i ? { ...x, image: e.target.value } : x)))
-                        }
-                        placeholder="Image URL (copied to product)"
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="h-7 text-xs"
-                      />
+                        onClick={() => {
+                          setGalleryForIndex(i);
+                          setGalleryOpen(true);
+                        }}
+                      >
+                        <ImagePlus className="size-3.5" />
+                        {c.image ? "Change Image" : "Choose Image"}
+                      </Button>
                       {c.image && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -563,6 +571,16 @@ export function PurchasesClient({
                           alt={c.name}
                           className="size-7 shrink-0 rounded border object-cover"
                         />
+                      )}
+                      {c.image && (
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          className="h-7"
+                          onClick={() => setCart(cart.map((x, j) => (j === i ? { ...x, image: "" } : x)))}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -937,6 +955,18 @@ export function PurchasesClient({
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          <GalleryPicker
+            open={galleryOpen}
+            onOpenChange={setGalleryOpen}
+            onSelect={(url) => {
+              if (galleryForIndex !== null) {
+                setCart(cart.map((x, j) => (j === galleryForIndex ? { ...x, image: url } : x)));
+              }
+              setGalleryForIndex(null);
+            }}
+            title="Choose Purchase Image"
+          />
         </DialogContent>
       </Dialog>
     </div>
