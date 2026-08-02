@@ -156,6 +156,11 @@ export function PurchasesClient({
   const [brandList, setBrandList] = useState(brands);
   const [unitList, setUnitList] = useState(units);
 
+  const [supplierDialog, setSupplierDialog] = useState(false);
+  const [supplierSaving, setSupplierSaving] = useState(false);
+  const [supplierList, setSupplierList] = useState(suppliers);
+  const [supplierForm, setSupplierForm] = useState({ name: "", mobile: "", address: "" });
+
   const calculatedSell = Number(newProduct.cost_price || 0) * (1 + Number(newProduct.profit_pct || 0) / 100);
 
   const addProduct = (p: Product) => {
@@ -264,6 +269,31 @@ export function PurchasesClient({
 
     setAddSaving(false);
     setAddDialog(null);
+  };
+
+  const handleAddSupplier = async () => {
+    if (!supplierForm.name.trim()) return;
+    setSupplierSaving(true);
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("suppliers")
+      .insert({
+        name: supplierForm.name.trim(),
+        mobile: supplierForm.mobile.trim() || null,
+        address: supplierForm.address.trim() || null,
+        status: "active",
+      })
+      .select("id, name")
+      .single();
+    if (error) {
+      console.error(error);
+    } else {
+      setSupplierList([...supplierList, data]);
+      setForm({ ...form, supplier_id: data.id });
+    }
+    setSupplierSaving(false);
+    setSupplierDialog(false);
+    setSupplierForm({ name: "", mobile: "", address: "" });
   };
 
   const handleCreateProduct = async () => {
@@ -418,20 +448,25 @@ export function PurchasesClient({
           </DialogHeader>
 
           <div className="grid grid-cols-3 gap-3">
-            <div className="grid gap-2">
+            <div className="grid gap-1.5">
               <Label>Supplier</Label>
-              <select
-                className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                value={form.supplier_id}
-                onChange={(e) => setForm({ ...form, supplier_id: e.target.value })}
-              >
-                <option value="">Select supplier</option>
-                {suppliers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex gap-1.5">
+                <select
+                  className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                  value={form.supplier_id}
+                  onChange={(e) => setForm({ ...form, supplier_id: e.target.value })}
+                >
+                  <option value="">Select supplier</option>
+                  {supplierList.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <Button variant="outline" size="icon-xs" onClick={() => setSupplierDialog(true)} title="New supplier">
+                  <Plus className="size-3.5" />
+                </Button>
+              </div>
             </div>
             <div className="grid gap-2">
               <Label>Branch</Label>
@@ -852,6 +887,52 @@ export function PurchasesClient({
                 <Button onClick={handleAddEntity} disabled={addSaving || !addDialog?.name.trim()}>
                   {addSaving && <Loader2 className="size-4 animate-spin" />}
                   Add
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={supplierDialog} onOpenChange={setSupplierDialog}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>New Supplier</DialogTitle>
+                <DialogDescription>
+                  Create a new supplier and assign it to this purchase.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label>Name *</Label>
+                  <Input
+                    value={supplierForm.name}
+                    onChange={(e) => setSupplierForm({ ...supplierForm, name: e.target.value })}
+                    placeholder="Supplier name"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Mobile</Label>
+                  <Input
+                    value={supplierForm.mobile}
+                    onChange={(e) => setSupplierForm({ ...supplierForm, mobile: e.target.value })}
+                    placeholder="e.g. 017XXXXXXXX"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Address</Label>
+                  <Input
+                    value={supplierForm.address}
+                    onChange={(e) => setSupplierForm({ ...supplierForm, address: e.target.value })}
+                    placeholder="Supplier address"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSupplierDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAddSupplier} disabled={supplierSaving || !supplierForm.name.trim()}>
+                  {supplierSaving && <Loader2 className="size-4 animate-spin" />}
+                  Add & Select
                 </Button>
               </DialogFooter>
             </DialogContent>
