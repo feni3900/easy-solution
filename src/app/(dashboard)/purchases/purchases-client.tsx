@@ -652,54 +652,6 @@ export function PurchasesClient({
                 </DialogDescription>
               </DialogHeader>
               <div className="grid max-h-[60vh] gap-4 overflow-y-auto pr-1">
-                <div className="grid gap-2">
-                  <Label>Product Name *</Label>
-                  <Input
-                    value={newProduct.name}
-                    onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value.toUpperCase() })}
-                    placeholder="Product name"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Image</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={newProduct.image}
-                      onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
-                      placeholder="Image URL or pick from gallery"
-                    />
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      title="Pick from gallery"
-                      onClick={() => {
-                        setGalleryForProduct(true);
-                        setGalleryOpen(true);
-                      }}
-                    >
-                      <ImagePlus className="size-4" />
-                    </Button>
-                  </div>
-                  {newProduct.image && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={newProduct.image}
-                      alt="preview"
-                      className="h-24 w-24 rounded-md border object-cover"
-                    />
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="grid gap-2">
-                    <Label>SKU (auto)</Label>
-                    <Input
-                      value={newProduct.sku}
-                      onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
-                      placeholder="AUTO-GENERATED"
-                    />
-                  </div>
-                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="grid gap-1.5">
                     <Label>Category</Label>
@@ -746,6 +698,54 @@ export function PurchasesClient({
                         <Plus className="size-3.5" />
                       </Button>
                     </div>
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Product Name *</Label>
+                  <Input
+                    value={newProduct.name}
+                    onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value.toUpperCase() })}
+                    placeholder="Product name"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-2">
+                    <Label>Image</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newProduct.image}
+                        onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                        placeholder="Image URL or pick from gallery"
+                      />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        title="Pick from gallery"
+                        onClick={() => {
+                          setGalleryForProduct(true);
+                          setGalleryOpen(true);
+                        }}
+                      >
+                        <ImagePlus className="size-4" />
+                      </Button>
+                    </div>
+                    {newProduct.image && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={newProduct.image}
+                        alt="preview"
+                        className="h-24 w-24 rounded-md border object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>SKU (auto)</Label>
+                    <Input
+                      value={newProduct.sku}
+                      onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
+                      placeholder="AUTO-GENERATED"
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
