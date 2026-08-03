@@ -31,12 +31,13 @@ export function GalleryPicker({ open, onOpenChange, onSelect, title = "Image Gal
   const supabase = createClient();
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!open || loaded) return;
+    if (!open) return;
     let active = true;
     (async () => {
       const { data, error } = await supabase
@@ -55,7 +56,7 @@ export function GalleryPicker({ open, onOpenChange, onSelect, title = "Image Gal
     return () => {
       active = false;
     };
-  }, [open, loaded, supabase]);
+  }, [open, supabase, retryCount]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -120,7 +121,16 @@ export function GalleryPicker({ open, onOpenChange, onSelect, title = "Image Gal
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (o) {
+          setLoaded(false);
+          setError("");
+        }
+        onOpenChange(o);
+      }}
+    >
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -142,7 +152,14 @@ export function GalleryPicker({ open, onOpenChange, onSelect, title = "Image Gal
             {uploading ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
             {uploading ? "Uploading..." : "Upload Images"}
           </Button>
-          {error && <span className="text-xs text-red-500">{error}</span>}
+          {error && (
+            <span className="flex items-center gap-2 text-xs text-red-500">
+              {error}
+              <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setRetryCount((c) => c + 1)}>
+                Retry
+              </Button>
+            </span>
+          )}
         </div>
 
         <div className="max-h-96 overflow-y-auto rounded-lg border p-2">

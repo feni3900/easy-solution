@@ -52,13 +52,15 @@ export default async function StorefrontHome() {
 
   return (
     <div>
-      <section className="relative bg-cover bg-center" style={{ backgroundImage: "url(/images/home-banner.png)" }}>
-        <div className="absolute inset-0 bg-black/60" />
-        <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-6 px-4 py-16 text-center sm:py-24">
-          <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-5xl">
+      <section className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/images/home-banner.png" alt="Home banner" className="h-auto w-full" />
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-4 text-center">
+          <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] sm:text-5xl">
             Discover Premium Fragrances &amp; Smart Gadgets
           </h1>
-          <p className="max-w-xl text-gray-200">
+          <p className="max-w-xl text-gray-100 drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
             Explore our exclusive collection of oil-based perfumes, spray
             perfumes, mobile gadgets, speakers, and premium accessories—all in
             one place.
