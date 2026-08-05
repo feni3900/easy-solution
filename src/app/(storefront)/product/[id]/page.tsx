@@ -1,11 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { Star, Truck, BadgePercent } from "lucide-react";
 import Link from "next/link";
-import { AddToCart } from "./add-to-cart";
-import { bulkDiscountPct } from "@/app/cart/cart-storage";
+import { ArrowLeft, Package } from "lucide-react";
+import { AddToCartButton } from "./add-to-cart-button";
 
-export default async function ProductPage({
+export default async function ProductDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -15,125 +14,89 @@ export default async function ProductPage({
 
   const { data: product } = await supabase
     .from("products")
-    .select(
-      "id, name, barcode, sku, selling_price, purchase_price, minimum_stock, image, status, is_coming_soon, is_popular, is_best_seller, categories(name), brands(name), product_variants(id, name, additional_price, stock_quantity)"
-    )
-    .eq("id", id)
+    .select("*, categories(category_name), brands(brand_name), product_variants(*)")
+    .eq("product_id", id)
+    .eq("is_active", true)
     .single();
 
-  if (!product || product.status !== "active") notFound();
+  if (!product) notFound();
 
-  const categories = Array.isArray(product.categories)
-    ? product.categories[0]
-    : product.categories;
-  const brands = Array.isArray(product.brands) ? product.brands[0] : product.brands;
+  const category = product.categories as { category_name?: string } | null;
+  const brand = product.brands as { brand_name?: string } | null;
+  const variants = (product.product_variants ?? []) as {
+    variant_id: number;
+    variant_key: string;
+    variant_value: string;
+    sku_override: string | null;
+    stock_adjustment: number;
+    price_adjustment: number;
+  }[];
 
-  const { data: reviews } = await supabase
-    .from("reviews")
-    .select("rating, comment, date")
-    .eq("product_id", id)
-    .eq("status", "approved");
-
-  const avgRating = (reviews ?? []).length
-    ? (reviews ?? []).reduce((s, r) => s + r.rating, 0) / (reviews ?? []).length
-    : 0;
+  const effectiveStock = product.current_stock + variants.reduce((s, v) => s + (v.stock_adjustment ?? 0), 0);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <Link href="/shop" className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        ← Back to shop
+      <Link href="/shop" className="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-6">
+        <ArrowLeft className="size-4" /> Back to Shop
       </Link>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <div className="flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-muted">
-          {product.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+        {/* Image */}
+        <div className="aspect-square rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+          {product.image_url ? (
+            <img src={product.image_url} alt={product.product_name} className="h-full w-full object-cover" />
           ) : (
-            <span className="text-8xl">📦</span>
+            <Package className="size-24 text-muted-foreground" />
           )}
         </div>
-        <div>
-          <div className="mb-2 flex flex-wrap gap-2">
-            {categories && (
-              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                {categories.name}
-              </span>
-            )}
-            {brands && (
-              <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                {brands.name}
-              </span>
-            )}
-            {product.is_popular && (
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
-                Popular
-              </span>
-            )}
-            {product.is_best_seller && (
-              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
-                Best Seller
-              </span>
-            )}
-            {product.is_coming_soon && (
-              <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                Coming Soon
-              </span>
-            )}
+
+        {/* Details */}
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {category?.category_name ?? ""} {brand?.brand_name ? `· ${brand.brand_name}` : ""}
+            </p>
+            <h1 className="text-2xl font-bold mt-1">{product.product_name}</h1>
+            <p className="text-sm text-muted-foreground mt-1">SKU: {product.sku}</p>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">{product.name}</h1>
-          <div className="mt-2 flex items-center gap-2 text-sm">
-            <span className="flex gap-0.5 text-yellow-500">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className={`size-4 ${i < Math.round(avgRating) ? "fill-yellow-500" : ""}`} />
-              ))}
+
+          <p className="text-3xl font-bold">৳{Number(product.selling_price).toFixed(2)}</p>
+
+          <div className="flex items-center gap-2">
+            <span className={`text-sm px-2 py-0.5 rounded-full ${effectiveStock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+              {effectiveStock > 0 ? `${effectiveStock} in stock` : "Out of stock"}
             </span>
-            <span className="text-muted-foreground">({reviews?.length ?? 0} reviews)</span>
-          </div>
-          <p className="mt-4 text-3xl font-bold text-primary">৳{Number(product.selling_price).toFixed(2)}</p>
-
-          <div className="mt-5 space-y-2 text-sm text-muted-foreground">
-            <p className="flex items-center gap-2">
-              <Truck className="size-4" />
-              Cash on delivery available — pay when your order arrives.
-            </p>
-            <p className="flex items-center gap-2">
-              <BadgePercent className="size-4" />
-              Bulk discount: 5% on 6+, 10% on 12+, 15% on 24+ items.
-            </p>
           </div>
 
-          <div className="mt-8">
-            <AddToCart
-              productId={product.id}
-              name={product.name}
-              price={Number(product.selling_price)}
-              image={product.image}
-              comingSoon={product.is_coming_soon}
-            />
-          </div>
-        </div>
-      </div>
+          {product.description && (
+            <p className="text-sm text-muted-foreground">{product.description}</p>
+          )}
 
-      <div className="mt-16">
-        <h2 className="mb-4 text-xl font-semibold">Reviews</h2>
-        {(reviews ?? []).length === 0 ? (
-          <p className="text-muted-foreground">No reviews yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {(reviews ?? []).map((r, i) => (
-              <div key={i} className="rounded-lg border p-4">
-                <div className="mb-1 flex gap-0.5 text-yellow-500">
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <Star key={j} className={`size-4 ${j < r.rating ? "fill-yellow-500" : "text-muted-foreground"}`} />
-                  ))}
-                </div>
-                <p className="text-sm">{r.comment}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{new Date(r.date).toLocaleDateString()}</p>
+          {variants.length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium mb-2">Variants</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {variants.map((v) => (
+                  <div key={v.variant_id} className="rounded-md border p-2 text-sm">
+                    <span className="font-medium">{v.variant_key}:</span> {v.variant_value}
+                    {v.price_adjustment !== 0 && (
+                      <span className="text-muted-foreground ml-1">
+                        (৳{Number(product.selling_price + v.price_adjustment).toFixed(2)})
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          )}
+
+          <AddToCartButton
+            productId={product.product_id}
+            productName={product.product_name}
+            price={Number(product.selling_price)}
+            inStock={effectiveStock > 0}
+          />
+        </div>
       </div>
     </div>
   );

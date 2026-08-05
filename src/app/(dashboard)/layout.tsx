@@ -16,7 +16,7 @@ export default async function DashboardLayout({
         <Header
           user={{
             full_name: profile.full_name,
-            role: profile.roles?.name ?? "",
+            role: profile.roles_permissions?.role_name ?? "",
           }}
         />
         <main className="flex-1 p-4 md:p-6">{children}</main>

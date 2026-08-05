@@ -1,47 +1,73 @@
-import { Store, Truck, BadgePercent, ShieldCheck } from "lucide-react";
-import Link from "next/link";
+import { getPageSections } from "@/lib/store";
+import { createClient } from "@/lib/supabase/server";
+import { Package } from "lucide-react";
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const [sections, supabase] = await Promise.all([
+    getPageSections("about"),
+    createClient(),
+  ]);
+
+  const section1 = sections.find((s) => s.section_number === 1);
+
+  const { data: featuredProducts } = await supabase
+    .from("products")
+    .select("product_id, product_name, selling_price, image_url")
+    .eq("is_active", true)
+    .eq("is_popular", true)
+    .limit(8);
+
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
-      <h1 className="text-3xl font-bold tracking-tight">About Us</h1>
-      <p className="mt-4 text-muted-foreground">
-        Maruf Enterprise runs a multi-company retail operation. Our storefront
-        is powered directly by the ERP catalog — every product you see is synced
-        live from our inventory, so pricing and availability are always accurate.
-      </p>
+    <div>
+      {/* Hero */}
+      <section className="bg-gradient-to-br from-primary/10 via-background to-primary/5">
+        <div className="mx-auto max-w-7xl px-4 py-16 text-center">
+          <h1 className="text-3xl font-bold sm:text-5xl">
+            {section1?.hero_title ?? "Our Story"}
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
+            {section1?.hero_subtitle ?? "Building trust through quality products"}
+          </p>
+        </div>
+      </section>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2">
-        {[
-          { icon: Store, title: "Live Catalog", desc: "Products, pricing and stock come straight from the ERP." },
-          { icon: Truck, title: "Cash on Delivery", desc: "Order now and pay when your products arrive." },
-          { icon: BadgePercent, title: "Bulk Discounts", desc: "Automatic discounts from 5% to 15% on larger orders." },
-          { icon: ShieldCheck, title: "Trusted Retailer", desc: "Established brands across perfume, electronics and stationery." },
-        ].map((f) => (
-          <div key={f.title} className="flex items-start gap-3 rounded-lg border p-5">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <f.icon className="size-5" />
+      {/* Values */}
+      <section className="mx-auto max-w-7xl px-4 py-12">
+        <div className="grid gap-6 sm:grid-cols-3">
+          {[
+            { title: section1?.col1_title ?? "Direct Sourcing", desc: section1?.col1_desc ?? "We source directly from manufacturers" },
+            { title: section1?.col2_title ?? "Quality Control", desc: section1?.col2_desc ?? "Every product passes rigorous QC" },
+            { title: section1?.col3_title ?? "Customer Care", desc: section1?.col3_desc ?? "Dedicated support for every customer" },
+          ].map((v) => (
+            <div key={v.title} className="rounded-lg border p-6 text-center">
+              <h3 className="font-semibold">{v.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{v.desc}</p>
             </div>
-            <div>
-              <p className="font-medium">{f.title}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{f.desc}</p>
-            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Featured Products */}
+      {featuredProducts && featuredProducts.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-12">
+          <h2 className="text-xl font-semibold mb-6">Featured Products</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {featuredProducts.map((p) => (
+              <div key={p.product_id} className="rounded-lg border bg-card p-4">
+                <div className="aspect-square rounded-md bg-muted mb-3 flex items-center justify-center">
+                  {p.image_url ? (
+                    <img src={p.image_url} alt={p.product_name} className="h-full w-full object-cover rounded-md" />
+                  ) : (
+                    <Package className="size-8 text-muted-foreground" />
+                  )}
+                </div>
+                <h3 className="text-sm font-medium">{p.product_name}</h3>
+                <p className="mt-1 font-semibold">৳{Number(p.selling_price).toFixed(2)}</p>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-
-      <div className="mt-10 rounded-xl bg-primary/5 p-6 text-center">
-        <h2 className="text-xl font-semibold">Ready to shop?</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Browse our catalog and order with cash on delivery.
-        </p>
-        <Link
-          href="/shop"
-          className="mt-4 inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          Go to Shop
-        </Link>
-      </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -40,7 +40,7 @@ export function SearchResults({
         id: p.id,
         title: p.name,
         subtitle: `${p.sku ?? ""} · ৳${Number(p.selling_price).toFixed(2)}`,
-        href: "/products",
+        href: "/inventory/products",
       })),
     },
     {
@@ -60,7 +60,7 @@ export function SearchResults({
         id: s.id,
         title: s.name,
         subtitle: s.company ?? "",
-        href: "/suppliers",
+        href: "/purchases/suppliers",
       })),
     },
     {
@@ -70,7 +70,7 @@ export function SearchResults({
         id: o.id,
         title: o.invoice_no ?? "—",
         subtitle: `৳${Number(o.total).toFixed(2)} · ${new Date(o.order_date).toLocaleDateString()}`,
-        href: "/sales/orders",
+        href: "/sales/invoices",
       })),
     },
     {
@@ -80,7 +80,7 @@ export function SearchResults({
         id: p.id,
         title: p.purchase_no ?? "—",
         subtitle: `৳${Number(p.total).toFixed(2)} · ${new Date(p.purchase_date).toLocaleDateString()}`,
-        href: "/purchases",
+        href: "/purchases/history",
       })),
     },
   ];

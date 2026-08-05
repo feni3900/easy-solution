@@ -2,120 +2,151 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   LayoutDashboard,
-  Building2,
-  Users,
+  Monitor,
   Package,
-  Boxes,
-  ShoppingCart,
   Truck,
-  Contact,
-  Factory,
-  Wallet,
+  ShoppingCart,
+  Users,
   BarChart3,
   Globe,
-  Settings,
+  Shield,
   ChevronDown,
+  ChevronRight,
   Store,
+  X,
   Image,
 } from "lucide-react";
 import { NAV_ITEMS, type NavItem } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
-  Building2,
-  Users,
+  Monitor,
   Package,
-  Boxes,
-  ShoppingCart,
   Truck,
-  Contact,
-  Factory,
-  Wallet,
+  ShoppingCart,
+  Users,
   BarChart3,
   Globe,
-  Settings,
+  Shield,
   Image,
 };
 
-function SidebarLink({ item }: { item: NavItem }) {
-  const pathname = usePathname();
-  const Icon = iconMap[item.icon] ?? Package;
-  const isActive = pathname === item.href;
+function NavItemComponent({
+  item,
+  pathname,
+  onClose,
+}: {
+  item: NavItem;
+  pathname: string;
+  onClose?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const Icon = iconMap[item.icon] || Package;
+  const isActive =
+    pathname === item.href || pathname.startsWith(item.href + "/");
   const hasChildren = item.children && item.children.length > 0;
 
-  if (hasChildren) {
-    const childActive = item.children!.some((c) => pathname.startsWith(c.href));
+  if (!hasChildren) {
     return (
-      <details open={childActive} className="group/nav">
-        <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-          <span className="flex items-center gap-3">
-            <Icon className="size-4 shrink-0" />
-            {item.title}
-          </span>
-          <ChevronDown className="size-4 shrink-0 transition-transform group-open/nav:rotate-180" />
-        </summary>
-        <div className="mt-1 space-y-1 pl-10">
+      <Link
+        href={item.href}
+        onClick={onClose}
+        className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+          isActive
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        }`}
+      >
+        <Icon className="size-4 shrink-0" />
+        {item.title}
+      </Link>
+    );
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+          isActive
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        }`}
+      >
+        <Icon className="size-4 shrink-0" />
+        <span className="flex-1 text-left">{item.title}</span>
+        {open ? (
+          <ChevronDown className="size-3" />
+        ) : (
+          <ChevronRight className="size-3" />
+        )}
+      </button>
+      {open && (
+        <div className="ml-4 mt-1 space-y-1">
           {item.children!.map((child) => {
-            const active = pathname === child.href || pathname.startsWith(child.href + "/");
+            const isChildActive = pathname === child.href;
             return (
               <Link
                 key={child.href}
                 href={child.href}
-                className={cn(
-                  "block rounded-md px-3 py-1.5 text-sm transition-colors",
-                  active
-                    ? "bg-primary/10 font-medium text-primary"
+                onClick={onClose}
+                className={`block rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                  isChildActive
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
+                }`}
               >
                 {child.title}
               </Link>
             );
           })}
         </div>
-      </details>
-    );
-  }
-
-  return (
-    <Link
-      href={item.href}
-      className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-        isActive
-          ? "bg-primary/10 text-primary"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
       )}
-    >
-      <Icon className="size-4 shrink-0" />
-      {item.title}
-    </Link>
+    </div>
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
+  const pathname = usePathname();
+
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r bg-background lg:flex">
-      <div className="flex h-14 items-center gap-2 border-b px-4">
-        <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <Store className="size-4" />
+    <>
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-card transition-transform lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex h-14 items-center justify-between border-b px-4">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <Store className="size-5 text-primary" />
+            <span className="text-lg font-semibold">Smart ERP</span>
+          </Link>
+          {onClose && (
+            <button onClick={onClose} className="lg:hidden">
+              <X className="size-5" />
+            </button>
+          )}
         </div>
-        <div>
-          <p className="text-sm font-semibold leading-none">Smart Solution ERP</p>
-          <p className="text-xs text-muted-foreground">Inventory &amp; Commerce</p>
-        </div>
-      </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        {NAV_ITEMS.map((item) => (
-          <SidebarLink key={item.href} item={item} />
-        ))}
-      </nav>
-      <div className="border-t p-3 text-xs text-muted-foreground">
-        v1.0.0 · Smart Solution ERP
-      </div>
-    </aside>
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+          {NAV_ITEMS.map((item) => (
+            <NavItemComponent
+              key={item.href}
+              item={item}
+              pathname={pathname}
+              onClose={onClose}
+            />
+          ))}
+        </nav>
+      </aside>
+    </>
   );
 }

@@ -1,0 +1,505 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { Search, Package, Plus, Minus, ShoppingCart, X, FileText, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+interface Product {
+  product_id: number;
+  product_name: string;
+  sku: string;
+  selling_price: number;
+  current_stock: number;
+  image_url: string | null;
+  size: string | null;
+  storage_location: string | null;
+  categories: { category_name: string } | null;
+  brands: { brand_name: string } | null;
+  product_variants: { variant_id: number; variant_key: string; variant_value: string; price_adjustment: number; stock_adjustment: number }[];
+}
+
+interface CartItem {
+  product_id: number;
+  product_name: string;
+  sku: string;
+  unit_price: number;
+  quantity: number;
+  discount: number;
+  max_stock: number;
+  variant_id?: number;
+}
+
+function makeInvoiceNo() {
+  return `POS-${Date.now()}`;
+}
+
+interface DiscountRule {
+  rule_id: number;
+  category: string | null;
+  item_name: string | null;
+  min_quantity: number;
+  discount_percentage: number;
+}
+
+export default function POSPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [discountRules, setDiscountRules] = useState<DiscountRule[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [customerMobile, setCustomerMobile] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerId, setCustomerId] = useState<number | null>(null);
+  const [previousDue, setPreviousDue] = useState(0);
+  const [manualDiscount, setManualDiscount] = useState(0);
+  const [paidAmount, setPaidAmount] = useState("");
+  const [notes, setNotes] = useState("");
+  const [heldOrders, setHeldOrders] = useState<CartItem[][]>([]);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const loadProducts = useCallback(async () => {
+    setLoading(true);
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("products")
+      .select("*, categories(category_name), brands(brand_name), product_variants(*), size, storage_location")
+      .eq("is_active", true)
+      .order("product_name");
+    setProducts(data ?? []);
+    setLoading(false);
+  }, []);
+
+  const loadDiscountRules = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("bulk_discount_rules")
+      .select("rule_id, category, item_name, min_quantity, discount_percentage")
+      .eq("is_active", true);
+    setDiscountRules(data ?? []);
+  }, []);
+
+  useEffect(() => {
+    loadProducts();
+    loadDiscountRules();
+  }, [loadProducts, loadDiscountRules]);
+
+  const filteredProducts = products.filter((p) =>
+    p.product_name.toLowerCase().includes(search.toLowerCase()) ||
+    p.sku.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const addToCart = useCallback((product: Product) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.product_id === product.product_id);
+      if (existing) {
+        if (existing.quantity >= product.current_stock) return prev;
+        return prev.map((item) =>
+          item.product_id === product.product_id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [
+        ...prev,
+        {
+          product_id: product.product_id,
+          product_name: product.product_name,
+          sku: product.sku,
+          unit_price: product.selling_price,
+          quantity: 1,
+          discount: 0,
+          max_stock: product.current_stock,
+        },
+      ];
+    });
+  }, []);
+
+  const updateCartQuantity = (productId: number, delta: number) => {
+    setCart((prev) => {
+      const item = prev.find((i) => i.product_id === productId);
+      if (!item) return prev;
+      const newQty = item.quantity + delta;
+      if (newQty <= 0) return prev.filter((i) => i.product_id !== productId);
+      if (newQty > item.max_stock) return prev;
+      return prev.map((i) =>
+        i.product_id === productId ? { ...i, quantity: newQty } : i
+      );
+    });
+  };
+
+  const removeCartItem = (productId: number) => {
+    setCart((prev) => prev.filter((item) => item.product_id !== productId));
+  };
+
+  const lookupCustomer = async (mobile: string) => {
+    if (mobile.length < 10) return;
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("customers")
+      .select("customer_id, full_name, previous_due")
+      .eq("mobile_number", mobile)
+      .single();
+    if (data) {
+      setCustomerId(data.customer_id);
+      setCustomerName(data.full_name ?? "");
+      setPreviousDue(Number(data.previous_due));
+    } else {
+      setCustomerId(null);
+      setCustomerName("");
+      setPreviousDue(0);
+    }
+  };
+
+  const holdOrder = () => {
+    if (cart.length === 0) return;
+    setHeldOrders((prev) => [...prev, [...cart]]);
+    setCart([]);
+    setCustomerMobile("");
+    setCustomerName("");
+    setCustomerId(null);
+    setPreviousDue(0);
+    setManualDiscount(0);
+    setPaidAmount("");
+    setNotes("");
+  };
+
+  const recallHeldOrder = (index: number) => {
+    setCart(heldOrders[index]);
+    setHeldOrders((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const newOrder = () => {
+    setCart([]);
+    setCustomerMobile("");
+    setCustomerName("");
+    setCustomerId(null);
+    setPreviousDue(0);
+    setManualDiscount(0);
+    setPaidAmount("");
+    setNotes("");
+  };
+
+  // Bulk discount calculation from DB rules
+  const subtotal = cart.reduce((s, item) => s + item.unit_price * item.quantity, 0);
+
+  const applyBulkDiscount = () => {
+    const discountedCart = cart.map((item) => {
+      const product = products.find((p) => p.product_id === item.product_id);
+      const categoryName = product?.categories?.category_name ?? "";
+      const matchingRules = discountRules.filter(
+        (rule) =>
+          item.quantity >= rule.min_quantity &&
+          (rule.category === null || rule.category === "" || rule.category === "all" || rule.category === categoryName) &&
+          (rule.item_name === null || rule.item_name === "" || rule.item_name === "all" || rule.item_name === item.product_name)
+      );
+      const bestRule = matchingRules.reduce<DiscountRule | null>((best, rule) =>
+        Number(rule.discount_percentage) > Number(best?.discount_percentage ?? 0) ? rule : best, null);
+      const percent = bestRule ? Number(bestRule.discount_percentage) : 0;
+      const lineTotal = item.unit_price * item.quantity;
+      return { ...item, discount: (lineTotal * percent) / 100 };
+    });
+    const totalDiscount = discountedCart.reduce((s, item) => s + item.discount, 0);
+    return { discountedCart, totalDiscount };
+  };
+
+  const { discountedCart, totalDiscount } = applyBulkDiscount();
+  const discountAmount = totalDiscount + manualDiscount;
+  const total = Math.max(0, subtotal - discountAmount);
+  const paid = parseFloat(paidAmount) || 0;
+  const due = Math.max(0, total - paid);
+
+  const handleConfirm = async () => {
+    if (cart.length === 0 || submitting) return;
+    if (!customerId && due > 0) {
+      alert("Walk-in customers must pay full amount. No due allowed.");
+      setSubmitting(false);
+      return;
+    }
+    setSubmitting(true);
+
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: profile } = await supabase
+        .from("users")
+        .select("salesperson_nickname")
+        .eq("user_id", user.id)
+        .single();
+
+      const invoiceNo = makeInvoiceNo();
+
+      const { data: invoice, error: invError } = await supabase
+        .from("sales_invoices")
+        .insert({
+          invoice_no: invoiceNo,
+          channel: "POS",
+          salesperson_nickname: profile?.salesperson_nickname ?? "POS",
+          customer_id: customerId,
+          subtotal,
+          bulk_discount_percent: subtotal > 0 ? (totalDiscount / subtotal) * 100 : 0,
+          manual_discount_percent: 0,
+          discount_amount: discountAmount,
+          courier_charge: 0,
+          total_amount: total,
+          paid_amount: paid,
+          due_amount: due,
+          payment_status: due > 0 ? (paid > 0 ? "Partial Due" : "Due") : "Cash",
+          notes: notes || null,
+          created_by: user.id,
+        })
+        .select("invoice_id")
+        .single();
+
+      if (invError) throw invError;
+
+      const items = discountedCart.map((item) => ({
+        invoice_id: invoice.invoice_id,
+        product_id: item.product_id,
+        product_name_snapshot: item.product_name,
+        variant_id: item.variant_id ?? null,
+        unit_price: item.unit_price,
+        quantity: item.quantity,
+        discount_applied: item.discount,
+        total_price: item.unit_price * item.quantity - item.discount,
+      }));
+
+      const { error: itemsError } = await supabase.from("sales_items").insert(items);
+      if (itemsError) throw itemsError;
+
+      // Deduct stock for each item
+      for (const item of cart) {
+        const { error: stockError } = await supabase.rpc("deduct_stock", {
+          p_product_id: item.product_id,
+          p_quantity: item.quantity,
+          p_movement_type: "Sale_POS",
+          p_reference_id: invoice.invoice_id,
+          p_reference_no: invoiceNo,
+          p_created_by: user.id,
+        });
+        if (stockError) throw stockError;
+      }
+
+      // Update customer due
+      if (customerId && due > 0) {
+        await supabase
+          .from("customers")
+          .update({ previous_due: previousDue + due })
+          .eq("customer_id", customerId);
+      }
+
+      // Reset
+      setCart([]);
+      setCustomerMobile("");
+      setCustomerName("");
+      setCustomerId(null);
+      setPreviousDue(0);
+      setManualDiscount(0);
+      setPaidAmount("");
+      setNotes("");
+      loadProducts();
+
+      alert(`Invoice ${invoiceNo} created successfully!`);
+    } catch (error) {
+      alert(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="flex h-[calc(100vh-3.5rem)]">
+      {/* Product Grid */}
+      <div className="flex-1 flex flex-col border-r">
+        <div className="p-3 border-b">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Search SKU or name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg border bg-card pl-10 pr-4 py-2 text-sm"
+            />
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto p-3">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">No products found.</p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              {filteredProducts.map((product) => (
+                <button
+                  key={product.product_id}
+                  onClick={() => addToCart(product)}
+                  className="rounded-lg border bg-card p-3 text-left hover:bg-accent transition-colors"
+                >
+                  <div className="aspect-square rounded bg-muted mb-2 flex items-center justify-center overflow-hidden">
+                    {product.image_url ? (
+                      <img src={product.image_url} alt={product.product_name} className="h-full w-full object-cover" />
+                    ) : (
+                      <Package className="size-6 text-muted-foreground" />
+                    )}
+                  </div>
+                  <p className="text-xs font-medium line-clamp-2">{product.product_name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {product.size ? `${product.size} • ` : ""}{product.storage_location || ""}
+                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-sm font-bold">৳{product.selling_price.toFixed(0)}</p>
+                    <span className={`text-[10px] px-1 rounded ${product.current_stock > 5 ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                      {product.current_stock}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Cart Panel */}
+      <div className="w-96 flex flex-col bg-card">
+        <div className="p-3 border-b">
+          <div className="flex items-center gap-2 mb-2">
+            <ShoppingCart className="size-4" />
+            <span className="font-medium text-sm">Cart ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Customer mobile"
+              value={customerMobile}
+              onChange={(e) => {
+                setCustomerMobile(e.target.value);
+                if (e.target.value.length >= 10) lookupCustomer(e.target.value);
+              }}
+              className="text-xs"
+            />
+          </div>
+          {customerName && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {customerName} {previousDue > 0 && <span className="text-amber-600">· Due: ৳{previousDue.toFixed(2)}</span>}
+            </p>
+          )}
+          <div className="flex gap-2 mt-2">
+            <Button variant="outline" size="sm" onClick={holdOrder} disabled={cart.length === 0} className="flex-1 text-xs">
+              Hold
+            </Button>
+            <Button variant="outline" size="sm" onClick={newOrder} className="flex-1 text-xs">
+              New Order
+            </Button>
+          </div>
+          {heldOrders.length > 0 && (
+            <div className="mt-2 space-y-1">
+              <p className="text-[10px] text-muted-foreground">Held Orders ({heldOrders.length}):</p>
+              <div className="flex flex-wrap gap-1">
+                {heldOrders.map((order, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => recallHeldOrder(idx)}
+                    className="text-[10px] rounded bg-amber-100 text-amber-800 px-2 py-0.5 hover:bg-amber-200"
+                  >
+                    #{idx + 1} ({order.length} items)
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {cart.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8 text-sm">Cart is empty</p>
+          ) : (
+            cart.map((item) => (
+              <div key={item.product_id} className="rounded-md border p-2 space-y-1">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{item.product_name}</p>
+                    <p className="text-[10px] text-muted-foreground">৳{item.unit_price.toFixed(0)} each</p>
+                  </div>
+                  <button onClick={() => removeCartItem(item.product_id)} className="text-destructive hover:bg-destructive/10 rounded p-0.5">
+                    <X className="size-3" />
+                  </button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => updateCartQuantity(item.product_id, -1)} className="rounded border p-0.5 hover:bg-muted">
+                      <Minus className="size-3" />
+                    </button>
+                    <span className="w-6 text-center text-xs">{item.quantity}</span>
+                    <button onClick={() => updateCartQuantity(item.product_id, 1)} className="rounded border p-0.5 hover:bg-muted">
+                      <Plus className="size-3" />
+                    </button>
+                  </div>
+                  <p className="text-xs font-bold">৳{(item.unit_price * item.quantity).toFixed(0)}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Summary */}
+        <div className="border-t p-3 space-y-2">
+          <div className="space-y-1 text-xs">
+            <div className="flex justify-between"><span>Subtotal</span><span>৳{subtotal.toFixed(2)}</span></div>
+            {totalDiscount > 0 && (
+              <div className="flex justify-between text-green-600"><span>Bulk Discount</span><span>-৳{totalDiscount.toFixed(2)}</span></div>
+            )}
+            <div className="flex justify-between">
+              <span>Manual Disc.</span>
+              <input
+                type="number"
+                value={manualDiscount || ""}
+                onChange={(e) => setManualDiscount(Number(e.target.value))}
+                className="w-20 text-right rounded border px-1 py-0.5 text-xs"
+                placeholder="0"
+              />
+            </div>
+            <div className="flex justify-between font-bold text-sm border-t pt-1">
+              <span>Total</span><span>৳{total.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <Input
+            placeholder="Paid amount"
+            type="number"
+            value={paidAmount}
+            onChange={(e) => setPaidAmount(e.target.value)}
+            className="text-xs"
+          />
+
+          {due > 0 && (
+            <p className="text-xs text-amber-600">Due: ৳{due.toFixed(2)}</p>
+          )}
+
+          <textarea
+            placeholder="Notes (optional)"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="w-full rounded border px-2 py-1 text-xs resize-none"
+            rows={2}
+          />
+
+          <Button
+            onClick={handleConfirm}
+            disabled={cart.length === 0 || submitting}
+            className="w-full"
+          >
+            {submitting ? <Loader2 className="size-4 animate-spin mr-2" /> : <FileText className="size-4 mr-2" />}
+            Place Order
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

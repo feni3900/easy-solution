@@ -1,210 +1,109 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { ShoppingCart, Menu, X, Store, LogOut, User as UserIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Menu, X, ShoppingCart, Store, LayoutDashboard, LogIn } from "lucide-react";
-import { getCart } from "@/app/cart/cart-storage";
-import type { StoreBranch } from "@/lib/store";
 
-const NAV = [
-  { label: "Home", href: "/" },
-  { label: "Shop", href: "/shop" },
-  { label: "About Us", href: "/about" },
-  { label: "Contact Us", href: "/contact" },
-];
-
-const FLAGS: Record<string, { src: string; label: string }> = {
-  Bangladesh: { src: "https://flagcdn.com/w40/bd.png", label: "Bangladesh" },
-  Greece: { src: "https://flagcdn.com/w40/gr.png", label: "Greece" },
-};
-
-export function StorefrontHeader({
-  user,
-  branches,
-  active,
-}: {
-  user: { id: string } | null;
-  branches: StoreBranch[];
-  active: StoreBranch;
-}) {
-  const [open, setOpen] = useState(false);
-  const [count, setCount] = useState(0);
-  const [switching, setSwitching] = useState(false);
+export function StorefrontHeader() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
-    const update = () => setCount(getCart().reduce((s, c) => s + c.quantity, 0));
-    update();
-    window.addEventListener("storage", update);
-    return () => window.removeEventListener("storage", update);
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      setLoggedIn(!!data.session);
+      setChecked(true);
+    });
+
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      setCartCount(cart.length);
+    };
+
+    updateCartCount();
+    window.addEventListener("cart-updated", updateCartCount);
+    window.addEventListener("storage", updateCartCount);
+    return () => {
+      window.removeEventListener("cart-updated", updateCartCount);
+      window.removeEventListener("storage", updateCartCount);
+    };
   }, []);
 
-  const switchStore = async (branchId: string) => {
-    if (branchId === active.id || switching) return;
-    setSwitching(true);
-    try {
-      const res = await fetch("/api/store", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branchId }),
-      });
-      if (res.ok) router.refresh();
-    } finally {
-      setSwitching(false);
-    }
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setLoggedIn(false);
+    router.refresh();
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Store className="size-4" />
-          </div>
-          <span>{active.shopName}</span>
+    <header className="sticky top-0 z-50 border-b bg-card">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
+        <Link href="/" className="flex items-center gap-2">
+          <Store className="size-5 text-primary" />
+          <span className="text-lg font-semibold">Smart ERP Store</span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
-          {NAV.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              className="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              {n.label}
-            </Link>
-          ))}
+        <nav className="hidden items-center gap-6 md:flex">
+          <Link href="/" className="text-sm hover:text-foreground">Home</Link>
+          <Link href="/shop" className="text-sm hover:text-foreground">Shop</Link>
+          <Link href="/about" className="text-sm hover:text-foreground">About</Link>
+          <Link href="/contact" className="text-sm hover:text-foreground">Contact</Link>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-full border p-1" role="group" aria-label="Select store">
-            {branches.map((b) => {
-              const f = FLAGS[b.country] ?? { src: "", label: b.shopName };
-              const isActive = b.id === active.id;
-              return (
-                <button
-                  key={b.id}
-                  type="button"
-                  onClick={() => switchStore(b.id)}
-                  disabled={switching}
-                  title={`${b.shopName} (${f.label})`}
-                  aria-pressed={isActive}
-                  className={`flex size-8 items-center justify-center overflow-hidden rounded-full transition-all ${
-                    isActive
-                      ? "ring-2 ring-primary ring-offset-1"
-                      : "opacity-70 hover:opacity-100"
-                  }`}
-                >
-                  {f.src ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={f.src} alt={f.label} className="size-8 object-cover" />
-                  ) : (
-                    <span className="text-lg">🏳️</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          <Link
-            href="/cart"
-            className="relative flex size-9 items-center justify-center rounded-lg border transition-colors hover:bg-muted"
-            aria-label="Cart"
-          >
-            <ShoppingCart className="size-4" />
-            {count > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
-                {count > 9 ? "9+" : count}
-              </span>
-            )}
+        <div className="flex items-center gap-2">
+          <Link href="/cart">
+            <Button variant="ghost" size="icon" className="relative">
+              <ShoppingCart className="size-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 size-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </Button>
           </Link>
-
-          {user ? (
-            <Link
-              href="/dashboard"
-              className="hidden items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 sm:flex"
-            >
-              <LayoutDashboard className="size-4" />
-              Dashboard
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              className="hidden items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 sm:flex"
-            >
-              <LogIn className="size-4" />
-              Login
-            </Link>
+          {checked && (
+            loggedIn ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden text-xs text-muted-foreground sm:inline">Admin</span>
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                  <LogOut className="size-4" />
+                </Button>
+              </div>
+            ) : (
+              <Link href="/login">
+                <Button variant="ghost" size="sm">
+                  <UserIcon className="size-4 mr-1" /> Login
+                </Button>
+              </Link>
+            )
           )}
-
-          <button
-            className="flex size-9 items-center justify-center rounded-lg border md:hidden"
-            onClick={() => setOpen(!open)}
-            aria-label="Toggle menu"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileOpen(!mobileOpen)}
           >
-            {open ? <X className="size-4" /> : <Menu className="size-4" />}
-          </button>
+            {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+          </Button>
         </div>
       </div>
 
-      {open && (
-        <nav className="border-t px-4 py-3 md:hidden">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1 rounded-full border p-1" role="group" aria-label="Select store">
-              {branches.map((b) => {
-                const f = FLAGS[b.country] ?? { src: "", label: b.shopName };
-                const isActive = b.id === active.id;
-                return (
-                  <button
-                    key={b.id}
-                    type="button"
-                    onClick={() => switchStore(b.id)}
-                    disabled={switching}
-                    aria-pressed={isActive}
-                    className={`flex size-9 items-center justify-center overflow-hidden rounded-full transition-all ${
-                      isActive ? "ring-2 ring-primary ring-offset-1" : "opacity-70 hover:opacity-100"
-                    }`}
-                  >
-                    {f.src ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={f.src} alt={f.label} className="size-9 object-cover" />
-                    ) : (
-                      <span className="text-lg">🏳️</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            {NAV.map((n) => (
-              <Link
-                key={n.href}
-                href={n.href}
-                onClick={() => setOpen(false)}
-                className="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
-              >
-                {n.label}
-              </Link>
-            ))}
-            {user ? (
-              <Link
-                href="/dashboard"
-                onClick={() => setOpen(false)}
-                className="rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground"
-              >
-                Dashboard
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className="rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground"
-              >
-                Login
-              </Link>
-            )}
-          </div>
-        </nav>
+      {mobileOpen && (
+        <div className="border-t md:hidden">
+          <nav className="flex flex-col p-4 space-y-2">
+            <Link href="/" onClick={() => setMobileOpen(false)} className="text-sm py-2 hover:text-foreground">Home</Link>
+            <Link href="/shop" onClick={() => setMobileOpen(false)} className="text-sm py-2 hover:text-foreground">Shop</Link>
+            <Link href="/about" onClick={() => setMobileOpen(false)} className="text-sm py-2 hover:text-foreground">About</Link>
+            <Link href="/contact" onClick={() => setMobileOpen(false)} className="text-sm py-2 hover:text-foreground">Contact</Link>
+          </nav>
+        </div>
       )}
     </header>
   );

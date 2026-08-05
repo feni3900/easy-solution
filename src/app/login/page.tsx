@@ -29,13 +29,21 @@ export default function LoginPage() {
     setError(null);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
+    console.log("LOGIN RESULT:", JSON.stringify({ data, error }, null, 2));
+
     if (error) {
-      setError(error.message);
+      setError(error.message || error.code || String(error));
+      setLoading(false);
+      return;
+    }
+
+    if (!data?.session) {
+      setError("No session created. Check credentials.");
       setLoading(false);
       return;
     }

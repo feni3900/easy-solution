@@ -1,42 +1,47 @@
 export const ROLES = [
-  { value: "super_admin", label: "Super Admin" },
-  { value: "company_admin", label: "Company Admin" },
-  { value: "branch_manager", label: "Branch Manager" },
-  { value: "cashier", label: "Cashier" },
-  { value: "salesperson", label: "Salesperson" },
-  { value: "accountant", label: "Accountant" },
-  { value: "warehouse_manager", label: "Warehouse Manager" },
+  { value: "Salesperson", label: "Salesperson", maxDiscount: 5, allowDue: false },
+  { value: "Branch Manager", label: "Branch Manager", maxDiscount: 15, allowDue: true },
+  { value: "Admin", label: "Admin", maxDiscount: 100, allowDue: true },
 ] as const;
 
-export const CURRENCIES = [
-  { value: "BDT", label: "Bangladeshi Taka (৳)" },
-  { value: "EUR", label: "Euro (€)" },
-  { value: "USD", label: "US Dollar ($)" },
+export const PAYMENT_TYPES = [
+  { value: "Cash", label: "Cash" },
+  { value: "Credit", label: "Credit" },
+  { value: "Partial", label: "Partial" },
 ] as const;
 
-export const LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "bn", label: "বাংলা (Bangla)" },
+export const SALE_CHANNELS = [
+  { value: "POS", label: "POS" },
+  { value: "ONLINE", label: "Online" },
 ] as const;
 
-export const PAYMENT_METHODS = [
-  { value: "cash", label: "Cash" },
-  { value: "credit", label: "Credit" },
-  { value: "card", label: "Card" },
-  { value: "bank_transfer", label: "Bank Transfer" },
-  { value: "mobile_payment", label: "Mobile Payment" },
-] as const;
-
-export const SALES_CHANNELS = [
-  { value: "pos", label: "POS" },
-  { value: "online", label: "Online" },
+export const PAYMENT_STATUSES = [
+  { value: "Cash", label: "Cash" },
+  { value: "Due", label: "Due" },
+  { value: "Partial Due", label: "Partial Due" },
+  { value: "COD", label: "COD" },
 ] as const;
 
 export const ORDER_STATUSES = [
-  { value: "pending", label: "Pending" },
-  { value: "approved", label: "Approved" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "Pending", label: "Pending" },
+  { value: "Confirmed", label: "Confirmed" },
+  { value: "Processing", label: "Processing" },
+  { value: "Shipped", label: "Shipped" },
+  { value: "Out for Delivery", label: "Out for Delivery" },
+  { value: "Delivered", label: "Delivered" },
+  { value: "Cancelled", label: "Cancelled" },
+  { value: "Return_Requested", label: "Return Requested" },
+  { value: "Returned", label: "Returned" },
+] as const;
+
+export const STOCK_MOVEMENT_TYPES = [
+  { value: "Purchase", label: "Purchase" },
+  { value: "Sale_POS", label: "Sale (POS)" },
+  { value: "Sale_Online", label: "Sale (Online)" },
+  { value: "Adjustment", label: "Adjustment" },
+  { value: "Return_In", label: "Return In" },
+  { value: "Damage", label: "Damage" },
+  { value: "Write_Off", label: "Write Off" },
 ] as const;
 
 export interface NavItem {
@@ -53,50 +58,20 @@ export const NAV_ITEMS: NavItem[] = [
     icon: "LayoutDashboard",
   },
   {
-    title: "Organization",
-    href: "/organization",
-    icon: "Building2",
-    children: [
-      { title: "Companies", href: "/organization/companies" },
-      { title: "Branches", href: "/organization/branches" },
-      { title: "Business Units", href: "/organization/units" },
-      { title: "Warehouses", href: "/organization/warehouses" },
-    ],
-  },
-  {
-    title: "User Management",
-    href: "/users",
-    icon: "Users",
-    children: [
-      { title: "Users", href: "/users" },
-      { title: "Roles", href: "/users/roles" },
-      { title: "Activity Logs", href: "/users/activity" },
-    ],
-  },
-  {
-    title: "Products",
-    href: "/products",
-    icon: "Package",
+    title: "POS Terminal",
+    href: "/pos",
+    icon: "Monitor",
   },
   {
     title: "Inventory",
     href: "/inventory",
-    icon: "Boxes",
+    icon: "Package",
     children: [
-      { title: "Ledger", href: "/inventory/ledger" },
-      { title: "Adjustments", href: "/inventory/adjustments" },
-      { title: "Transfers", href: "/inventory/transfers" },
+      { title: "Products", href: "/inventory/products" },
+      { title: "Categories", href: "/inventory/categories" },
+      { title: "Brands", href: "/inventory/brands" },
+      { title: "Stock Journal", href: "/inventory/stock-journal" },
       { title: "Damages", href: "/inventory/damages" },
-    ],
-  },
-  {
-    title: "Sales",
-    href: "/sales",
-    icon: "ShoppingCart",
-    children: [
-      { title: "POS", href: "/sales/pos" },
-      { title: "Orders", href: "/sales/orders" },
-      { title: "Returns", href: "/sales/returns" },
     ],
   },
   {
@@ -104,26 +79,28 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/purchases",
     icon: "Truck",
     children: [
-      { title: "Purchases", href: "/purchases" },
-      { title: "Returns", href: "/purchases/returns" },
+      { title: "New Purchase", href: "/purchases/new" },
+      { title: "Purchase History", href: "/purchases/history" },
+      { title: "Suppliers", href: "/purchases/suppliers" },
+    ],
+  },
+  {
+    title: "Sales",
+    href: "/sales",
+    icon: "ShoppingCart",
+    children: [
+      { title: "POS Invoices", href: "/sales/invoices" },
+      { title: "Online Orders", href: "/sales/online-orders" },
+      { title: "Returns", href: "/sales/returns" },
     ],
   },
   {
     title: "Customers",
     href: "/customers",
-    icon: "Contact",
+    icon: "Users",
     children: [
-      { title: "Customers", href: "/customers" },
-      { title: "Groups", href: "/customers/groups" },
-    ],
-  },
-  {
-    title: "Suppliers",
-    href: "/suppliers",
-    icon: "Factory",
-    children: [
-      { title: "Suppliers", href: "/suppliers" },
-      { title: "Groups", href: "/suppliers/groups" },
+      { title: "All Customers", href: "/customers" },
+      { title: "Due Ledger", href: "/customers/due-ledger" },
     ],
   },
   {
@@ -132,40 +109,36 @@ export const NAV_ITEMS: NavItem[] = [
     icon: "Image",
   },
   {
-    title: "Accounts",
-    href: "/accounts",
-    icon: "Wallet",
-    children: [
-      { title: "Cash Book", href: "/accounts/cashbook" },
-      { title: "Bank Accounts", href: "/accounts/banks" },
-      { title: "Expenses", href: "/accounts/expenses" },
-      { title: "Income", href: "/accounts/income" },
-    ],
-  },
-  {
     title: "Reports",
     href: "/reports",
     icon: "BarChart3",
     children: [
-      { title: "Sales", href: "/reports/sales" },
-      { title: "Purchases", href: "/reports/purchases" },
-      { title: "Inventory", href: "/reports/inventory" },
-      { title: "Profit & Loss", href: "/reports/pnl" },
+      { title: "Sales Report", href: "/reports/sales" },
+      { title: "Inventory Movement", href: "/reports/inventory" },
+      { title: "Customer Due", href: "/reports/customer-due" },
     ],
   },
   {
-    title: "Ecommerce",
-    href: "/ecommerce",
+    title: "Web Store",
+    href: "/web-store",
     icon: "Globe",
     children: [
-      { title: "Products", href: "/ecommerce/products" },
-      { title: "Coupons", href: "/ecommerce/coupons" },
-      { title: "Reviews", href: "/ecommerce/reviews" },
+      { title: "Settings", href: "/web-store/settings" },
+      { title: "Page Sections", href: "/web-store/pages" },
+      { title: "Courier Services", href: "/web-store/couriers" },
+      { title: "Contact Submissions", href: "/web-store/contacts" },
     ],
   },
   {
-    title: "Settings",
-    href: "/settings",
-    icon: "Settings",
+    title: "Admin",
+    href: "/admin",
+    icon: "Shield",
+    children: [
+      { title: "Users", href: "/admin/users" },
+      { title: "Roles & Permissions", href: "/admin/roles" },
+      { title: "Bulk Discount Rules", href: "/admin/discount-rules" },
+      { title: "Stock Alert Rules", href: "/admin/stock-alerts" },
+      { title: "Audit Log", href: "/admin/audit-log" },
+    ],
   },
 ];
