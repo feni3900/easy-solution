@@ -103,6 +103,9 @@ export default function ProductsPage() {
   const ratioFor = (p: Product) => {
     const edited = ratioEdits[p.product_id];
     if (edited !== undefined && edited.trim() !== "") return edited;
+    const cost = Number(p.cost_price);
+    const sell = Number(p.selling_price);
+    if (cost > 0) return String(Math.round((sell / cost) * 100) / 100);
     return "1";
   };
 
