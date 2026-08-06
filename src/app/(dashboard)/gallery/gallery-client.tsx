@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Trash2, Copy, Check } from "lucide-react";
+import { getClientLocale, t, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface GalleryImage {
   id: string;
@@ -14,6 +15,7 @@ interface GalleryImage {
 }
 
 export function GalleryClient({ initialImages }: { initialImages: GalleryImage[] }) {
+  const locale = getClientLocale();
   const router = useRouter();
   const supabase = createClient();
   const [images, setImages] = useState<GalleryImage[]>(initialImages);
@@ -49,7 +51,7 @@ export function GalleryClient({ initialImages }: { initialImages: GalleryImage[]
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
     if (files.some((f) => !f.type.startsWith("image/"))) {
-      setError("Please choose image files only.");
+      setError(t("gallery.imageOnly", locale));
       return;
     }
     setUploading(true);
@@ -68,7 +70,7 @@ export function GalleryClient({ initialImages }: { initialImages: GalleryImage[]
       }
     }
     if (failed > 0) {
-      setError(`${ok} uploaded, ${failed} failed.`);
+      setError(translateWithVars(t("gallery.uploadResult", locale), { ok: fmtInt(ok, locale), failed: fmtInt(failed, locale) }));
     }
     await reload();
     router.refresh();
@@ -91,7 +93,7 @@ export function GalleryClient({ initialImages }: { initialImages: GalleryImage[]
       setCopiedId(img.id);
       setTimeout(() => setCopiedId(null), 1500);
     } catch {
-      setError("Could not copy URL.");
+      setError(t("gallery.copyError", locale));
     }
   };
 
@@ -108,14 +110,14 @@ export function GalleryClient({ initialImages }: { initialImages: GalleryImage[]
         />
         <Button onClick={() => fileRef.current?.click()} disabled={uploading}>
           {uploading ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-          {uploading ? `Uploading ${uploadedCount}...` : "Upload Images"}
+          {uploading ? translateWithVars(t("gallery.uploadProgress", locale), { n: fmtInt(uploadedCount, locale) }) : t("gallery.uploadImages", locale)}
         </Button>
         {error && <span className="text-xs text-red-500">{error}</span>}
       </div>
 
       {images.length === 0 ? (
         <p className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">
-          No images yet. Upload an image to get started.
+          {t("gallery.noImagesYet", locale)}
         </p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -124,7 +126,7 @@ export function GalleryClient({ initialImages }: { initialImages: GalleryImage[]
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={img.url}
-                alt={img.file_name ?? "Gallery image"}
+                alt={img.file_name ?? t("gallery.altImage", locale)}
                 className="aspect-square w-full object-cover"
               />
               <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-black/60 p-1.5 opacity-0 transition-opacity group-hover:opacity-100">
@@ -132,7 +134,7 @@ export function GalleryClient({ initialImages }: { initialImages: GalleryImage[]
                   variant="ghost"
                   size="icon-xs"
                   className="text-white hover:bg-white/20 hover:text-white"
-                  title="Copy URL"
+                  title={t("gallery.copyUrl", locale)}
                   onClick={() => handleCopy(img)}
                 >
                   {copiedId === img.id ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
@@ -141,7 +143,7 @@ export function GalleryClient({ initialImages }: { initialImages: GalleryImage[]
                   variant="ghost"
                   size="icon-xs"
                   className="text-white hover:bg-white/20 hover:text-white"
-                  title="Delete"
+                  title={t("app.delete", locale)}
                   onClick={() => handleDelete(img)}
                 >
                   <Trash2 className="size-3.5" />

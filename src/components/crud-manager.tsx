@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Loader2 } from "lucide-react";
+import { getClientLocale, t, translateWithVars } from "@/lib/i18n";
 
 export interface CrudField {
   name: string;
@@ -49,6 +50,7 @@ export function CrudManager<T extends { id: string }>({
   parentLabel?: string;
 }) {
   const router = useRouter();
+  const locale = getClientLocale();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<T | null>(null);
   const [form, setForm] = useState<Record<string, unknown>>(config.defaultForm);
@@ -96,7 +98,7 @@ export function CrudManager<T extends { id: string }>({
       <div className="flex justify-end">
         <Button onClick={openAdd}>
           <Plus className="size-4" />
-          Add {config.title}
+          {translateWithVars(t("crud.add", locale), { title: config.title })}
         </Button>
       </div>
       <DataTable columns={cols} data={rows} searchKey={config.searchKey} />
@@ -105,7 +107,7 @@ export function CrudManager<T extends { id: string }>({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editing ? `Edit ${config.title}` : `Add ${config.title}`}
+              {translateWithVars(editing ? t("crud.edit", locale) : t("crud.add", locale), { title: config.title })}
               {parentLabel ? ` — ${parentLabel}` : ""}
             </DialogTitle>
             <DialogDescription>{config.description}</DialogDescription>
@@ -145,11 +147,11 @@ export function CrudManager<T extends { id: string }>({
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t("app.cancel", locale)}
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="size-4 animate-spin" />}
-              {editing ? "Save changes" : "Create"}
+              {editing ? t("crud.saveChanges", locale) : t("app.create", locale)}
             </Button>
           </DialogFooter>
         </DialogContent>

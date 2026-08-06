@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Loader2 } from "lucide-react";
+import { getClientLocale, t, fmtMoney } from "@/lib/i18n";
 
 interface Customer {
   id: string;
@@ -45,6 +46,7 @@ export function CustomersClient({
   groups: Group[];
 }) {
   const router = useRouter();
+  const locale = getClientLocale();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [saving, setSaving] = useState(false);
@@ -97,26 +99,26 @@ export function CustomersClient({
   };
 
   const columns: ColumnDef<Customer>[] = [
-    { accessorKey: "name", header: "Name" },
-    { accessorKey: "mobile", header: "Mobile" },
-    { accessorKey: "email", header: "Email" },
+    { accessorKey: "name", header: t("app.name", locale) },
+    { accessorKey: "mobile", header: t("customers.mobile", locale) },
+    { accessorKey: "email", header: t("customers.email", locale) },
     {
       accessorKey: "previous_due",
-      header: "Previous Due",
-      cell: ({ row }) => `৳${Number(row.original.previous_due).toFixed(2)}`,
+      header: t("customers.previousDue", locale),
+      cell: ({ row }) => fmtMoney(Number(row.original.previous_due), locale),
     },
     {
       accessorKey: "current_due",
-      header: "Current Due",
+      header: t("customers.currentDue", locale),
       cell: ({ row }) => (
         <span className="font-medium text-destructive">
-          ৳{Number(row.original.current_due).toFixed(2)}
+          {fmtMoney(Number(row.original.current_due), locale)}
         </span>
       ),
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("app.status", locale),
       cell: ({ row }) => <Badge className="capitalize">{row.original.status}</Badge>,
     },
     {
@@ -135,7 +137,7 @@ export function CustomersClient({
       <div className="flex justify-end">
         <Button onClick={openAdd}>
           <Plus className="size-4" />
-          Add Customer
+          {t("customers.add", locale)}
         </Button>
       </div>
       <DataTable columns={columns} data={customers} searchKey="name" />
@@ -143,17 +145,17 @@ export function CustomersClient({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Customer" : "Add Customer"}</DialogTitle>
-            <DialogDescription>Mobile number is required per business rules.</DialogDescription>
+            <DialogTitle>{editing ? t("customers.edit", locale) : t("customers.add", locale)}</DialogTitle>
+            <DialogDescription>{t("customers.mobileRequired", locale)}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label>Customer Name *</Label>
+              <Label>{t("customers.customerName", locale)} *</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label>Mobile *</Label>
+                <Label>{t("customers.mobile", locale)} *</Label>
                 <Input
                   value={form.mobile}
                   onChange={(e) => setForm({ ...form, mobile: e.target.value })}
@@ -161,7 +163,7 @@ export function CustomersClient({
                 />
               </div>
               <div className="grid gap-2">
-                <Label>Email</Label>
+                <Label>{t("customers.email", locale)}</Label>
                 <Input
                   type="email"
                   value={form.email}
@@ -171,13 +173,13 @@ export function CustomersClient({
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label>Group</Label>
+                <Label>{t("customers.group", locale)}</Label>
                 <select
                   className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                   value={form.group_id}
                   onChange={(e) => setForm({ ...form, group_id: e.target.value })}
                 >
-                  <option value="">None</option>
+                  <option value="">{t("app.none", locale)}</option>
                   {groups.map((g) => (
                     <option key={g.id} value={g.id}>
                       {g.name} ({g.discount_percent}%)
@@ -186,27 +188,27 @@ export function CustomersClient({
                 </select>
               </div>
               <div className="grid gap-2">
-                <Label>Status</Label>
+                <Label>{t("app.status", locale)}</Label>
                 <select
                   className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="active">{t("app.active", locale)}</option>
+                  <option value="inactive">{t("app.inactive", locale)}</option>
                 </select>
               </div>
             </div>
             <div className="grid gap-2">
-              <Label>Address</Label>
+              <Label>{t("app.address", locale)}</Label>
               <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("app.cancel", locale)}</Button>
             <Button onClick={handleSave} disabled={saving || !form.name || !form.mobile}>
               {saving && <Loader2 className="size-4 animate-spin" />}
-              {editing ? "Save changes" : "Create"}
+              {editing ? t("customers.saveChanges", locale) : t("app.create", locale)}
             </Button>
           </DialogFooter>
         </DialogContent>

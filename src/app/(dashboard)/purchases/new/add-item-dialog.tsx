@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { PurchaseItem } from "./page";
+import { getClientLocale, t, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface Category {
   category_id: number;
@@ -53,6 +54,7 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
   const [quantity, setQuantity] = useState("");
   const [unitCost, setUnitCost] = useState(0);
   const [sellRatio, setSellRatio] = useState("2");
+  const locale = getClientLocale();
 
   useEffect(() => {
     if (editItem) {
@@ -100,7 +102,7 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
 
   const handleAdd = () => {
     if (!productId || qtyNum <= 0) {
-      alert("Please select a product and enter valid quantity.");
+      alert(t("purchases.itemDialog.error", locale));
       return;
     }
     onAdd({
@@ -123,7 +125,7 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-lg border bg-card p-4 sm:p-6 shadow-lg">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">{editItem ? "Edit Item" : "Add Purchase Item"}</h2>
+          <h2 className="text-lg font-semibold">{editItem ? t("purchases.itemDialog.editTitle", locale) : t("purchases.itemDialog.addTitle", locale)}</h2>
           <Button variant="ghost" size="icon" onClick={onClose}><X className="size-4" /></Button>
         </div>
 
@@ -131,18 +133,18 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
           {/* Category & Brand */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label>Category</Label>
+              <Label>{t("purchases.new.category", locale)}</Label>
               <select value={categoryId} onChange={(e) => { setCategoryId(Number(e.target.value)); setProductId(0); setProductName(""); }} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
-                <option value={0}>All Categories</option>
+                <option value={0}>{t("store.allCategories", locale)}</option>
                 {categories.map((c) => (
                   <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-1">
-              <Label>Brand</Label>
+              <Label>{t("purchases.new.brand", locale)}</Label>
               <select value={brandId} onChange={(e) => { setBrandId(Number(e.target.value)); setProductId(0); setProductName(""); }} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
-                <option value={0}>All Brands</option>
+                <option value={0}>{t("store.allBrands", locale)}</option>
                 {brands.map((b) => (
                   <option key={b.brand_id} value={b.brand_id}>{b.brand_name}</option>
                 ))}
@@ -152,16 +154,16 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
 
           {/* Product */}
           <div className="space-y-1">
-            <Label>Product *</Label>
+            <Label>{t("purchases.itemDialog.product", locale)}</Label>
             <select
               value={productId || 0}
               onChange={(e) => handleProductSelect(Number(e.target.value))}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
             >
-              <option value={0}>Select Product</option>
+              <option value={0}>{t("purchases.itemDialog.selectProduct", locale)}</option>
               {filteredProducts.map((p) => (
                 <option key={p.product_id} value={p.product_id}>
-                  {p.product_name} — {p.sku} (Stock: {p.current_stock})
+                  {translateWithVars(t("purchases.itemDialog.productOption", locale), { name: p.product_name, sku: p.sku, n: fmtInt(p.current_stock, locale) })}
                 </option>
               ))}
             </select>
@@ -170,11 +172,11 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
           {/* Size & Unit */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label>Size</Label>
-              <Input value={size} onChange={(e) => setSize(e.target.value)} placeholder="e.g. Large, 500ml, XL" />
+              <Label>{t("app.size", locale)}</Label>
+              <Input value={size} onChange={(e) => setSize(e.target.value)} placeholder={t("purchases.itemDialog.sizePh", locale)} />
             </div>
             <div className="space-y-1">
-              <Label>Unit</Label>
+              <Label>{t("app.unit", locale)}</Label>
               <select value={unit} onChange={(e) => setUnit(e.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                 {UNITS.map((u) => (
                   <option key={u} value={u}>{u}</option>
@@ -185,7 +187,7 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
 
           {/* Location */}
           <div className="space-y-1">
-            <Label>Storage Location</Label>
+            <Label>{t("purchases.itemDialog.storageLocation", locale)}</Label>
             <div className="flex gap-2">
               <select value={storageType} onChange={(e) => setStorageType(e.target.value)} className="shrink-0 rounded-md border bg-background px-3 py-2 text-sm">
                 <option value="Self">Self</option>
@@ -198,17 +200,17 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
           {/* Quantity & Prices */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label>Quantity *</Label>
+              <Label>{t("purchases.itemDialog.quantity", locale)}</Label>
               <Input type="number" min={1} value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="0" />
             </div>
             <div className="space-y-1">
-              <Label>Purchase Price (৳) *</Label>
+              <Label>{t("purchases.itemDialog.purchasePrice", locale)}</Label>
               <Input type="number" min={0} step={0.01} value={unitCost || ""} onChange={(e) => setUnitCost(parseFloat(e.target.value) || 0)} placeholder="0.00" />
             </div>
           </div>
 
           <div className="space-y-1">
-            <Label>Line Total</Label>
+            <Label>{t("purchases.itemDialog.lineTotal", locale)}</Label>
             <div className="rounded-md border bg-muted px-3 py-2 text-sm font-medium">
               ৳{(qtyNum * unitCost).toFixed(2)}
             </div>
@@ -216,9 +218,9 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
         </div>
 
         <div className="flex justify-end gap-2 mt-6 flex-col-reverse sm:flex-row">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>{t("purchases.new.cancel", locale)}</Button>
           <Button onClick={handleAdd} disabled={!productId || qtyNum <= 0}>
-            {editItem ? "Update Item" : "Add to Purchase"}
+            {editItem ? t("purchases.itemDialog.update", locale) : t("purchases.itemDialog.add", locale)}
           </Button>
         </div>
       </div>

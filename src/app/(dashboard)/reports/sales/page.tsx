@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { getClientLocale, t, fmtMoney, fmtInt } from "@/lib/i18n";
 
 interface Invoice {
   invoice_id: number;
@@ -28,6 +29,7 @@ interface WebOrder {
 }
 
 export default function SalesReportPage() {
+  const locale = getClientLocale();
   const [posInvoices, setPosInvoices] = useState<Invoice[]>([]);
   const [webOrders, setWebOrders] = useState<WebOrder[]>([]);
   const [posProfit, setPosProfit] = useState(0);
@@ -135,42 +137,42 @@ export default function SalesReportPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Sales Report" description="Sales performance across channels and payment methods" />
+      <PageHeader title={t("reports.sales.title", locale)} description={t("reports.sales.description", locale)} />
 
       <div className="flex items-end gap-3 rounded-lg border bg-card p-4">
         <div className="space-y-1">
-          <Label>From</Label>
+          <Label>{t("sales.returns.from", locale)}</Label>
           <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" />
         </div>
         <div className="space-y-1">
-          <Label>To</Label>
+          <Label>{t("sales.returns.to", locale)}</Label>
           <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" />
         </div>
         <Button onClick={fetchData} disabled={loading}>
-          <Calendar className="size-4 mr-2" /> Filter
+          <Calendar className="size-4 mr-2" /> {t("reports.filter", locale)}
         </Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Sales" value={`৳${totalSales.toFixed(2)}`} icon={<ShoppingCart className="size-4" />} />
-        <StatCard title="Total Profit" value={`৳${totalProfit.toFixed(2)}`} icon={<TrendingUp className="size-4" />} variant={totalProfit > 0 ? "default" : "destructive"} />
-        <StatCard title="POS Sales" value={`৳${posSales.toFixed(2)}`} icon={<ShoppingCart className="size-4" />} />
-        <StatCard title="Online Sales" value={`৳${onlineSales.toFixed(2)}`} icon={<ShoppingCart className="size-4" />} />
-        <StatCard title="POS Profit" value={`৳${posProfit.toFixed(2)}`} icon={<TrendingUp className="size-4" />} />
-        <StatCard title="Online Profit" value={`৳${onlineProfit.toFixed(2)}`} icon={<TrendingUp className="size-4" />} />
-        <StatCard title="Orders" value={String(totalOrders)} icon={<Users className="size-4" />} />
+        <StatCard title={t("reports.sales.totalSales", locale)} value={fmtMoney(totalSales, locale)} icon={<ShoppingCart className="size-4" />} />
+        <StatCard title={t("reports.totalProfit", locale)} value={fmtMoney(totalProfit, locale)} icon={<TrendingUp className="size-4" />} variant={totalProfit > 0 ? "default" : "destructive"} />
+        <StatCard title={t("reports.sales.posSales", locale)} value={fmtMoney(posSales, locale)} icon={<ShoppingCart className="size-4" />} />
+        <StatCard title={t("reports.sales.onlineSales", locale)} value={fmtMoney(onlineSales, locale)} icon={<ShoppingCart className="size-4" />} />
+        <StatCard title={t("reports.sales.posProfit", locale)} value={fmtMoney(posProfit, locale)} icon={<TrendingUp className="size-4" />} />
+        <StatCard title={t("reports.sales.onlineProfit", locale)} value={fmtMoney(onlineProfit, locale)} icon={<TrendingUp className="size-4" />} />
+        <StatCard title={t("reports.orders", locale)} value={fmtInt(totalOrders, locale)} icon={<Users className="size-4" />} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Cash vs Credit</CardTitle>
+            <CardTitle className="text-base">{t("reports.sales.cashVsCredit", locale)}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <StatCard title="Cash Sales" value={`৳${cashSales.toFixed(2)}`} icon={<CreditCard className="size-4" />} />
+            <StatCard title={t("reports.sales.cashSales", locale)} value={fmtMoney(cashSales, locale)} icon={<CreditCard className="size-4" />} />
             <StatCard
-              title="Credit Sales"
-              value={`৳${creditSales.toFixed(2)}`}
+              title={t("reports.sales.creditSales", locale)}
+              value={fmtMoney(creditSales, locale)}
               icon={<CreditCard className="size-4" />}
               variant={creditSales > 0 ? "destructive" : "default"}
             />

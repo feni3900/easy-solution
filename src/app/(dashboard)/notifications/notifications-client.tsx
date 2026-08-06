@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCheck, Bell } from "lucide-react";
+import { t } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 
 interface Notification {
   id: string;
@@ -24,7 +26,7 @@ const typeColors: Record<string, string> = {
   purchase_received: "bg-violet-500/10 text-violet-600",
 };
 
-export function NotificationsClient({ notifications }: { notifications: Notification[] }) {
+export function NotificationsClient({ notifications, locale }: { notifications: Notification[]; locale: Locale }) {
   const router = useRouter();
   const [working, setWorking] = useState(false);
 
@@ -47,7 +49,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-lg border py-16 text-muted-foreground">
         <Bell className="size-8" />
-        <p className="text-sm">No notifications</p>
+        <p className="text-sm">{t("notifications.empty", locale)}</p>
       </div>
     );
   }
@@ -57,7 +59,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
       <div className="flex justify-end">
         <Button variant="outline" size="sm" onClick={markAllRead} disabled={working}>
           <CheckCheck className="size-4" />
-          Mark all read
+          {t("notifications.markAllRead", locale)}
         </Button>
       </div>
       <ul className="space-y-2">

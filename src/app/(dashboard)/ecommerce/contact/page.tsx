@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { ContactPageClient } from "./contact-client";
+import { getLocale } from "@/lib/i18n-server";
+import { t } from "@/lib/i18n";
 
 export const metadata = { title: "Contact Page | Smart Solution ERP" };
 
@@ -20,6 +22,7 @@ const KEYS = [
 ];
 
 export default async function ContactPageAdmin() {
+  const locale = await getLocale();
   const supabase = await createClient();
   const { data } = await supabase.from("settings").select("key, value").in("key", KEYS);
 
@@ -33,7 +36,7 @@ export default async function ContactPageAdmin() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Contact Page" description="Manage storefront Contact Us page with addresses, contract info, and map" />
+      <PageHeader title={t("webstore.contacts.pageTitle", locale)} description={t("webstore.contacts.pageDesc", locale)} />
       <ContactPageClient
         heading={map.get("contact_heading") ?? "Contact Us"}
         subhead={map.get("contact_subhead") ?? ""}

@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getClientLocale, t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface OrderOption {
   id: string;
@@ -44,15 +45,15 @@ function getProductName(products: { product_id: number; name: string }[], produc
   return products.find((p) => String(p.product_id) === String(productId))?.name ?? "—";
 }
 
-const columns: ColumnDef<SalesReturn>[] = [
+const makeColumns = (locale: "en" | "bn"): ColumnDef<SalesReturn>[] => [
   {
     accessorKey: "date",
-    header: "Date",
+    header: t("app.date", locale),
     cell: ({ row }) => new Date(row.original.date).toLocaleDateString(),
   },
-  { header: "Product", cell: ({ row }) => row.original.productName ?? "—" },
-  { accessorKey: "quantity", header: "Qty" },
-  { accessorKey: "reason", header: "Reason" },
+  { header: t("sales.returns.product", locale), cell: ({ row }) => row.original.productName ?? "—" },
+  { accessorKey: "quantity", header: t("app.qty", locale), cell: ({ row }) => fmtInt(row.original.quantity, locale) },
+  { accessorKey: "reason", header: t("sales.reason", locale) },
 ];
 
 export default function SalesReturnsPage() {
@@ -71,6 +72,8 @@ export default function SalesReturnsPage() {
     quantity: "1",
     reason: "",
   });
+  const locale = getClientLocale();
+  const columns = makeColumns(locale);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -226,7 +229,7 @@ export default function SalesReturnsPage() {
       source: option?.source ?? "pos",
     });
     if (error) {
-      alert("Error: " + error.message);
+      alert(`${t("pos.error", locale)} ${error.message}`);
       setSaving(false);
       return;
     }
@@ -242,7 +245,7 @@ export default function SalesReturnsPage() {
       p_created_by: user?.id ?? null,
     });
     if (stockError) {
-      alert("Return recorded but stock restore failed: " + stockError.message);
+      alert(`${t("sales.returns.stockFailed", locale)} ${stockError.message}`);
     }
 
     if (option?.source === "pos") {
@@ -295,7 +298,7 @@ export default function SalesReturnsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <PageHeader title="Sales Returns" description="Record returned items from POS or Online orders — stock is restored automatically" />
+        <PageHeader title={t("sales.returns.title", locale)} description={t("sales.returns.desc", locale)} />
         <Dialog
           open={open}
           onOpenChange={(v) => {
@@ -308,15 +311,15 @@ export default function SalesReturnsPage() {
         >
           <Button onClick={() => setOpen(true)}>
             <Plus className="size-4 mr-2" />
-            Record Return
+            {t("sales.returns.record", locale)}
           </Button>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Record Sales Return</DialogTitle>
+              <DialogTitle>{t("sales.returns.recordTitle", locale)}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid gap-2">
-                <Label>Invoice / Order</Label>
+                <Label>{t("sales.returns.invoiceOrder", locale)}</Label>
                 <select
                   className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                   value={form.order_key}
@@ -325,23 +328,23 @@ export default function SalesReturnsPage() {
                     loadOrderItems(e.target.value);
                   }}
                 >
-                  <option value="">Select invoice or order</option>
+                  <option value="">{t("sales.returns.selectInvoice", locale)}</option>
                   {orderOptions.map((opt) => (
                     <option key={`${opt.source}-${opt.id}`} value={`${opt.source}-${opt.id}`}>
-                      {opt.invoice_no} ({opt.source === "pos" ? "POS" : "Online"}) — ৳{Number(opt.total).toFixed(2)}
+                      {opt.invoice_no} ({opt.source === "pos" ? "POS" : "Online"}) — {fmtMoney(Number(opt.total), locale)}
                     </option>
                   ))}
                 </select>
               </div>
               {form.order_key && orderItems.length > 0 && (
                 <div className="grid gap-2">
-                  <Label>Product</Label>
+                  <Label>{t("sales.returns.product", locale)}</Label>
                   <select
                     className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                     value={form.product_id}
                     onChange={(e) => setForm({ ...form, product_id: e.target.value })}
                   >
-                    <option value="">Select product</option>
+                    <option value="">{t("sales.returns.selectProduct", locale)}</option>
                     {orderItems.map((item) => (
                       <option key={item.product_id} value={item.product_id}>
                         {item.product_name} × {item.quantity}
@@ -353,7 +356,7 @@ export default function SalesReturnsPage() {
               {form.product_id && (
                 <>
                   <div className="grid gap-2">
-                    <Label>Quantity (max {maxQty})</Label>
+                    <Label>{translateWithVars(t("sales.returns.qtyMax", locale), { n: fmtInt(maxQty, locale) })}</Label>
                     <Input
                       type="number"
                       min={1}
@@ -363,11 +366,11 @@ export default function SalesReturnsPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label>Reason</Label>
+                    <Label>{t("sales.reason", locale)}</Label>
                     <Input
                       value={form.reason}
                       onChange={(e) => setForm({ ...form, reason: e.target.value })}
-                      placeholder="e.g. Customer changed mind"
+                      placeholder={t("sales.returns.reasonPh", locale)}
                     />
                   </div>
                 </>
@@ -377,7 +380,7 @@ export default function SalesReturnsPage() {
                 disabled={saving || !form.product_id || !form.quantity}
               >
                 {saving && <Loader2 className="size-4 animate-spin mr-2" />}
-                Record Return
+                {t("sales.returns.record", locale)}
               </Button>
             </div>
           </DialogContent>
@@ -391,7 +394,7 @@ export default function SalesReturnsPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <Label className="whitespace-nowrap">From</Label>
+              <Label className="whitespace-nowrap">{t("sales.returns.from", locale)}</Label>
               <Input
                 type="date"
                 value={dateFrom}
@@ -400,7 +403,7 @@ export default function SalesReturnsPage() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <Label className="whitespace-nowrap">To</Label>
+              <Label className="whitespace-nowrap">{t("sales.returns.to", locale)}</Label>
               <Input
                 type="date"
                 value={dateTo}
@@ -410,7 +413,7 @@ export default function SalesReturnsPage() {
             </div>
             {(dateFrom || dateTo) && (
               <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); }}>
-                Clear
+                {t("sales.returns.clear", locale)}
               </Button>
             )}
           </div>

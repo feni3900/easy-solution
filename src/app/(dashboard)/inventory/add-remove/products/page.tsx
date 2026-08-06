@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/page-header";
 import AddProductModal from "@/app/(dashboard)/purchases/new/add-product-modal";
+import { getClientLocale, t, translateWithVars } from "@/lib/i18n";
 
 interface Category {
   category_id: number;
@@ -31,6 +32,7 @@ interface Product {
 }
 
 export default function AddRemoveProductsPage() {
+  const locale = getClientLocale();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -49,7 +51,7 @@ export default function AddRemoveProductsPage() {
     setProducts(p.data ?? []);
     setCategories(c.data ?? []);
     setBrands(b.data ?? []);
-  }, []);
+  }, [setProducts, setCategories, setBrands]);
 
   useEffect(() => {
     (async () => {
@@ -63,13 +65,13 @@ export default function AddRemoveProductsPage() {
   );
 
   const handleDelete = async (p: Product) => {
-    if (!confirm(`Delete product "${p.product_name}"? This cannot be undone.`)) return;
+    if (!confirm(translateWithVars(t("inventory.addRemove.deleteConfirm", locale), { name: p.product_name }))) return;
     setDeletingId(p.product_id);
     const supabase = createClient();
     const { error } = await supabase.from("products").delete().eq("product_id", p.product_id);
     setDeletingId(null);
     if (error) {
-      alert("Error deleting product: " + error.message);
+      alert(translateWithVars(t("inventory.addRemove.deleteError", locale), { message: error.message }));
       return;
     }
     setProducts((prev) => prev.filter((x) => x.product_id !== p.product_id));
@@ -85,17 +87,17 @@ export default function AddRemoveProductsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Products" description="Add and remove products" />
+      <PageHeader title={t("inventory.addRemove.productsTitle", locale)} description={t("inventory.addRemove.description", locale)} />
 
       <div className="flex items-center justify-between gap-4">
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search products by name or SKU..."
+          placeholder={t("inventory.addRemove.searchProducts", locale)}
           className="max-w-sm"
         />
         <Button onClick={() => setShowAddModal(true)}>
-          <Plus className="size-4 mr-2" /> Add Product
+          <Plus className="size-4 mr-2" /> {t("inventory.addRemove.addProduct", locale)}
         </Button>
       </div>
 
@@ -103,9 +105,9 @@ export default function AddRemoveProductsPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50 text-left">
-              <th className="p-3 font-medium">Image</th>
-              <th className="p-3 font-medium">Product</th>
-              <th className="p-3 font-medium">SKU</th>
+              <th className="p-3 font-medium">{t("app.image", locale)}</th>
+              <th className="p-3 font-medium">{t("inventory.products.title", locale)}</th>
+              <th className="p-3 font-medium">{t("app.sku", locale)}</th>
               <th className="p-3 text-right font-medium"></th>
             </tr>
           </thead>
@@ -114,7 +116,7 @@ export default function AddRemoveProductsPage() {
               <tr>
                 <td colSpan={4} className="p-12 text-center text-muted-foreground">
                   <Package className="size-8 mx-auto mb-2 opacity-50" />
-                  <p>No products found.</p>
+                  <p>{t("store.noProducts", locale)}</p>
                 </td>
               </tr>
             ) : (

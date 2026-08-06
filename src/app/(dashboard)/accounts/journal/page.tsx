@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getClientLocale, t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface Account {
   account_id: number;
@@ -32,9 +33,30 @@ interface Entry {
   lines: { account_code: string; account_name: string; debit: number; credit: number }[];
 }
 
+interface EntryLineRow {
+  account_code: string;
+  account_name: string;
+  debit: number;
+  credit: number;
+}
+
+interface EntryRow {
+  entry_id: number;
+  entry_no: string;
+  entry_date: string;
+  description: string;
+  created_at: string;
+  journal_entry_lines: EntryLineRow[];
+}
+
+function makeEntryNo(date: string) {
+  return "JE-" + date.replace(/-/g, "") + "-" + Math.floor(1000 + Math.random() * 9000);
+}
+
 let lineKey = 1;
 
 export default function JournalPage() {
+  const locale = getClientLocale();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,9 +79,9 @@ export default function JournalPage() {
       supabase.from("journal_entries").select("*, journal_entry_lines(*)").order("entry_id", { ascending: false }).limit(100),
     ]);
     setAccounts(accRes.data ?? []);
-    const rows: Entry[] = (entryRes.data ?? []).map((e: any) => {
+    const rows: Entry[] = (entryRes.data ?? []).map((e: EntryRow) => {
       const lines = e.journal_entry_lines ?? [];
-      const total = lines.reduce((s: number, l: any) => s + Number(l.debit || 0), 0);
+      const total = lines.reduce((s: number, l: EntryLineRow) => s + Number(l.debit || 0), 0);
       return {
         entry_id: e.entry_id,
         entry_no: e.entry_no,
@@ -83,8 +105,8 @@ export default function JournalPage() {
   const addLine = () => {
     const debit = parseFloat(currentLine.debit) || 0;
     const credit = parseFloat(currentLine.credit) || 0;
-    if (!currentLine.account_id) { alert("Please select an account."); return; }
-    if (debit <= 0 && credit <= 0) { alert("Please enter a debit or credit amount."); return; }
+    if (!currentLine.account_id) { alert(t("accounts.journal.alertAccount", locale)); return; }
+    if (debit <= 0 && credit <= 0) { alert(t("accounts.journal.alertAmount", locale)); return; }
     setLines([...lines, currentLine]);
     setCurrentLine(emptyLine());
   };
@@ -98,8 +120,8 @@ export default function JournalPage() {
   const balanced = Math.abs(totalDebit - totalCredit) < 0.01 && totalDebit > 0;
 
   const handleSave = async () => {
-    if (!description.trim()) { alert("Please enter a description."); return; }
-    if (!balanced) { alert("Debits and credits must balance."); return; }
+    if (!description.trim()) { alert(t("accounts.journal.alertDescription", locale)); return; }
+    if (!balanced) { alert(t("accounts.journal.alertBalance", locale)); return; }
     const rows = lines
       .filter((l) => l.account_id && (parseFloat(l.debit) > 0 || parseFloat(l.credit) > 0))
       .map((l) => ({
@@ -108,11 +130,11 @@ export default function JournalPage() {
         debit: parseFloat(l.debit) || 0,
         credit: parseFloat(l.credit) || 0,
       }));
-    if (rows.length < 2) { alert("Please add at least two lines."); return; }
+    if (rows.length < 2) { alert(t("accounts.journal.alertTwoLines", locale)); return; }
     setSaving(true);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const entryNo = "JE-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + Math.floor(1000 + Math.random() * 9000);
+    const entryNo = makeEntryNo(new Date().toISOString().slice(0, 10));
 
     const { data: entry, error: entryError } = await supabase
       .from("journal_entries")
@@ -127,7 +149,7 @@ export default function JournalPage() {
       .single();
     if (entryError) {
       setSaving(false);
-      alert("Error: " + entryError.message);
+      alert(translateWithVars(t("accounts.error", locale), { message: entryError.message }));
       return;
     }
 
@@ -136,7 +158,7 @@ export default function JournalPage() {
       .insert(rows.map((r) => ({ ...r, entry_id: entry.entry_id })));
     setSaving(false);
     if (linesError) {
-      alert("Lines error: " + linesError.message);
+      alert(translateWithVars(t("accounts.linesError", locale), { message: linesError.message }));
       return;
     }
 
@@ -154,10 +176,10 @@ export default function JournalPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Journal Entries</h1>
-          <p className="text-sm text-muted-foreground">Record manual double-entry transactions</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("nav.accounts.journal", locale)}</h1>
+          <p className="text-sm text-muted-foreground">{t("accounts.journal.desc", locale)}</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}><Plus className="size-4 mr-2" />New Entry</Button>
+        <Button onClick={() => setDialogOpen(true)}><Plus className="size-4 mr-2" />{t("accounts.journal.newEntry", locale)}</Button>
       </div>
 
       {loading ? (
@@ -167,11 +189,11 @@ export default function JournalPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left font-medium">Entry No</th>
-                <th className="p-3 text-left font-medium">Date</th>
-                <th className="p-3 text-left font-medium">Description</th>
-                <th className="p-3 text-right font-medium">Amount</th>
-                <th className="p-3 text-right font-medium">Lines</th>
+                <th className="p-3 text-left font-medium">{t("accounts.journal.entryNo", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.date", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("accounts.journal.description", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("app.amount", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("accounts.journal.lines", locale)}</th>
                 <th className="p-3 text-right font-medium"></th>
               </tr>
             </thead>
@@ -181,15 +203,15 @@ export default function JournalPage() {
                   <td className="p-3 font-mono text-xs">{e.entry_no}</td>
                   <td className="p-3">{formatDate(e.entry_date)}</td>
                   <td className="p-3 font-medium">{e.description}</td>
-                  <td className="p-3 text-right font-semibold">{e.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                  <td className="p-3 text-right text-muted-foreground">{e.lines.length}</td>
+                  <td className="p-3 text-right font-semibold">{fmtMoney(e.total, locale)}</td>
+                  <td className="p-3 text-right text-muted-foreground">{fmtInt(e.lines.length, locale)}</td>
                   <td className="p-3 text-right">
                     <Button variant="ghost" size="icon" onClick={() => setViewing(e)}><ListChecks className="size-4" /></Button>
                   </td>
                 </tr>
               ))}
               {entries.length === 0 && (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No journal entries yet.</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{t("accounts.journal.noEntries", locale)}</td></tr>
               )}
             </tbody>
           </table>
@@ -198,49 +220,49 @@ export default function JournalPage() {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-xl">
-          <DialogHeader><DialogTitle>New Journal Entry</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("accounts.journal.newEntryTitle", locale)}</DialogTitle></DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-1">
-              <Label>Date</Label>
+              <Label>{t("app.date", locale)}</Label>
               <Input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label>Description *</Label>
-              <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Paid rent" />
+              <Label>{t("accounts.journal.description", locale)} *</Label>
+              <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("accounts.journal.descPh", locale)} />
             </div>
           </div>
 
           <div className="space-y-3">
             <div className="rounded-lg border p-3 space-y-3">
               <div className="space-y-1">
-                <Label className="text-xs">Account</Label>
+                <Label className="text-xs">{t("accounts.journal.account", locale)}</Label>
                 <select
                   value={currentLine.account_id}
                   onChange={(e) => updateCurrent("account_id", e.target.value)}
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm"
                 >
-                  <option value="">-- Select account --</option>
+                  <option value="">{t("accounts.journal.selectAccount", locale)}</option>
                   {accounts.map((a) => (
                     <option key={a.account_id} value={a.account_id}>{a.account_code} · {a.account_name}</option>
                   ))}
                 </select>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Memo (optional)</Label>
-                <Input value={currentLine.description} onChange={(e) => updateCurrent("description", e.target.value)} placeholder="optional note" />
+                <Label className="text-xs">{t("accounts.journal.memoOptional", locale)}</Label>
+                <Input value={currentLine.description} onChange={(e) => updateCurrent("description", e.target.value)} placeholder={t("accounts.journal.memoPh", locale)} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Debit</Label>
+                <Label className="text-xs">{t("accounts.debit", locale)}</Label>
                 <Input type="number" min="0" step="0.01" value={currentLine.debit} onChange={(e) => updateCurrent("debit", e.target.value)} placeholder="0.00" />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Credit</Label>
+                <Label className="text-xs">{t("accounts.credit", locale)}</Label>
                 <Input type="number" min="0" step="0.01" value={currentLine.credit} onChange={(e) => updateCurrent("credit", e.target.value)} placeholder="0.00" />
               </div>
               <div className="flex justify-end">
                 <Button variant="outline" size="sm" onClick={addLine}>
-                  <Plus className="size-4 mr-1" />Add Line
+                  <Plus className="size-4 mr-1" />{t("accounts.journal.addLine", locale)}
                 </Button>
               </div>
             </div>
@@ -251,10 +273,10 @@ export default function JournalPage() {
                   const acc = accounts.find((a) => String(a.account_id) === l.account_id);
                   return (
                     <div key={l.key} className="flex items-center justify-between px-3 py-2 text-sm">
-                      <span className="font-medium truncate">{acc ? `${acc.account_code} · ${acc.account_name}` : "Unknown account"}</span>
+                      <span className="font-medium truncate">{acc ? `${acc.account_code} · ${acc.account_name}` : t("accounts.journal.unknownAccount", locale)}</span>
                       <span className="flex items-center gap-3 shrink-0">
-                        {parseFloat(l.debit) > 0 && <span className="text-green-600">Dr {parseFloat(l.debit).toFixed(2)}</span>}
-                        {parseFloat(l.credit) > 0 && <span className="text-red-600">Cr {parseFloat(l.credit).toFixed(2)}</span>}
+                        {parseFloat(l.debit) > 0 && <span className="text-green-600">{translateWithVars(t("accounts.journal.drLine", locale), { amount: fmtMoney(parseFloat(l.debit), locale) })}</span>}
+                        {parseFloat(l.credit) > 0 && <span className="text-red-600">{translateWithVars(t("accounts.journal.crLine", locale), { amount: fmtMoney(parseFloat(l.credit), locale) })}</span>}
                         <Button variant="ghost" size="icon" className="size-6" onClick={() => removeLine(l.key)}>
                           <Trash2 className="size-3.5 text-destructive" />
                         </Button>
@@ -267,20 +289,20 @@ export default function JournalPage() {
           </div>
 
           <div className="rounded-lg border bg-muted/40 p-3 flex items-center justify-between">
-            <span className="text-sm font-medium">Debit total</span>
-            <span className="text-sm font-semibold">{totalDebit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            <span className="text-sm font-medium ml-auto mr-4">Credit total</span>
-            <span className="text-sm font-semibold">{totalCredit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span className="text-sm font-medium">{t("accounts.journal.debitTotal", locale)}</span>
+            <span className="text-sm font-semibold">{fmtMoney(totalDebit, locale)}</span>
+            <span className="text-sm font-medium ml-auto mr-4">{t("accounts.journal.creditTotal", locale)}</span>
+            <span className="text-sm font-semibold">{fmtMoney(totalCredit, locale)}</span>
           </div>
 
           <div className="flex items-center justify-between">
             <div className={`text-sm font-medium ${balanced ? "text-green-600" : "text-destructive"}`}>
-              {totalDebit === 0 && totalCredit === 0 ? "Enter debits and credits"
-                : balanced ? "Balanced ✓"
-                : `Out of balance (diff ${(totalDebit - totalCredit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
+              {totalDebit === 0 && totalCredit === 0 ? t("accounts.journal.enterValues", locale)
+                : balanced ? t("accounts.journal.balanced", locale)
+                : translateWithVars(t("accounts.journal.outOfBalance", locale), { amount: fmtMoney(totalDebit - totalCredit, locale) })}
             </div>
             <Button onClick={handleSave} disabled={saving || !balanced || lines.length < 1}>
-              {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}Save Entry
+              {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}{t("accounts.journal.saveEntry", locale)}
             </Button>
           </div>
         </DialogContent>
@@ -298,23 +320,23 @@ export default function JournalPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50">
-                      <th className="p-2 text-left font-medium">Account</th>
-                      <th className="p-2 text-right font-medium">Debit</th>
-                      <th className="p-2 text-right font-medium">Credit</th>
+                      <th className="p-2 text-left font-medium">{t("accounts.journal.account", locale)}</th>
+                      <th className="p-2 text-right font-medium">{t("accounts.debit", locale)}</th>
+                      <th className="p-2 text-right font-medium">{t("accounts.credit", locale)}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {viewing.lines.map((l, i) => (
                       <tr key={i} className="border-b">
                         <td className="p-2"><span className="font-mono text-xs text-muted-foreground">{l.account_code}</span> {l.account_name}</td>
-                        <td className="p-2 text-right whitespace-nowrap">{Number(l.debit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                        <td className="p-2 text-right whitespace-nowrap">{Number(l.credit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td className="p-2 text-right whitespace-nowrap">{fmtMoney(l.debit, locale)}</td>
+                        <td className="p-2 text-right whitespace-nowrap">{fmtMoney(l.credit, locale)}</td>
                       </tr>
                     ))}
                     <tr className="border-t bg-muted/30 font-semibold">
-                      <td className="p-2">Total</td>
-                      <td className="p-2 text-right whitespace-nowrap">{viewing.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                      <td className="p-2 text-right whitespace-nowrap">{viewing.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="p-2">{t("app.total", locale)}</td>
+                      <td className="p-2 text-right whitespace-nowrap">{fmtMoney(viewing.total, locale)}</td>
+                      <td className="p-2 text-right whitespace-nowrap">{fmtMoney(viewing.total, locale)}</td>
                     </tr>
                   </tbody>
                 </table>

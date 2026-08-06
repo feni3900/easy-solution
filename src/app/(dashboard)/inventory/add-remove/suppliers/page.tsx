@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
+import { getClientLocale, t, translateWithVars } from "@/lib/i18n";
 
 interface Supplier {
   supplier_id: number;
@@ -17,6 +18,7 @@ interface Supplier {
 }
 
 export default function AddRemoveSuppliersPage() {
+  const locale = getClientLocale();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
@@ -41,7 +43,7 @@ export default function AddRemoveSuppliersPage() {
 
   const handleAdd = async () => {
     if (!name.trim()) {
-      alert("Supplier name is required.");
+      alert(t("inventory.addRemove.supplierNameRequired", locale));
       return;
     }
     setSaving(true);
@@ -52,7 +54,7 @@ export default function AddRemoveSuppliersPage() {
       .ilike("supplier_name", name.trim());
     if (existing && existing.length > 0) {
       setSaving(false);
-      alert(`Supplier "${name.trim()}" already exists.`);
+      alert(translateWithVars(t("inventory.addRemove.supplierExists", locale), { name: name.trim() }));
       return;
     }
     const { error } = await supabase.from("suppliers").insert({
@@ -63,7 +65,7 @@ export default function AddRemoveSuppliersPage() {
     });
     setSaving(false);
     if (error) {
-      alert("Error adding supplier: " + error.message);
+      alert(translateWithVars(t("inventory.addRemove.supplierError", locale), { message: error.message }));
       return;
     }
     setName("");
@@ -74,13 +76,13 @@ export default function AddRemoveSuppliersPage() {
   };
 
   const handleDelete = async (s: Supplier) => {
-    if (!confirm(`Delete supplier "${s.supplier_name}"?`)) return;
+    if (!confirm(translateWithVars(t("inventory.addRemove.deleteSupplier", locale), { name: s.supplier_name }))) return;
     setDeletingId(s.supplier_id);
     const supabase = createClient();
     const { error } = await supabase.from("suppliers").delete().eq("supplier_id", s.supplier_id);
     setDeletingId(null);
     if (error) {
-      alert("Error deleting supplier: " + error.message);
+      alert(translateWithVars(t("inventory.addRemove.supplierError", locale), { message: error.message }));
       return;
     }
     setSuppliers((prev) => prev.filter((x) => x.supplier_id !== s.supplier_id));
@@ -96,31 +98,31 @@ export default function AddRemoveSuppliersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Suppliers" description="Add and remove suppliers" />
+      <PageHeader title={t("purchases.suppliers.title", locale)} description={t("inventory.addRemove.suppliersDesc", locale)} />
 
       <div className="rounded-lg border bg-card p-4">
         <div className="grid gap-3 md:grid-cols-4">
           <div className="space-y-1">
-            <Label>Supplier Name</Label>
+            <Label>{t("inventory.addRemove.supplierName", locale)}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. ABC Traders" />
           </div>
           <div className="space-y-1">
-            <Label>Phone</Label>
+            <Label>{t("app.phone", locale)}</Label>
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01XXXXXXXXX" />
           </div>
           <div className="space-y-1">
-            <Label>Company Name</Label>
-            <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Optional" />
+            <Label>{t("suppliers.add.company", locale)}</Label>
+            <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder={t("inventory.addRemove.optional", locale)} />
           </div>
           <div className="space-y-1">
-            <Label>Address</Label>
-            <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Optional" />
+            <Label>{t("app.address", locale)}</Label>
+            <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("inventory.addRemove.optional", locale)} />
           </div>
         </div>
         <div className="mt-3">
           <Button onClick={handleAdd} disabled={saving}>
             {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Plus className="size-4 mr-2" />}
-            Add Supplier
+            {t("inventory.addRemove.addSupplier", locale)}
           </Button>
         </div>
       </div>
@@ -129,10 +131,10 @@ export default function AddRemoveSuppliersPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50 text-left">
-              <th className="p-3 font-medium">Name</th>
-              <th className="p-3 font-medium">Phone</th>
-              <th className="p-3 font-medium">Company</th>
-              <th className="p-3 font-medium">Address</th>
+              <th className="p-3 font-medium">{t("app.name", locale)}</th>
+              <th className="p-3 font-medium">{t("app.phone", locale)}</th>
+              <th className="p-3 font-medium">{t("suppliers.company", locale)}</th>
+              <th className="p-3 font-medium">{t("app.address", locale)}</th>
               <th className="p-3 text-right font-medium"></th>
             </tr>
           </thead>
@@ -141,7 +143,7 @@ export default function AddRemoveSuppliersPage() {
               <tr>
                 <td colSpan={5} className="p-12 text-center text-muted-foreground">
                   <Truck className="size-8 mx-auto mb-2 opacity-50" />
-                  <p>No suppliers yet.</p>
+                  <p>{t("inventory.addRemove.noSuppliers", locale)}</p>
                 </td>
               </tr>
             ) : (

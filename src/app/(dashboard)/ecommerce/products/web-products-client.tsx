@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Star, TrendingUp, Clock, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { t, fmtMoney, translateWithVars } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 
 type FlagKey = "is_popular" | "is_best_seller" | "is_coming_soon";
 
@@ -27,7 +29,82 @@ interface WebProduct {
 const getName = (v: { name: string }[] | { name: string } | null | undefined) =>
   Array.isArray(v) ? v[0]?.name : v?.name;
 
-export function WebProductsClient({ products }: { products: WebProduct[] }) {
+const makeColumns = (locale: Locale, toggle: (id: string, key: FlagKey) => void, saving: string | null): ColumnDef<WebProduct>[] => [
+  {
+    header: t("webstore.products.product", locale),
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-lg">
+          {row.original.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={row.original.image} alt={row.original.name} className="h-full w-full object-cover" />
+          ) : (
+            <span>📦</span>
+          )}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{row.original.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {getName(row.original.categories) ?? "—"} {getName(row.original.brands) ? `· ${getName(row.original.brands)}` : ""}
+          </p>
+        </div>
+      </div>
+    ),
+  },
+  {
+    header: t("app.price", locale),
+    cell: ({ row }) => fmtMoney(Number(row.original.selling_price), locale),
+  },
+  {
+    header: t("webstore.products.popular", locale),
+    cell: ({ row }) => (
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={saving === row.original.id}
+        onClick={() => toggle(row.original.id, "is_popular")}
+      >
+        <Star className={`size-4 ${row.original.is_popular ? "fill-amber-500 text-amber-500" : ""}`} />
+      </Button>
+    ),
+  },
+  {
+    header: t("webstore.products.bestSeller", locale),
+    cell: ({ row }) => (
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={saving === row.original.id}
+        onClick={() => toggle(row.original.id, "is_best_seller")}
+      >
+        <TrendingUp className={`size-4 ${row.original.is_best_seller ? "fill-emerald-500 text-emerald-500" : ""}`} />
+      </Button>
+    ),
+  },
+  {
+    header: t("webstore.products.comingSoon", locale),
+    cell: ({ row }) => (
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={saving === row.original.id}
+        onClick={() => toggle(row.original.id, "is_coming_soon")}
+      >
+        <Clock className={`size-4 ${row.original.is_coming_soon ? "fill-primary text-primary" : ""}`} />
+      </Button>
+    ),
+  },
+  {
+    header: t("app.status", locale),
+    cell: ({ row }) => (
+      <Badge variant={row.original.status === "active" ? "default" : "outline"} className="capitalize">
+        {row.original.status}
+      </Badge>
+    ),
+  },
+];
+
+export function WebProductsClient({ products, locale }: { products: WebProduct[]; locale: Locale }) {
   const router = useRouter();
   const [saving, setSaving] = useState<string | null>(null);
 
@@ -42,90 +119,15 @@ export function WebProductsClient({ products }: { products: WebProduct[] }) {
     router.refresh();
   };
 
-  const columns: ColumnDef<WebProduct>[] = [
-    {
-      header: "Product",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-lg">
-            {row.original.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={row.original.image} alt={row.original.name} className="h-full w-full object-cover" />
-            ) : (
-              <span>📦</span>
-            )}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{row.original.name}</p>
-            <p className="text-xs text-muted-foreground">
-              {getName(row.original.categories) ?? "—"} {getName(row.original.brands) ? `· ${getName(row.original.brands)}` : ""}
-            </p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: "Price",
-      cell: ({ row }) => `৳${Number(row.original.selling_price).toFixed(2)}`,
-    },
-    {
-      header: "Popular",
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={saving === row.original.id}
-          onClick={() => toggle(row.original.id, "is_popular")}
-        >
-          <Star className={`size-4 ${row.original.is_popular ? "fill-amber-500 text-amber-500" : ""}`} />
-        </Button>
-      ),
-    },
-    {
-      header: "Best Seller",
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={saving === row.original.id}
-          onClick={() => toggle(row.original.id, "is_best_seller")}
-        >
-          <TrendingUp className={`size-4 ${row.original.is_best_seller ? "fill-emerald-500 text-emerald-500" : ""}`} />
-        </Button>
-      ),
-    },
-    {
-      header: "Coming Soon",
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={saving === row.original.id}
-          onClick={() => toggle(row.original.id, "is_coming_soon")}
-        >
-          <Clock className={`size-4 ${row.original.is_coming_soon ? "fill-primary text-primary" : ""}`} />
-        </Button>
-      ),
-    },
-    {
-      header: "Status",
-      cell: ({ row }) => (
-        <Badge variant={row.original.status === "active" ? "default" : "outline"} className="capitalize">
-          {row.original.status}
-        </Badge>
-      ),
-    },
-  ];
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-4 rounded-lg border p-3 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1"><Star className="size-3.5 text-amber-500" /> Popular (home)</span>
-        <span className="flex items-center gap-1"><TrendingUp className="size-3.5 text-emerald-500" /> Best Seller (home)</span>
-        <span className="flex items-center gap-1"><Clock className="size-3.5 text-primary" /> Coming Soon (home)</span>
+        <span className="flex items-center gap-1"><Star className="size-3.5 text-amber-500" /> {translateWithVars(t("webstore.products.home", locale), { label: t("webstore.products.popular", locale) })}</span>
+        <span className="flex items-center gap-1"><TrendingUp className="size-3.5 text-emerald-500" /> {translateWithVars(t("webstore.products.home", locale), { label: t("webstore.products.bestSeller", locale) })}</span>
+        <span className="flex items-center gap-1"><Clock className="size-3.5 text-primary" /> {translateWithVars(t("webstore.products.home", locale), { label: t("webstore.products.comingSoon", locale) })}</span>
         {saving && <Loader2 className="size-3.5 animate-spin" />}
       </div>
-      <DataTable columns={columns} data={products} searchKey="name" />
+      <DataTable columns={makeColumns(locale, toggle, saving)} data={products} searchKey="name" />
     </div>
   );
 }

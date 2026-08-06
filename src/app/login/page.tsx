@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getClientLocale, t } from "@/lib/i18n";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const locale = getClientLocale();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +45,7 @@ export default function LoginPage() {
     }
 
     if (!data?.session) {
-      setError("No session created. Check credentials.");
+      setError(t("login.noSession", locale));
       setLoading(false);
       return;
     }
@@ -59,9 +61,9 @@ export default function LoginPage() {
           <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Store className="size-6" />
           </div>
-          <CardTitle className="text-xl">Smart Solution ERP</CardTitle>
+          <CardTitle className="text-xl">{t("login.title", locale)}</CardTitle>
           <CardDescription>
-            Sign in to your workspace
+            {t("login.subtitle", locale)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -72,11 +74,11 @@ export default function LoginPage() {
               </Alert>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("login.email", locale)}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@company.com"
+                placeholder={t("login.emailPlaceholder", locale)}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -84,7 +86,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("login.password", locale)}</Label>
               <Input
                 id="password"
                 type="password"
@@ -96,7 +98,7 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="size-4 animate-spin" />}
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? t("login.signingIn", locale) : t("login.signIn", locale)}
             </Button>
           </form>
         </CardContent>

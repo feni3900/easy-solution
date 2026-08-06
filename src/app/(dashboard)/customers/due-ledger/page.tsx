@@ -7,6 +7,7 @@ import { DataTable } from "@/components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { getClientLocale, t, fmtMoney } from "@/lib/i18n";
 
 interface DueEntry {
   id: string;
@@ -20,41 +21,41 @@ interface DueEntry {
   status: string;
 }
 
-const columns: ColumnDef<DueEntry>[] = [
-  { accessorKey: "customer_name", header: "Customer" },
+const makeColumns = (locale: "en" | "bn"): ColumnDef<DueEntry>[] => [
+  { accessorKey: "customer_name", header: t("app.customer", locale) },
   {
     accessorKey: "mobile_number",
-    header: "Mobile No",
+    header: t("customers.dueLedger.mobileNo", locale),
     cell: ({ row }) => <span className="font-mono text-sm">{row.original.mobile_number}</span>,
   },
-  { accessorKey: "invoice_no", header: "Invoice" },
+  { accessorKey: "invoice_no", header: t("customers.dueLedger.invoice", locale) },
   {
     accessorKey: "total_amount",
-    header: "Total",
-    cell: ({ row }) => `৳${Number(row.original.total_amount).toFixed(2)}`,
+    header: t("app.total", locale),
+    cell: ({ row }) => fmtMoney(Number(row.original.total_amount), locale),
   },
   {
     accessorKey: "paid_amount",
-    header: "Paid",
-    cell: ({ row }) => `৳${Number(row.original.paid_amount).toFixed(2)}`,
+    header: t("app.paid", locale),
+    cell: ({ row }) => fmtMoney(Number(row.original.paid_amount), locale),
   },
   {
     accessorKey: "due_amount",
-    header: "Due",
+    header: t("app.due", locale),
     cell: ({ row }) => (
       <span className={row.original.due_amount > 0 ? "text-destructive font-medium" : ""}>
-        ৳{Number(row.original.due_amount).toFixed(2)}
+        {fmtMoney(Number(row.original.due_amount), locale)}
       </span>
     ),
   },
   {
     accessorKey: "due_date",
-    header: "Due Date",
+    header: t("customers.dueLedger.dueDate", locale),
     cell: ({ row }) => row.original.due_date ? new Date(row.original.due_date).toLocaleDateString() : "—",
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: t("app.status", locale),
     cell: ({ row }) => (
       <Badge variant={row.original.status === "paid" ? "default" : "destructive"} className="capitalize">
         {row.original.status}
@@ -64,6 +65,8 @@ const columns: ColumnDef<DueEntry>[] = [
 ];
 
 export default function CustomerDueLedgerPage() {
+  const locale = getClientLocale();
+  const columns = makeColumns(locale);
   const [entries, setEntries] = useState<DueEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -111,13 +114,13 @@ export default function CustomerDueLedgerPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Customer Due Ledger" description="Track outstanding customer payments" />
+      <PageHeader title={t("customers.dueLedger.title", locale)} description={t("customers.dueLedger.desc", locale)} />
       <DataTable
         columns={columns}
         data={entries}
         searchColumns={[
-          { key: "customer_name", placeholder: "Search by name..." },
-          { key: "mobile_number", placeholder: "Search mobile no..." },
+          { key: "customer_name", placeholder: t("customers.dueLedger.searchName", locale) },
+          { key: "mobile_number", placeholder: t("customers.dueLedger.searchMobile", locale) },
         ]}
       />
     </div>

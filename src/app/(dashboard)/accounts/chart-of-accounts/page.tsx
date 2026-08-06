@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { getClientLocale, t, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface Account {
   account_id: number;
@@ -27,11 +28,20 @@ const typeStyles: Record<string, string> = {
 };
 
 export default function ChartOfAccountsPage() {
+  const locale = getClientLocale();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ account_code: "", account_name: "", account_type: "Asset", is_active: true });
+
+  const typeLabels: Record<string, string> = {
+    Asset: t("accounts.type.asset", locale),
+    Liability: t("accounts.type.liability", locale),
+    Equity: t("accounts.type.equity", locale),
+    Revenue: t("accounts.type.revenue", locale),
+    Expense: t("accounts.type.expense", locale),
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,7 +58,7 @@ export default function ChartOfAccountsPage() {
 
   const handleCreate = async () => {
     if (!form.account_code || !form.account_name) {
-      alert("Please enter account code and name.");
+      alert(t("accounts.chartOfAccounts.alertRequired", locale));
       return;
     }
     setSaving(true);
@@ -63,7 +73,7 @@ export default function ChartOfAccountsPage() {
       }]);
     setSaving(false);
     if (error) {
-      alert("Error creating account: " + error.message);
+      alert(translateWithVars(t("accounts.chartOfAccounts.createError", locale), { message: error.message }));
       return;
     }
     setDialogOpen(false);
@@ -81,13 +91,13 @@ export default function ChartOfAccountsPage() {
   };
 
   const handleDelete = async (account: Account) => {
-    if (!confirm(`Delete account "${account.account_name}"?`)) return;
+    if (!confirm(translateWithVars(t("accounts.chartOfAccounts.deleteConfirm", locale), { name: account.account_name }))) return;
     const supabase = createClient();
     const { error } = await supabase
       .from("chart_of_accounts")
       .delete()
       .eq("account_id", account.account_id);
-    if (error) alert("Cannot delete: " + error.message);
+    if (error) alert(translateWithVars(t("accounts.chartOfAccounts.deleteError", locale), { message: error.message }));
     else load();
   };
 
@@ -100,17 +110,17 @@ export default function ChartOfAccountsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Chart of Accounts</h1>
-          <p className="text-sm text-muted-foreground">Manage the accounts used in journal entries</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("accounts.chartOfAccounts", locale)}</h1>
+          <p className="text-sm text-muted-foreground">{t("accounts.chartOfAccounts.desc", locale)}</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}><Plus className="size-4 mr-2" />Add Account</Button>
+        <Button onClick={() => setDialogOpen(true)}><Plus className="size-4 mr-2" />{t("accounts.chartOfAccounts.addAccount", locale)}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {ACCOUNT_TYPES.map((t) => (
-          <div key={t} className="rounded-lg border bg-card p-4">
-            <p className={`text-xs font-medium ${typeStyles[t]}`}>{t}</p>
-            <p className="text-2xl font-bold mt-1">{totals[t]}</p>
+        {ACCOUNT_TYPES.map((type) => (
+          <div key={type} className="rounded-lg border bg-card p-4">
+            <p className={`text-xs font-medium ${typeStyles[type]}`}>{typeLabels[type]}</p>
+            <p className="text-2xl font-bold mt-1">{fmtInt(totals[type], locale)}</p>
           </div>
         ))}
       </div>
@@ -122,11 +132,11 @@ export default function ChartOfAccountsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left font-medium">Code</th>
-                <th className="p-3 text-left font-medium">Account Name</th>
-                <th className="p-3 text-left font-medium">Type</th>
-                <th className="p-3 text-center font-medium">Status</th>
-                <th className="p-3 text-right font-medium">Actions</th>
+                <th className="p-3 text-left font-medium">{t("accounts.code", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("accounts.chartOfAccounts.accountNameCol", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.type", locale)}</th>
+                <th className="p-3 text-center font-medium">{t("app.status", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("app.actions", locale)}</th>
               </tr>
             </thead>
             <tbody>
@@ -146,7 +156,7 @@ export default function ChartOfAccountsPage() {
                       onClick={() => toggleActive(a)}
                       className={`text-xs px-2 py-0.5 rounded-full ${a.is_active ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
                     >
-                      {a.is_active ? "Active" : "Inactive"}
+                      {a.is_active ? t("app.active", locale) : t("app.inactive", locale)}
                     </Button>
                   </td>
                   <td className="p-3 text-right">
@@ -155,7 +165,7 @@ export default function ChartOfAccountsPage() {
                 </tr>
               ))}
               {accounts.length === 0 && (
-                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No accounts yet.</td></tr>
+                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">{t("accounts.chartOfAccounts.noAccounts", locale)}</td></tr>
               )}
             </tbody>
           </table>
@@ -164,39 +174,39 @@ export default function ChartOfAccountsPage() {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Add Account</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("accounts.chartOfAccounts.addAccount", locale)}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label>Account Code *</Label>
+              <Label>{t("accounts.chartOfAccounts.accountCode", locale)}</Label>
               <Input
                 value={form.account_code}
                 onChange={(e) => setForm({ ...form, account_code: e.target.value })}
-                placeholder="e.g. 6000"
+                placeholder={t("accounts.chartOfAccounts.accountCodePh", locale)}
               />
             </div>
             <div className="space-y-1">
-              <Label>Account Name *</Label>
+              <Label>{t("accounts.chartOfAccounts.accountName", locale)}</Label>
               <Input
                 value={form.account_name}
                 onChange={(e) => setForm({ ...form, account_name: e.target.value })}
-                placeholder="e.g. Telephone Expense"
+                placeholder={t("accounts.chartOfAccounts.accountNamePh", locale)}
               />
             </div>
             <div className="space-y-1">
-              <Label>Type</Label>
+              <Label>{t("app.type", locale)}</Label>
               <select
                 value={form.account_type}
                 onChange={(e) => setForm({ ...form, account_type: e.target.value })}
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               >
-                {ACCOUNT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                {ACCOUNT_TYPES.map((type) => <option key={type} value={type}>{typeLabels[type]}</option>)}
               </select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("app.cancel", locale)}</Button>
             <Button onClick={handleCreate} disabled={saving}>
-              {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}Create
+              {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}{t("app.create", locale)}
             </Button>
           </DialogFooter>
         </DialogContent>

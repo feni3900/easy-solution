@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Loader2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getClientLocale, t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface Invoice {
   invoice_id: number;
@@ -33,6 +34,15 @@ export default function InvoicesPage() {
   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
   const [viewItems, setViewItems] = useState<{ product_name_snapshot: string; unit_price: number; quantity: number; total_price: number; discount_applied: number; cost_price: number | null }[]>([]);
   const [viewReturns, setViewReturns] = useState<ReturnItem[]>([]);
+  const locale = getClientLocale();
+
+  const paymentStatusLabel = (status: string) => {
+    if (status === "Cash") return t("app.paymentStatusCash", locale);
+    if (status === "Partial Due") return t("app.paymentStatusPartial", locale);
+    if (status === "Paid") return t("app.paymentStatusPaid", locale);
+    if (status === "Unpaid") return t("app.paymentStatusUnpaid", locale);
+    return t("app.paymentStatusDue", locale);
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -107,7 +117,7 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">POS Invoices</h1>
+      <h1 className="text-2xl font-semibold">{t("sales.invoices.title", locale)}</h1>
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="size-6 animate-spin" /></div>
       ) : (
@@ -115,15 +125,15 @@ export default function InvoicesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left font-medium">Invoice #</th>
-                <th className="p-3 text-left font-medium">Date</th>
-                <th className="p-3 text-left font-medium">Customer</th>
-                <th className="p-3 text-left font-medium">Channel</th>
-                <th className="p-3 text-right font-medium">Total</th>
-                <th className="p-3 text-right font-medium">Paid</th>
-                <th className="p-3 text-right font-medium">Due</th>
-                <th className="p-3 text-center font-medium">Status</th>
-                <th className="p-3 text-center font-medium">Actions</th>
+                <th className="p-3 text-left font-medium">{t("sales.invoiceNo", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.date", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.customer", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.channel", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("app.total", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("app.paid", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("app.due", locale)}</th>
+                <th className="p-3 text-center font-medium">{t("app.status", locale)}</th>
+                <th className="p-3 text-center font-medium">{t("app.actions", locale)}</th>
               </tr>
             </thead>
             <tbody>
@@ -131,17 +141,17 @@ export default function InvoicesPage() {
                 <tr key={inv.invoice_id} className="border-b hover:bg-muted/30">
                   <td className="p-3 font-medium">{inv.invoice_no}</td>
                   <td className="p-3 text-muted-foreground">{new Date(inv.sale_date).toLocaleDateString()}</td>
-                  <td className="p-3">{(inv.customers as { full_name?: string })?.full_name ?? "Walk-in"}</td>
+                  <td className="p-3">{(inv.customers as { full_name?: string })?.full_name ?? t("app.walkIn", locale)}</td>
                   <td className="p-3 text-muted-foreground">{inv.channel}</td>
-                  <td className="p-3 text-right">৳{Number(inv.total_amount).toFixed(2)}</td>
-                  <td className="p-3 text-right">৳{Number(inv.paid_amount).toFixed(2)}</td>
-                  <td className={`p-3 text-right ${inv.due_amount > 0 ? "text-amber-600 font-medium" : ""}`}>৳{Number(inv.due_amount).toFixed(2)}</td>
+                  <td className="p-3 text-right">{fmtMoney(Number(inv.total_amount), locale)}</td>
+                  <td className="p-3 text-right">{fmtMoney(Number(inv.paid_amount), locale)}</td>
+                  <td className={`p-3 text-right ${inv.due_amount > 0 ? "text-amber-600 font-medium" : ""}`}>{fmtMoney(Number(inv.due_amount), locale)}</td>
                   <td className="p-3 text-center">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
                       inv.payment_status === "Cash" ? "bg-green-100 text-green-700" :
                       inv.payment_status === "Due" ? "bg-red-100 text-red-700" :
                       "bg-amber-100 text-amber-700"
-                    }`}>{inv.payment_status}</span>
+                    }`}>{paymentStatusLabel(inv.payment_status)}</span>
                   </td>
                   <td className="p-3 text-center">
                     <Button variant="ghost" size="icon" onClick={() => viewDetail(inv)}><Eye className="size-4" /></Button>
@@ -149,7 +159,7 @@ export default function InvoicesPage() {
                 </tr>
               ))}
               {invoices.length === 0 && (
-                <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No invoices yet.</td></tr>
+                <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">{t("sales.noInvoices", locale)}</td></tr>
               )}
             </tbody>
           </table>
@@ -157,14 +167,14 @@ export default function InvoicesPage() {
       )}
       <Dialog open={!!viewInvoice} onOpenChange={() => setViewInvoice(null)}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Invoice {viewInvoice?.invoice_no}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{translateWithVars(t("sales.invoiceTitle", locale), { no: viewInvoice?.invoice_no ?? "" })}</DialogTitle></DialogHeader>
           <div className="space-y-2 text-sm">
-            <p>Salesperson: {viewInvoice?.salesperson_nickname}</p>
-            <p>Channel: {viewInvoice?.channel}</p>
-            <p>Date: {viewInvoice ? new Date(viewInvoice.sale_date).toLocaleString() : ""}</p>
+            <p>{t("sales.salesperson", locale)} {viewInvoice?.salesperson_nickname}</p>
+            <p>{t("sales.channelLabel", locale)} {viewInvoice?.channel}</p>
+            <p>{t("sales.dateLabel", locale)} {viewInvoice ? new Date(viewInvoice.sale_date).toLocaleString() : ""}</p>
             <div className="overflow-x-auto">
               <table className="w-full mt-4 min-w-[480px]">
-                <thead><tr className="border-b"><th className="p-2 text-left">Item</th><th className="text-right">Qty</th><th className="text-right">Price</th><th className="text-right">Total</th><th className="text-right">Profit</th></tr></thead>
+                <thead><tr className="border-b"><th className="p-2 text-left">{t("app.item", locale)}</th><th className="text-right">{t("app.qty", locale)}</th><th className="text-right">{t("app.price", locale)}</th><th className="text-right">{t("app.total", locale)}</th><th className="text-right">{t("app.profit", locale)}</th></tr></thead>
                 <tbody>
                   {viewItems.map((item, i) => {
                     const profit = item.cost_price != null
@@ -173,11 +183,11 @@ export default function InvoicesPage() {
                     return (
                       <tr key={i} className="border-b">
                         <td className="p-2">{item.product_name_snapshot}</td>
-                        <td className="text-right whitespace-nowrap">{item.quantity}</td>
-                        <td className="text-right whitespace-nowrap">৳{Number(item.unit_price).toFixed(2)}</td>
-                        <td className="text-right whitespace-nowrap">৳{Number(item.total_price).toFixed(2)}</td>
+                        <td className="text-right whitespace-nowrap">{fmtInt(item.quantity, locale)}</td>
+                        <td className="text-right whitespace-nowrap">{fmtMoney(Number(item.unit_price), locale)}</td>
+                        <td className="text-right whitespace-nowrap">{fmtMoney(Number(item.total_price), locale)}</td>
                         <td className={`text-right whitespace-nowrap ${profit != null && profit >= 0 ? "text-green-600" : profit != null ? "text-red-600" : "text-muted-foreground"}`}>
-                          {profit != null ? `৳${profit.toFixed(2)}` : "—"}
+                          {profit != null ? fmtMoney(profit, locale) : "—"}
                         </td>
                       </tr>
                     );
@@ -187,15 +197,15 @@ export default function InvoicesPage() {
             </div>
             {viewReturns.length > 0 && (
               <>
-                <p className="font-medium text-red-600 mt-3">Returned Items</p>
+                <p className="font-medium text-red-600 mt-3">{t("sales.returnedItems", locale)}</p>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[320px]">
-                    <thead><tr className="border-b"><th className="p-2 text-left">Item</th><th className="text-right">Qty</th><th className="text-left">Reason</th></tr></thead>
+                    <thead><tr className="border-b"><th className="p-2 text-left">{t("app.item", locale)}</th><th className="text-right">{t("app.qty", locale)}</th><th className="text-left">{t("sales.reason", locale)}</th></tr></thead>
                     <tbody>
                       {viewReturns.map((r, i) => (
                         <tr key={i} className="border-b text-red-600">
                           <td className="p-2">{r.product_name_snapshot}</td>
-                          <td className="text-right whitespace-nowrap">-{r.quantity}</td>
+                          <td className="text-right whitespace-nowrap">-{fmtInt(r.quantity, locale)}</td>
                           <td className="text-left text-muted-foreground">{r.reason ?? "—"}</td>
                         </tr>
                       ))}
@@ -206,9 +216,9 @@ export default function InvoicesPage() {
             )}
             <div className="flex justify-between items-center mt-2">
               <div className="text-sm font-bold text-green-600">
-                Profit: ৳{viewItems.reduce((s, item) => s + (item.cost_price != null ? Number(item.total_price) - item.cost_price * item.quantity - Number(item.discount_applied) : 0), 0).toFixed(2)}
+                {t("sales.profitLabel", locale)} {fmtMoney(viewItems.reduce((s, item) => s + (item.cost_price != null ? Number(item.total_price) - item.cost_price * item.quantity - Number(item.discount_applied) : 0), 0), locale)}
               </div>
-              <div className="text-right font-bold">Total: ৳{viewInvoice?.total_amount.toFixed(2)}</div>
+              <div className="text-right font-bold">{t("sales.totalLabel", locale)} {fmtMoney(Number(viewInvoice?.total_amount ?? 0), locale)}</div>
             </div>
           </div>
         </DialogContent>

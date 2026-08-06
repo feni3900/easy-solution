@@ -3,6 +3,8 @@
 import { CrudManager, type CrudConfig } from "@/components/crud-manager";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
+import { t, fmtMoney, fmtInt } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 
 interface Coupon {
   id: string;
@@ -13,32 +15,32 @@ interface Coupon {
   status: string;
 }
 
-const columns: ColumnDef<Coupon>[] = [
+const makeColumns = (locale: Locale): ColumnDef<Coupon>[] => [
   {
     accessorKey: "code",
-    header: "Code",
+    header: t("webstore.coupons.code", locale),
     cell: ({ row }) => <span className="font-mono font-medium">{row.original.code}</span>,
   },
-  { accessorKey: "discount_type", header: "Type", cell: ({ row }) => <span className="capitalize">{row.original.discount_type}</span> },
-  { accessorKey: "value", header: "Value", cell: ({ row }) => row.original.discount_type === "percentage" ? `${Number(row.original.value)}%` : `৳${Number(row.original.value).toFixed(2)}` },
+  { accessorKey: "discount_type", header: t("app.type", locale), cell: ({ row }) => <span className="capitalize">{row.original.discount_type}</span> },
+  { accessorKey: "value", header: t("webstore.coupons.value", locale), cell: ({ row }) => row.original.discount_type === "percentage" ? `${fmtInt(Number(row.original.value), locale)}%` : fmtMoney(Number(row.original.value), locale) },
   {
     accessorKey: "expiry_date",
-    header: "Expires",
+    header: t("webstore.coupons.expires", locale),
     cell: ({ row }) => (row.original.expiry_date ? new Date(row.original.expiry_date).toLocaleDateString() : "—"),
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: t("app.status", locale),
     cell: ({ row }) => <Badge className="capitalize">{row.original.status}</Badge>,
   },
 ];
 
-const config: CrudConfig<Coupon> = {
+const makeConfig = (locale: Locale): CrudConfig<Coupon> => ({
   table: "coupons",
-  title: "Coupon",
-  description: "Promo codes for the ecommerce store.",
+  title: t("webstore.coupons.coupon", locale),
+  description: t("webstore.coupons.description", locale),
   searchKey: "code",
-  columns,
+  columns: makeColumns(locale),
   defaultForm: { code: "", discount_type: "percentage", value: "0", minimum_order: "0", expiry_date: "", status: "active" },
   toForm: (c) => ({
     code: c.code,
@@ -48,30 +50,30 @@ const config: CrudConfig<Coupon> = {
     status: c.status,
   }),
   fields: [
-    { name: "code", label: "Coupon Code", required: true },
+    { name: "code", label: t("webstore.coupons.couponCode", locale), required: true },
     {
       name: "discount_type",
-      label: "Type",
+      label: t("app.type", locale),
       type: "select",
       options: [
-        { value: "flat", label: "Flat amount" },
-        { value: "percentage", label: "Percentage" },
+        { value: "flat", label: t("webstore.coupons.flatAmount", locale) },
+        { value: "percentage", label: t("webstore.coupons.percentage", locale) },
       ],
     },
-    { name: "value", label: "Value" },
-    { name: "expiry_date", label: "Expiry Date" },
+    { name: "value", label: t("webstore.coupons.value", locale) },
+    { name: "expiry_date", label: t("webstore.coupons.expiryDate", locale) },
     {
       name: "status",
-      label: "Status",
+      label: t("app.status", locale),
       type: "select",
       options: [
-        { value: "active", label: "Active" },
-        { value: "inactive", label: "Inactive" },
+        { value: "active", label: t("app.active", locale) },
+        { value: "inactive", label: t("app.inactive", locale) },
       ],
     },
   ],
-};
+});
 
-export function CouponsClient({ rows }: { rows: Coupon[] }) {
-  return <CrudManager config={config} rows={rows} />;
+export function CouponsClient({ rows, locale }: { rows: Coupon[]; locale: Locale }) {
+  return <CrudManager config={makeConfig(locale)} rows={rows} />;
 }

@@ -6,6 +6,7 @@ import { Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Link from "next/link";
+import { getClientLocale, t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface Purchase {
   purchase_id: number;
@@ -38,6 +39,7 @@ export default function PurchasesHistoryPage() {
   const [selected, setSelected] = useState<Purchase | null>(null);
   const [items, setItems] = useState<PurchaseItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
+  const locale = getClientLocale();
 
   useEffect(() => {
     const load = async () => {
@@ -66,7 +68,7 @@ export default function PurchasesHistoryPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Purchase History</h1>
+      <h1 className="text-2xl font-semibold">{t("purchases.history.title", locale)}</h1>
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="size-6 animate-spin" /></div>
       ) : (
@@ -74,12 +76,12 @@ export default function PurchasesHistoryPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left font-medium">Purchase No</th>
-                <th className="p-3 text-left font-medium">Date</th>
-                <th className="p-3 text-left font-medium">Supplier</th>
-                <th className="p-3 text-center font-medium">Payment</th>
-                <th className="p-3 text-right font-medium">Total</th>
-                <th className="p-3 text-center font-medium">Details</th>
+                <th className="p-3 text-left font-medium">{t("purchases.purchaseNo", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.date", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("purchases.supplier", locale)}</th>
+                <th className="p-3 text-center font-medium">{t("purchases.payment", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("app.total", locale)}</th>
+                <th className="p-3 text-center font-medium">{t("purchases.details", locale)}</th>
               </tr>
             </thead>
             <tbody>
@@ -89,7 +91,7 @@ export default function PurchasesHistoryPage() {
                     <span>{p.invoice_no}</span>
                     <Link
                       href={`/purchases/new?edit=${p.purchase_id}`}
-                      title={`Edit purchase ${p.invoice_no}`}
+                      title={translateWithVars(t("purchases.editTitle", locale), { no: p.invoice_no })}
                       className="ml-2 inline-flex items-center text-muted-foreground hover:text-primary"
                     >
                       <Pencil className="size-3.5" />
@@ -98,14 +100,14 @@ export default function PurchasesHistoryPage() {
                   <td className="p-3 text-muted-foreground">{p.purchase_date}</td>
                   <td className="p-3">{(p.suppliers as { supplier_name?: string })?.supplier_name ?? "-"}</td>
                   <td className="p-3 text-center">{p.payment_type}</td>
-                  <td className="p-3 text-right">৳{Number(p.total_amount).toFixed(2)}</td>
+                  <td className="p-3 text-right">{fmtMoney(Number(p.total_amount), locale)}</td>
                   <td className="p-3 text-center">
-                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); viewDetails(p); }}>View</Button>
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); viewDetails(p); }}>{t("app.view", locale)}</Button>
                   </td>
                 </tr>
               ))}
               {purchases.length === 0 && (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No purchases recorded.</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{t("purchases.noPurchases", locale)}</td></tr>
               )}
             </tbody>
           </table>
@@ -115,10 +117,10 @@ export default function PurchasesHistoryPage() {
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader className="flex-row items-center justify-between">
-            <DialogTitle>{selected?.invoice_no} — Purchase Items</DialogTitle>            {selected && (
+            <DialogTitle>{selected?.invoice_no} — {t("purchases.purchaseItemsTitle", locale)}</DialogTitle>            {selected && (
               <Link href={`/purchases/new?edit=${selected.purchase_id}`}>
                 <Button size="sm" variant="outline">
-                  <Pencil className="size-3.5 mr-1" />Edit
+                  <Pencil className="size-3.5 mr-1" />{t("purchases.edit", locale)}
                 </Button>
               </Link>
             )}
@@ -128,42 +130,42 @@ export default function PurchasesHistoryPage() {
           ) : (
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-2 text-sm text-muted-foreground">
-                <div>Date: {selected?.purchase_date}</div>
-                <div>Payment: {selected?.payment_type}</div>
-                <div>Total: ৳{Number(selected?.total_amount ?? 0).toFixed(2)}</div>
+                <div>{t("purchases.dateLabel", locale)} {selected?.purchase_date}</div>
+                <div>{t("purchases.paymentLabel", locale)} {selected?.payment_type}</div>
+                <div>{t("purchases.totalLabel", locale)} {fmtMoney(Number(selected?.total_amount ?? 0), locale)}</div>
               </div>
-              {selected?.notes && <div className="text-xs text-muted-foreground">Notes: {selected.notes}</div>}
+              {selected?.notes && <div className="text-xs text-muted-foreground">{t("purchases.notesLabel", locale)} {selected.notes}</div>}
               <div className="rounded-lg border overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50">
                       <th className="p-2 text-left">#</th>
-                      <th className="p-2 text-left">Product</th>
-                      <th className="p-2 text-left">SKU</th>
-                      <th className="p-2 text-left">Size</th>
-                      <th className="p-2 text-left">Unit</th>
-                      <th className="p-2 text-left">Location</th>
-                      <th className="p-2 text-center">Qty</th>
-                      <th className="p-2 text-right">Cost</th>
-                      <th className="p-2 text-right">Total</th>
+                      <th className="p-2 text-left">{t("sales.returns.product", locale)}</th>
+                      <th className="p-2 text-left">{t("app.sku", locale)}</th>
+                      <th className="p-2 text-left">{t("app.size", locale)}</th>
+                      <th className="p-2 text-left">{t("app.unit", locale)}</th>
+                      <th className="p-2 text-left">{t("app.location", locale)}</th>
+                      <th className="p-2 text-center">{t("app.qty", locale)}</th>
+                      <th className="p-2 text-right">{t("app.cost", locale)}</th>
+                      <th className="p-2 text-right">{t("app.total", locale)}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {items.map((item, i) => (
                       <tr key={item.purchase_item_id} className="border-b last:border-0">
-                        <td className="p-2 text-muted-foreground">{i + 1}</td>
+                        <td className="p-2 text-muted-foreground">{fmtInt(i + 1, locale)}</td>
                         <td className="p-2 font-medium">{item.products?.product_name ?? "-"}</td>
                         <td className="p-2 text-xs">{item.products?.sku ?? "-"}</td>
                         <td className="p-2 text-xs">{item.products?.size ?? "-"}</td>
                         <td className="p-2 text-xs">{item.products?.unit ?? "-"}</td>
                         <td className="p-2 text-xs">{item.products?.storage_location ?? "-"}</td>
-                        <td className="p-2 text-center">{item.quantity}</td>
-                        <td className="p-2 text-right">৳{Number(item.unit_cost).toFixed(2)}</td>
-                        <td className="p-2 text-right font-medium">৳{Number(item.total_cost).toFixed(2)}</td>
+                        <td className="p-2 text-center">{fmtInt(item.quantity, locale)}</td>
+                        <td className="p-2 text-right">{fmtMoney(Number(item.unit_cost), locale)}</td>
+                        <td className="p-2 text-right font-medium">{fmtMoney(Number(item.total_cost), locale)}</td>
                       </tr>
                     ))}
                     {items.length === 0 && (
-                      <tr><td colSpan={9} className="p-4 text-center text-muted-foreground">No items found.</td></tr>
+                      <tr><td colSpan={9} className="p-4 text-center text-muted-foreground">{t("purchases.noItems", locale)}</td></tr>
                     )}
                   </tbody>
                 </table>

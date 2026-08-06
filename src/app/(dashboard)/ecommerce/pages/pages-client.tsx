@@ -17,6 +17,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, Plus, Pencil, Trash2 } from "lucide-react";
+import { t, translateWithVars } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 
 interface Page {
   id: string;
@@ -28,29 +30,29 @@ interface Page {
   updated_at: string;
 }
 
-const buildColumns = (onEdit: (p: Page) => void, onDelete: (p: Page) => void): ColumnDef<Page>[] => [
+const makeColumns = (locale: Locale, onEdit: (p: Page) => void, onDelete: (p: Page) => void): ColumnDef<Page>[] => [
   {
     accessorKey: "title",
-    header: "Title",
+    header: t("webstore.pages.titleColumn", locale),
     cell: ({ row }) => <span className="font-medium">{row.original.title}</span>,
   },
   {
     accessorKey: "slug",
-    header: "Slug",
+    header: t("webstore.pages.slug", locale),
     cell: ({ row }) => <span className="font-mono text-xs">/{row.original.slug}</span>,
   },
   {
     accessorKey: "is_published",
-    header: "Status",
+    header: t("app.status", locale),
     cell: ({ row }) => (
       <Badge className={row.original.is_published ? "bg-emerald-500/10 text-emerald-600" : "bg-slate-500/10 text-slate-600"} variant="outline">
-        {row.original.is_published ? "Published" : "Draft"}
+        {row.original.is_published ? t("webstore.pages.published", locale) : t("webstore.pages.draft", locale)}
       </Badge>
     ),
   },
   {
     accessorKey: "updated_at",
-    header: "Updated",
+    header: t("webstore.pages.updated", locale),
     cell: ({ row }) => new Date(row.original.updated_at).toLocaleDateString(),
   },
   {
@@ -69,7 +71,7 @@ const buildColumns = (onEdit: (p: Page) => void, onDelete: (p: Page) => void): C
   },
 ];
 
-export function PagesClient({ pages }: { pages: Page[] }) {
+export function PagesClient({ pages, locale }: { pages: Page[]; locale: Locale }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -113,7 +115,7 @@ export function PagesClient({ pages }: { pages: Page[] }) {
   };
 
   const handleDelete = async (p: Page) => {
-    if (!confirm(`Delete page "${p.title}"?`)) return;
+    if (!confirm(translateWithVars(t("webstore.pages.deleteConfirm", locale), { title: p.title }))) return;
     const supabase = createClient();
     const { error } = await supabase.from("ecommerce_pages").delete().eq("id", p.id);
     if (error) console.error(error);
@@ -125,28 +127,28 @@ export function PagesClient({ pages }: { pages: Page[] }) {
       <div className="flex justify-end">
         <Button onClick={openNew}>
           <Plus className="size-4" />
-          New Page
+          {t("webstore.pages.newPage", locale)}
         </Button>
       </div>
 
-      <DataTable columns={buildColumns(openEdit, handleDelete)} data={pages} searchKey="title" searchPlaceholder="Search pages..." />
+      <DataTable columns={makeColumns(locale, openEdit, handleDelete)} data={pages} searchKey="title" searchPlaceholder={t("webstore.pages.search", locale)} />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Page" : "New Page"}</DialogTitle>
+            <DialogTitle>{editing ? t("webstore.pages.editPage", locale) : t("webstore.pages.newPage", locale)}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-2">
-              <Label>Title</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. About Us" />
+              <Label>{t("webstore.pages.titleColumn", locale)}</Label>
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={t("webstore.pages.titlePh", locale)} />
             </div>
             <div className="grid gap-2">
-              <Label>Slug</Label>
-              <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="e.g. about" disabled={!!editing} />
+              <Label>{t("webstore.pages.slug", locale)}</Label>
+              <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder={t("webstore.pages.slugPh", locale)} disabled={!!editing} />
             </div>
             <div className="grid gap-2">
-              <Label>Content (HTML)</Label>
+              <Label>{t("webstore.pages.content", locale)}</Label>
               <textarea
                 value={form.body}
                 onChange={(e) => setForm({ ...form, body: e.target.value })}
@@ -156,14 +158,14 @@ export function PagesClient({ pages }: { pages: Page[] }) {
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} />
-              Published
+              {t("webstore.pages.published", locale)}
             </label>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("app.cancel", locale)}</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="size-4 animate-spin mr-2" />}
-              {editing ? "Save Changes" : "Create Page"}
+              {editing ? t("crud.saveChanges", locale) : t("webstore.pages.createPage", locale)}
             </Button>
           </DialogFooter>
         </DialogContent>

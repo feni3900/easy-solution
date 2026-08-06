@@ -8,6 +8,7 @@ import { DataTable } from "@/components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { getClientLocale, t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface CustomerDue {
   id: string;
@@ -22,33 +23,33 @@ interface CustomerDue {
   status: string;
 }
 
-const columns: ColumnDef<CustomerDue>[] = [
-  { accessorKey: "customer_name", header: "Customer" },
-  { accessorKey: "mobile_number", header: "Mobile" },
-  { accessorKey: "sales_person", header: "Sales Person" },
-  { accessorKey: "invoice_no", header: "Invoice" },
+const makeColumns = (locale: "en" | "bn"): ColumnDef<CustomerDue>[] => [
+  { accessorKey: "customer_name", header: t("app.customer", locale) },
+  { accessorKey: "mobile_number", header: t("reports.mobile", locale) },
+  { accessorKey: "sales_person", header: t("reports.salesPerson", locale) },
+  { accessorKey: "invoice_no", header: t("reports.invoice", locale) },
   {
     accessorKey: "total_amount",
-    header: "Total",
-    cell: ({ row }) => `৳${Number(row.original.total_amount).toFixed(2)}`,
+    header: t("app.total", locale),
+    cell: ({ row }) => fmtMoney(Number(row.original.total_amount), locale),
   },
   {
     accessorKey: "due_amount",
-    header: "Due",
+    header: t("app.due", locale),
     cell: ({ row }) => (
       <span className={row.original.due_amount > 0 ? "text-destructive font-medium" : ""}>
-        ৳{Number(row.original.due_amount).toFixed(2)}
+        {fmtMoney(Number(row.original.due_amount), locale)}
       </span>
     ),
   },
   {
     accessorKey: "due_date",
-    header: "Due Date",
+    header: t("reports.dueDate", locale),
     cell: ({ row }) => row.original.due_date ? new Date(row.original.due_date).toLocaleDateString() : "—",
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: t("app.status", locale),
     cell: ({ row }) => (
       <Badge variant={row.original.status === "paid" ? "default" : "destructive"} className="capitalize">
         {row.original.status}
@@ -58,6 +59,7 @@ const columns: ColumnDef<CustomerDue>[] = [
 ];
 
 export default function CustomerDueReportPage() {
+  const locale = getClientLocale();
   const [dues, setDues] = useState<CustomerDue[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -99,6 +101,7 @@ export default function CustomerDueReportPage() {
 
   const totalDue = dues.reduce((s, d) => s + Number(d.due_amount), 0);
   const unpaidCount = dues.length;
+  const columns = makeColumns(locale);
 
   if (loading) {
     return (
@@ -110,19 +113,19 @@ export default function CustomerDueReportPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Customer Due Report" description="Outstanding customer payments overview" />
+      <PageHeader title={t("reports.customerDue.title", locale)} description={t("reports.customerDue.description", locale)} />
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <StatCard title="Total Due" value={`৳${totalDue.toFixed(2)}`} variant={totalDue > 0 ? "destructive" : "default"} />
-        <StatCard title="Unpaid Invoices" value={String(unpaidCount)} />
+        <StatCard title={t("reports.totalDue", locale)} value={fmtMoney(totalDue, locale)} variant={totalDue > 0 ? "destructive" : "default"} />
+        <StatCard title={t("reports.unpaidInvoices", locale)} value={fmtInt(unpaidCount, locale)} />
       </div>
 
       <DataTable
         columns={columns}
         data={dues}
         searchColumns={[
-          { key: "invoice_no", placeholder: "Search invoice no..." },
-          { key: "mobile_number", placeholder: "Search mobile no..." },
+          { key: "invoice_no", placeholder: translateWithVars(t("table.searchCol", locale), { key: t("reports.invoiceNo", locale) }) },
+          { key: "mobile_number", placeholder: translateWithVars(t("table.searchCol", locale), { key: t("reports.mobileNo", locale) }) },
         ]}
       />
     </div>

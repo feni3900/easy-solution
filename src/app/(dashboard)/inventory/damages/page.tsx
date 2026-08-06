@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getClientLocale, t, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface Product {
   product_id: number;
@@ -30,18 +31,20 @@ interface DamageRow {
   products?: { product_name: string } | null;
 }
 
-const columns: ColumnDef<DamageRow>[] = [
+const makeColumns = (locale: "en" | "bn"): ColumnDef<DamageRow>[] => [
   {
     accessorKey: "date",
-    header: "Date",
+    header: t("app.date", locale),
     cell: ({ row }) => new Date(row.original.date).toLocaleDateString(),
   },
-  { header: "Product", cell: ({ row }) => row.original.products?.product_name ?? "—" },
-  { accessorKey: "quantity", header: "Qty" },
-  { accessorKey: "reason", header: "Reason" },
+  { header: t("sales.returns.product", locale), cell: ({ row }) => row.original.products?.product_name ?? "—" },
+  { accessorKey: "quantity", header: t("app.qty", locale), cell: ({ row }) => fmtInt(row.original.quantity, locale) },
+  { accessorKey: "reason", header: t("sales.reason", locale) },
 ];
 
 export default function DamagesPage() {
+  const locale = getClientLocale();
+  const columns = makeColumns(locale);
   const [damages, setDamages] = useState<DamageRow[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +85,7 @@ export default function DamagesPage() {
     const product = products.find((p) => String(p.product_id) === form.product_id);
     if (!product) return;
     if (qty > product.current_stock) {
-      alert(`Only ${product.current_stock} units in stock for ${product.product_name}.`);
+      alert(translateWithVars(t("inventory.damages.onlyStock", locale), { stock: fmtInt(product.current_stock, locale), product: product.product_name }));
       return;
     }
 
@@ -101,7 +104,7 @@ export default function DamagesPage() {
       .single();
 
     if (error) {
-      alert("Error: " + error.message);
+      alert(translateWithVars(t("inventory.damages.error", locale), { message: error.message }));
       setSaving(false);
       return;
     }
@@ -111,13 +114,13 @@ export default function DamagesPage() {
       p_quantity: qty,
       p_movement_type: "Damage",
       p_reference_id: damage?.id ?? null,
-      p_reference_no: `DAM-${damage?.id ?? Date.now()}`,
+      p_reference_no: `DAM-${damage?.id ?? 0}`,
       p_notes: form.reason || "Damaged stock",
       p_created_by: user?.id ?? null,
     });
 
     if (stockError) {
-      alert("Damage recorded but stock deduction failed: " + stockError.message);
+      alert(translateWithVars(t("inventory.damages.recordedButFailed", locale), { message: stockError.message }));
     } else {
       setForm({ product_id: "", quantity: "1", reason: "" });
       setOpen(false);
@@ -129,34 +132,34 @@ export default function DamagesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <PageHeader title="Damaged Products" description="Record and track damaged stock" />
+        <PageHeader title={t("inventory.damages.title", locale)} description={t("inventory.damages.desc", locale)} />
         <Dialog open={open} onOpenChange={setOpen}>
           <Button onClick={() => setOpen(true)}>
             <Plus className="size-4 mr-2" />
-            Record Damage
+            {t("inventory.damages.record", locale)}
           </Button>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Record Damaged Stock</DialogTitle>
+              <DialogTitle>{t("inventory.damages.recordTitle", locale)}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid gap-2">
-                <Label>Product</Label>
+                <Label>{t("sales.returns.product", locale)}</Label>
                 <select
                   className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                   value={form.product_id}
                   onChange={(e) => setForm({ ...form, product_id: e.target.value })}
                 >
-                  <option value="">Select product</option>
+                  <option value="">{t("inventory.damages.selectProduct", locale)}</option>
                   {products.map((p) => (
                     <option key={p.product_id} value={p.product_id}>
-                      {p.product_name} (Stock: {p.current_stock})
+                      {p.product_name} ({translateWithVars(t("inventory.damages.stock", locale), { n: fmtInt(p.current_stock, locale) })})
                     </option>
                   ))}
                 </select>
               </div>
               <div className="grid gap-2">
-                <Label>Quantity</Label>
+                <Label>{t("inventory.damages.quantity", locale)}</Label>
                 <Input
                   type="number"
                   min={1}
@@ -165,11 +168,11 @@ export default function DamagesPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label>Reason</Label>
+                <Label>{t("sales.reason", locale)}</Label>
                 <Input
                   value={form.reason}
                   onChange={(e) => setForm({ ...form, reason: e.target.value })}
-                  placeholder="e.g. Broken during delivery"
+                  placeholder={t("inventory.damages.reasonPh", locale)}
                 />
               </div>
               <Button
@@ -177,7 +180,7 @@ export default function DamagesPage() {
                 disabled={saving || !form.product_id || !form.quantity}
               >
                 {saving && <Loader2 className="size-4 animate-spin mr-2" />}
-                Record Damage
+                {t("inventory.damages.record", locale)}
               </Button>
             </div>
           </DialogContent>

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Package, Loader2, Search, Upload, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getClientLocale, t, fmtMoney } from "@/lib/i18n";
 
 interface Product {
   product_id: number;
@@ -42,6 +43,7 @@ interface Brand {
 }
 
 export default function ProductsPage() {
+  const locale = getClientLocale();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -227,20 +229,20 @@ export default function ProductsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Products</h1>
+        <h1 className="text-2xl font-semibold">{t("inventory.products.title", locale)}</h1>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          <Input placeholder={t("store.searchPlaceholder", locale)} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(Number(e.target.value))}
           className="rounded-md border bg-background px-3 py-2 text-sm"
         >
-          <option value={0}>All Categories</option>
+          <option value={0}>{t("store.allCategories", locale)}</option>
           {categories.map((c) => (
             <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
           ))}
@@ -250,7 +252,7 @@ export default function ProductsPage() {
           onChange={(e) => setBrandFilter(Number(e.target.value))}
           className="rounded-md border bg-background px-3 py-2 text-sm"
         >
-          <option value={0}>All Brands</option>
+          <option value={0}>{t("store.allBrands", locale)}</option>
           {brands.map((b) => (
             <option key={b.brand_id} value={b.brand_id}>{b.brand_name}</option>
           ))}
@@ -272,15 +274,15 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left font-medium">Product</th>
-                <th className="p-3 text-left font-medium">SKU</th>
-                <th className="p-3 text-left font-medium">Size</th>
-                <th className="p-3 text-left font-medium">Unit</th>
-                <th className="p-3 text-left font-medium">Location</th>
-                <th className="p-3 text-right font-medium">P Price</th>
-                <th className="p-3 text-right font-medium">S Ratio</th>
-                <th className="p-3 text-right font-medium">S Price</th>
-                <th className="p-3 text-right font-medium">Stock</th>
+                <th className="p-3 text-left font-medium">{t("inventory.products.title", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.sku", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.size", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.unit", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.location", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("inventory.products.pPrice", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("inventory.products.sRatio", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("inventory.products.sPrice", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("inventory.products.stock", locale)}</th>
               </tr>
             </thead>
             <tbody>
@@ -292,7 +294,7 @@ export default function ProductsPage() {
                         <button
                           type="button"
                           onClick={() => openGalleryPicker(p)}
-                          title="Change image"
+                          title={t("inventory.products.changeImage", locale)}
                           className="relative shrink-0 group"
                         >
                           {p.image_url ? (
@@ -313,7 +315,7 @@ export default function ProductsPage() {
                         <button
                           type="button"
                           onClick={() => toggleInvoices(p)}
-                          title="View purchase invoices"
+                          title={t("inventory.products.viewInvoices", locale)}
                           className="text-muted-foreground hover:text-primary"
                         >
                           {invoiceOpenFor === p.product_id ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -322,8 +324,8 @@ export default function ProductsPage() {
                     </td>
                   <td className="p-3 text-muted-foreground">{p.size || "-"}</td>
                   <td className="p-3 text-muted-foreground">{p.unit || "-"}</td>
-                  <td className="p-3 text-muted-foreground">{p.storage_location || "Self"}</td>
-                  <td className="p-3 text-right">৳{Number(p.cost_price).toFixed(2)}</td>
+                  <td className="p-3 text-muted-foreground">{p.storage_location || t("app.self", locale)}</td>
+                  <td className="p-3 text-right">{fmtMoney(Number(p.cost_price), locale)}</td>
                   <td className="p-3 text-right w-24">
                     {savingRatioId === p.product_id ? (
                       <Loader2 className="size-4 animate-spin ml-auto" />
@@ -339,17 +341,17 @@ export default function ProductsPage() {
                       />
                     )}
                   </td>
-                  <td className="p-3 text-right">৳{Number(p.selling_price).toFixed(2)}</td>
+                  <td className="p-3 text-right">{fmtMoney(Number(p.selling_price), locale)}</td>
                   <td className={`p-3 text-right font-medium ${p.current_stock <= p.min_stock_threshold ? "text-amber-600" : ""}`}>{p.current_stock}</td>
                   </tr>
                   {invoiceOpenFor === p.product_id && (
                     <tr key={`${p.product_id}-inv`} className="border-b bg-muted/30">
                       <td colSpan={9} className="p-2 pl-3">
-                        <span className="text-xs font-medium text-muted-foreground">Purchase No:</span>
+                        <span className="text-xs font-medium text-muted-foreground">{t("purchases.purchaseNo", locale)}:</span>
                         {invoiceLoading ? (
                           <span className="ml-2"><Loader2 className="size-3 inline animate-spin" /></span>
                         ) : invoiceNos.length === 0 ? (
-                          <span className="ml-2 text-xs text-muted-foreground">No purchase invoices found.</span>
+                          <span className="ml-2 text-xs text-muted-foreground">{t("inventory.products.noInvoices", locale)}</span>
                         ) : (
                           <span className="ml-2 inline-flex flex-wrap items-center gap-1">
                             {invoiceNos.map((inv) => (
@@ -363,7 +365,7 @@ export default function ProductsPage() {
                 </Fragment>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No products found.</td></tr>
+                <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">{t("store.noProducts", locale)}</td></tr>
               )}
             </tbody>
           </table>
@@ -374,7 +376,7 @@ export default function ProductsPage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-hidden rounded-lg border bg-card shadow-lg flex flex-col">
             <div className="flex items-center justify-between border-b p-4">
-              <h2 className="text-base sm:text-lg font-semibold">Choose from Gallery</h2>
+              <h2 className="text-base sm:text-lg font-semibold">{t("inventory.products.gallery", locale)}</h2>
               <Button variant="ghost" size="icon" onClick={() => { setGalleryOpen(false); setGalleryForProduct(null); }}><span className="text-lg">×</span></Button>
             </div>
             <div className="flex items-center gap-3 border-b px-4 py-2">
@@ -383,14 +385,14 @@ export default function ProductsPage() {
                 size="sm"
                 onClick={() => { uploadTargetRef.current = galleryForProduct?.product_id ?? null; fileInputRef.current?.click(); }}
               >
-                <Upload className="size-4 mr-1" /> Upload New
+                <Upload className="size-4 mr-1" /> {t("inventory.products.uploadNew", locale)}
               </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               {galleryLoading ? (
                 <div className="flex justify-center py-12"><Loader2 className="size-6 animate-spin" /></div>
               ) : galleryImages.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">No images in gallery. Upload some first.</p>
+                <p className="text-center text-muted-foreground py-12">{t("inventory.products.noImages", locale)}</p>
               ) : (
                 <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
                   {galleryImages.map((img) => (

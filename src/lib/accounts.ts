@@ -1,5 +1,20 @@
 import { createClient } from "@/lib/supabase/client";
 
+interface JournalLineRow {
+  debit: number;
+  credit: number;
+  account_id: number;
+  description: string;
+  journal_entries: { entry_date: string; entry_no: string }[] | null;
+}
+
+interface AccountRow {
+  account_id: number;
+  account_code: string;
+  account_name: string;
+  account_type: string;
+}
+
 export interface LedgerRow {
   entry_date: string;
   entry_no: string;
@@ -35,8 +50,8 @@ export async function fetchLedger(from: string, to: string): Promise<LedgerRow[]
 
   const accounts = await fetchAccounts();
 
-  return (data ?? []).map((l: any) => {
-    const entry = l.journal_entries ?? {};
+  return (data ?? []).map((l: JournalLineRow) => {
+    const entry = (l.journal_entries ?? [])[0] ?? {};
     const account = accounts.get(l.account_id);
     return {
       entry_date: entry.entry_date ?? from,
@@ -56,7 +71,7 @@ export async function fetchAccounts(): Promise<Map<number, { account_code: strin
   const supabase = createClient();
   const { data } = await supabase.from("chart_of_accounts").select("account_id, account_code, account_name, account_type");
   const map = new Map<number, { account_code: string; account_name: string; account_type: string }>();
-  (data ?? []).forEach((a: any) => map.set(a.account_id, a));
+  (data ?? []).forEach((a: AccountRow) => map.set(a.account_id, a));
   return map;
 }
 

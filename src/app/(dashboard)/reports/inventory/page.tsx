@@ -8,6 +8,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { DataTable } from "@/components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
+import { getClientLocale, t, fmtMoney, fmtInt } from "@/lib/i18n";
 
 interface Product {
   product_id: number;
@@ -19,32 +20,37 @@ interface Product {
   current_stock: number;
 }
 
-const columns: ColumnDef<Product>[] = [
-  { accessorKey: "product_name", header: "Product" },
-  { accessorKey: "sku", header: "SKU" },
+const makeColumns = (locale: "en" | "bn"): ColumnDef<Product>[] => [
+  { accessorKey: "product_name", header: t("sales.returns.product", locale) },
+  { accessorKey: "sku", header: t("app.sku", locale) },
   {
     accessorKey: "cost_price",
-    header: "Cost",
-    cell: ({ row }) => `৳${Number(row.original.cost_price).toFixed(2)}`,
+    header: t("app.cost", locale),
+    cell: ({ row }) => fmtMoney(Number(row.original.cost_price), locale),
   },
   {
     accessorKey: "selling_price",
-    header: "Price",
-    cell: ({ row }) => `৳${Number(row.original.selling_price).toFixed(2)}`,
+    header: t("app.price", locale),
+    cell: ({ row }) => fmtMoney(Number(row.original.selling_price), locale),
   },
   {
     accessorKey: "current_stock",
-    header: "Stock",
+    header: t("inventory.products.stock", locale),
     cell: ({ row }) => (
       <span className={row.original.current_stock <= row.original.min_stock_threshold ? "text-destructive font-medium" : ""}>
-        {row.original.current_stock}
+        {fmtInt(row.original.current_stock, locale)}
       </span>
     ),
   },
-  { accessorKey: "min_stock_threshold", header: "Min Stock" },
+  {
+    accessorKey: "min_stock_threshold",
+    header: t("reports.minStock", locale),
+    cell: ({ row }) => fmtInt(row.original.min_stock_threshold, locale),
+  },
 ];
 
 export default function InventoryReportPage() {
+  const locale = getClientLocale();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -70,6 +76,7 @@ export default function InventoryReportPage() {
 
   const stockValue = products.reduce((s, p) => s + p.current_stock * Number(p.cost_price), 0);
   const lowStockCount = products.filter((p) => p.current_stock <= Number(p.min_stock_threshold)).length;
+  const columns = makeColumns(locale);
 
   if (loading) {
     return (
@@ -81,21 +88,21 @@ export default function InventoryReportPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Inventory Report" description="Stock summary and valuation" />
+      <PageHeader title={t("reports.inventory.title", locale)} description={t("reports.inventory.description", locale)} />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard title="Products" value={String(products.length)} />
-        <StatCard title="Stock Value (Cost)" value={`৳${stockValue.toFixed(2)}`} />
+        <StatCard title={t("inventory.products.title", locale)} value={fmtInt(products.length, locale)} />
+        <StatCard title={t("reports.inventory.stockValue", locale)} value={fmtMoney(stockValue, locale)} />
         <StatCard
-          title="Low Stock Items"
-          value={String(lowStockCount)}
+          title={t("reports.inventory.lowStockItems", locale)}
+          value={fmtInt(lowStockCount, locale)}
           variant={lowStockCount > 0 ? "destructive" : "default"}
         />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Stock Levels</CardTitle>
+          <CardTitle className="text-base">{t("reports.inventory.stockLevels", locale)}</CardTitle>
         </CardHeader>
         <CardContent>
           <DataTable columns={columns} data={products} searchKey="product_name" />

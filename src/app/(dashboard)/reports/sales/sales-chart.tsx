@@ -9,8 +9,10 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
+import { getClientLocale, t, fmtMoney } from "@/lib/i18n";
 
 export function SalesChart({ data }: { data: { date: string; total: number }[] }) {
+  const locale = getClientLocale();
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -30,7 +32,7 @@ export function SalesChart({ data }: { data: { date: string; total: number }[] }
           />
           <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
           <Tooltip
-            formatter={(value) => [`৳${Number(value ?? 0).toFixed(2)}`, "Sales"]}
+            formatter={(value) => [fmtMoney(Number(value ?? 0), locale), t("reports.sales.chartLabel", locale)]}
           />
           <Area
             type="monotone"

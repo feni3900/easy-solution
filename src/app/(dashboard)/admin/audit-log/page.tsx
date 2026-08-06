@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
+import { getClientLocale, t } from "@/lib/i18n";
 
 interface AuditLogEntry {
   id: string;
@@ -18,19 +19,21 @@ interface AuditLogEntry {
   created_at: string;
 }
 
-const columns: ColumnDef<AuditLogEntry>[] = [
-  { accessorKey: "user_email", header: "User" },
-  { accessorKey: "action", header: "Action" },
-  { accessorKey: "table_name", header: "Table" },
-  { accessorKey: "record_id", header: "Record ID" },
+const makeColumns = (locale: "en" | "bn"): ColumnDef<AuditLogEntry>[] => [
+  { accessorKey: "user_email", header: t("admin.auditLog.user", locale) },
+  { accessorKey: "action", header: t("admin.auditLog.action", locale) },
+  { accessorKey: "table_name", header: t("admin.auditLog.table", locale) },
+  { accessorKey: "record_id", header: t("admin.auditLog.recordId", locale) },
   {
     accessorKey: "created_at",
-    header: "Time",
+    header: t("admin.auditLog.time", locale),
     cell: ({ row }) => new Date(row.original.created_at).toLocaleString(),
   },
 ];
 
 export default function AdminAuditLogPage() {
+  const locale = getClientLocale();
+  const columns = makeColumns(locale);
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,7 +60,7 @@ export default function AdminAuditLogPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Audit Log" description="System activity trail for accountability" />
+      <PageHeader title={t("admin.auditLog.title", locale)} description={t("admin.auditLog.desc", locale)} />
       <DataTable columns={columns} data={logs} searchKey="user_email" />
     </div>
   );

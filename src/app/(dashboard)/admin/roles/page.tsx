@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Loader2 } from "lucide-react";
+import { getClientLocale, t } from "@/lib/i18n";
 
 interface RolePermission {
   id: string;
@@ -25,13 +26,15 @@ interface RolePermission {
   description: string;
 }
 
-const columns: ColumnDef<RolePermission>[] = [
-  { accessorKey: "role", header: "Role" },
-  { accessorKey: "permission", header: "Permission" },
-  { accessorKey: "description", header: "Description" },
+const makeColumns = (locale: "en" | "bn"): ColumnDef<RolePermission>[] => [
+  { accessorKey: "role", header: t("admin.roles.role", locale) },
+  { accessorKey: "permission", header: t("admin.roles.permission", locale) },
+  { accessorKey: "description", header: t("admin.roles.description", locale) },
 ];
 
 export default function AdminRolesPage() {
+  const locale = getClientLocale();
+  const columns = makeColumns(locale);
   const [roles, setRoles] = useState<RolePermission[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -86,10 +89,10 @@ export default function AdminRolesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Roles & Permissions" description="Manage user roles and access permissions" />
+      <PageHeader title={t("nav.admin.roles", locale)} description={t("admin.roles.desc", locale)} />
 
       <div className="flex justify-end">
-        <Button onClick={openAdd}><Plus className="size-4" /> Add Role</Button>
+        <Button onClick={openAdd}><Plus className="size-4" /> {t("admin.roles.addRole", locale)}</Button>
       </div>
 
       <DataTable columns={cols} data={roles} searchKey="role" />
@@ -97,28 +100,28 @@ export default function AdminRolesPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Role" : "Add Role"}</DialogTitle>
-            <DialogDescription>Define role and permission details.</DialogDescription>
+            <DialogTitle>{editing ? t("admin.roles.editRole", locale) : t("admin.roles.addRole", locale)}</DialogTitle>
+            <DialogDescription>{t("admin.roles.dialogDesc", locale)}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label>Role</Label>
+              <Label>{t("admin.roles.role", locale)}</Label>
               <Input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} />
             </div>
             <div className="grid gap-2">
-              <Label>Permission</Label>
+              <Label>{t("admin.roles.permission", locale)}</Label>
               <Input value={form.permission} onChange={(e) => setForm({ ...form, permission: e.target.value })} />
             </div>
             <div className="grid gap-2">
-              <Label>Description</Label>
+              <Label>{t("admin.roles.description", locale)}</Label>
               <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("app.cancel", locale)}</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="size-4 animate-spin" />}
-              {editing ? "Save Changes" : "Create"}
+              {editing ? t("crud.saveChanges", locale) : t("app.create", locale)}
             </Button>
           </DialogFooter>
         </DialogContent>

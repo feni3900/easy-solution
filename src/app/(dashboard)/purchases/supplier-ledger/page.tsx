@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, Truck } from "lucide-react";
+import { getClientLocale, t, fmtMoney } from "@/lib/i18n";
 
 interface Supplier {
   supplier_id: number;
@@ -47,6 +48,7 @@ export default function SupplierLedgerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const locale = getClientLocale();
 
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -104,16 +106,16 @@ export default function SupplierLedgerPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Supplier Ledger" description="Search a supplier by name or phone to see their full purchase & payment history" />
+      <PageHeader title={t("purchases.ledger.title", locale)} description={t("suppliers.ledger.desc", locale)} />
 
       <div className="rounded-lg border bg-card p-4">
-        <Label>Search Supplier</Label>
+        <Label>{t("suppliers.ledger.search", locale)}</Label>
         <div className="relative mt-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Type supplier name or phone number..."
+            placeholder={t("suppliers.ledger.searchPh", locale)}
             className="pl-9"
           />
           {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 size-4 animate-spin text-muted-foreground" />}
@@ -135,7 +137,7 @@ export default function SupplierLedgerPage() {
             </div>
           )}
           {!searching && search.trim() && results.length === 0 && (
-            <p className="mt-1 text-xs text-muted-foreground">No supplier found.</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("suppliers.ledger.noFound", locale)}</p>
           )}
         </div>
       </div>
@@ -150,42 +152,42 @@ export default function SupplierLedgerPage() {
               <p className="text-sm text-muted-foreground font-mono">{selected.phone}</p>
               {selected.company_name && <p className="text-sm text-muted-foreground">{selected.company_name}</p>}
             </div>
-            <Button variant="outline" onClick={() => { setSelected(null); setPurchases([]); }}>Clear</Button>
+            <Button variant="outline" onClick={() => { setSelected(null); setPurchases([]); }}>{t("sales.returns.clear", locale)}</Button>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard title="Total Purchases" value={`৳${totalPurchases.toFixed(2)}`} />
-            <StatCard title="Total Paid" value={`৳${totalPaid.toFixed(2)}`} />
-            <StatCard title="Current Due" value={`৳${currentDue.toFixed(2)}`} variant={currentDue > 0 ? "destructive" : "default"} />
+            <StatCard title={t("suppliers.ledger.totalPurchases", locale)} value={fmtMoney(totalPurchases, locale)} />
+            <StatCard title={t("suppliers.ledger.totalPaid", locale)} value={fmtMoney(totalPaid, locale)} />
+            <StatCard title={t("suppliers.ledger.currentDue", locale)} value={fmtMoney(currentDue, locale)} variant={currentDue > 0 ? "destructive" : "default"} />
           </div>
 
           {loading ? (
             <div className="flex items-center justify-center h-40"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
           ) : (
             <div className="rounded-lg border bg-card overflow-x-auto">
-              <h3 className="border-b p-4 font-medium">Purchase History</h3>
+              <h3 className="border-b p-4 font-medium">{t("suppliers.ledger.purchaseHistory", locale)}</h3>
               <table className="w-full text-sm min-w-[600px]">
                 <thead>
                   <tr className="border-b bg-muted/50 text-left">
-                    <th className="p-3 font-medium">Date</th>
-                    <th className="p-3 font-medium">Purchase No</th>
-                    <th className="p-3 text-right font-medium">Total</th>
-                    <th className="p-3 text-right font-medium">Paid</th>
-                    <th className="p-3 text-right font-medium">Due</th>
-                    <th className="p-3 font-medium">Payment Type</th>
+                    <th className="p-3 font-medium">{t("app.date", locale)}</th>
+                    <th className="p-3 font-medium">{t("purchases.purchaseNo", locale)}</th>
+                    <th className="p-3 text-right font-medium">{t("app.total", locale)}</th>
+                    <th className="p-3 text-right font-medium">{t("app.paid", locale)}</th>
+                    <th className="p-3 text-right font-medium">{t("app.due", locale)}</th>
+                    <th className="p-3 font-medium">{t("suppliers.ledger.paymentType", locale)}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {purchases.length === 0 ? (
-                    <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No purchases recorded.</td></tr>
+                    <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{t("purchases.noPurchases", locale)}</td></tr>
                   ) : (
                     purchases.map((p, i) => (
                       <tr key={i} className="border-b last:border-0 hover:bg-muted/30">
                         <td className="p-3 whitespace-nowrap">{new Date(p.purchase_date).toLocaleDateString()}</td>
                         <td className="p-3 font-medium">{p.invoice_no}</td>
-                        <td className="p-3 text-right">৳{Number(p.total_amount).toFixed(2)}</td>
-                        <td className="p-3 text-right">৳{Number(p.paid_amount).toFixed(2)}</td>
-                        <td className={`p-3 text-right ${Number(p.due_amount) > 0 ? "text-destructive font-medium" : ""}`}>৳{Number(p.due_amount).toFixed(2)}</td>
+                        <td className="p-3 text-right">{fmtMoney(Number(p.total_amount), locale)}</td>
+                        <td className="p-3 text-right">{fmtMoney(Number(p.paid_amount), locale)}</td>
+                        <td className={`p-3 text-right ${Number(p.due_amount) > 0 ? "text-destructive font-medium" : ""}`}>{fmtMoney(Number(p.due_amount), locale)}</td>
                         <td className="p-3">
                           <Badge variant={p.payment_type === "Cash" ? "default" : "destructive"} className="capitalize">
                             {p.payment_type}
@@ -203,26 +205,26 @@ export default function SupplierLedgerPage() {
             <div className="flex items-center justify-center h-40"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
           ) : (
             <div className="rounded-lg border bg-card overflow-x-auto">
-              <h3 className="border-b p-4 font-medium">Payment History</h3>
+              <h3 className="border-b p-4 font-medium">{t("suppliers.ledger.paymentHistory", locale)}</h3>
               <table className="w-full text-sm min-w-[600px]">
                 <thead>
                   <tr className="border-b bg-muted/50 text-left">
-                    <th className="p-3 font-medium">Date</th>
-                    <th className="p-3 font-medium">Purchase No</th>
-                    <th className="p-3 text-right font-medium">Amount</th>
-                    <th className="p-3 font-medium">Mode</th>
-                    <th className="p-3 font-medium">Remarks</th>
+                    <th className="p-3 font-medium">{t("app.date", locale)}</th>
+                    <th className="p-3 font-medium">{t("purchases.purchaseNo", locale)}</th>
+                    <th className="p-3 text-right font-medium">{t("app.amount", locale)}</th>
+                    <th className="p-3 font-medium">{t("suppliers.ledger.mode", locale)}</th>
+                    <th className="p-3 font-medium">{t("suppliers.ledger.remarks", locale)}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {payments.length === 0 ? (
-                    <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No payments recorded.</td></tr>
+                    <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">{t("suppliers.ledger.noPayments", locale)}</td></tr>
                   ) : (
                     payments.map((pm, i) => (
                       <tr key={pm.payment_id ?? i} className="border-b last:border-0 hover:bg-muted/30">
                         <td className="p-3 whitespace-nowrap">{new Date(pm.created_at).toLocaleDateString()}</td>
                         <td className="p-3 font-medium">{Array.isArray(pm.purchases) ? pm.purchases[0]?.invoice_no ?? "-" : pm.purchases?.invoice_no ?? "-"}</td>
-                        <td className="p-3 text-right">৳{Number(pm.amount_paid).toFixed(2)}</td>
+                        <td className="p-3 text-right">{fmtMoney(Number(pm.amount_paid), locale)}</td>
                         <td className="p-3">
                           <Badge variant="outline" className="capitalize">{pm.payment_mode}</Badge>
                         </td>
@@ -239,7 +241,7 @@ export default function SupplierLedgerPage() {
 
       {!selected && !search && (
         <div className="rounded-lg border bg-card p-12 text-center text-muted-foreground">
-          Search and select a supplier to view their ledger.
+          {t("suppliers.ledger.empty", locale)}
         </div>
       )}
     </div>

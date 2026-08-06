@@ -5,6 +5,7 @@ import { Upload, Trash2, Copy, Loader2, Image, Grid, List, Search, Scissors } fr
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { getClientLocale, t, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface GalleryImage {
   id: number;
@@ -18,6 +19,7 @@ interface GalleryImage {
 }
 
 export default function GalleryPage() {
+  const locale = getClientLocale();
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -51,7 +53,7 @@ export default function GalleryPage() {
       const json = await res.json();
 
       if (!res.ok) {
-        alert(`Upload failed: ${json.error}`);
+        alert(translateWithVars(t("gallery.uploadFailed", locale), { message: json.error }));
       }
     }
 
@@ -61,12 +63,12 @@ export default function GalleryPage() {
   };
 
   const handleDelete = async (image: GalleryImage) => {
-    if (!confirm(`Delete "${image.filename}"?`)) return;
+    if (!confirm(translateWithVars(t("gallery.deleteConfirm", locale), { name: image.filename }))) return;
 
     const res = await fetch(`/api/gallery/${image.id}`, { method: "DELETE" });
     if (!res.ok) {
       const json = await res.json();
-      alert(`Delete failed: ${json.error}`);
+      alert(translateWithVars(t("gallery.deleteFailed", locale), { message: json.error }));
     }
     if (selectedImage?.id === image.id) setSelectedImage(null);
     load();
@@ -93,7 +95,7 @@ export default function GalleryPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Gallery</h1>
+        <h1 className="text-2xl font-semibold">{t("gallery.title", locale)}</h1>
         <div className="flex items-center gap-2">
           <input
             ref={fileInputRef}
@@ -106,12 +108,12 @@ export default function GalleryPage() {
           <Link href="/gallery/edit">
             <Button variant="outline">
               <Scissors className="size-4 mr-2" />
-              Image Editor
+              {t("gallery.imageEditor", locale)}
             </Button>
           </Link>
           <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
             {uploading ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Upload className="size-4 mr-2" />}
-            {uploading ? "Uploading..." : "Upload Images"}
+            {uploading ? t("gallery.uploading", locale) : t("gallery.uploadImages", locale)}
           </Button>
         </div>
       </div>
@@ -119,7 +121,7 @@ export default function GalleryPage() {
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input placeholder="Search images..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          <Input placeholder={t("gallery.search", locale)} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
         <Button variant={view === "grid" ? "default" : "outline"} size="icon" onClick={() => setView("grid")}>
           <Grid className="size-4" />
@@ -129,15 +131,15 @@ export default function GalleryPage() {
         </Button>
       </div>
 
-      <p className="text-sm text-muted-foreground">{filtered.length} images</p>
+      <p className="text-sm text-muted-foreground">{translateWithVars(t("gallery.imagesCount", locale), { n: fmtInt(filtered.length, locale) })}</p>
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="size-6 animate-spin" /></div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
           <Image className="mx-auto size-12 text-muted-foreground" />
-          <p className="mt-4 text-muted-foreground">No images uploaded yet.</p>
-          <Button className="mt-4" onClick={() => fileInputRef.current?.click()}>Upload your first image</Button>
+          <p className="mt-4 text-muted-foreground">{t("gallery.noImages", locale)}</p>
+          <Button className="mt-4" onClick={() => fileInputRef.current?.click()}>{t("gallery.uploadFirst", locale)}</Button>
         </div>
       ) : view === "grid" ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -158,21 +160,21 @@ export default function GalleryPage() {
                 <button
                   onClick={(e) => { e.stopPropagation(); copyUrl(img.url); }}
                   className="rounded bg-black/60 p-1 text-white hover:bg-black/80"
-                  title="Copy URL"
+                  title={t("gallery.copyUrl", locale)}
                 >
                   <Copy className="size-3" />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDelete(img); }}
                   className="rounded bg-red-600/80 p-1 text-white hover:bg-red-600"
-                  title="Delete"
+                  title={t("app.delete", locale)}
                 >
                   <Trash2 className="size-3" />
                 </button>
               </div>
               {copied === img.url && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-xs font-medium">
-                  Copied!
+                  {t("gallery.copied", locale)}
                 </div>
               )}
             </div>
@@ -183,12 +185,12 @@ export default function GalleryPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left font-medium w-16">Preview</th>
-                <th className="p-3 text-left font-medium">Filename</th>
-                <th className="p-3 text-left font-medium">Size</th>
-                <th className="p-3 text-left font-medium">Type</th>
-                <th className="p-3 text-left font-medium">Date</th>
-                <th className="p-3 text-right font-medium">Actions</th>
+                <th className="p-3 text-left font-medium w-16">{t("gallery.preview", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("gallery.filename", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("gallery.size", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.type", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.date", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("app.actions", locale)}</th>
               </tr>
             </thead>
             <tbody>
@@ -227,10 +229,10 @@ export default function GalleryPage() {
               </div>
               <div className="flex gap-2 shrink-0">
                 <Button variant="outline" size="sm" onClick={() => copyUrl(selectedImage.url)}>
-                  <Copy className="size-4 mr-1" /> Copy URL
+                  <Copy className="size-4 mr-1" /> {t("gallery.copyUrl", locale)}
                 </Button>
                 <Button variant="destructive" size="sm" onClick={() => handleDelete(selectedImage)}>
-                  <Trash2 className="size-4 mr-1" /> Delete
+                  <Trash2 className="size-4 mr-1" /> {t("app.delete", locale)}
                 </Button>
               </div>
             </div>

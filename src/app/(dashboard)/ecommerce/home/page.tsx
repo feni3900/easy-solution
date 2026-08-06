@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { EcommerceHomeClient } from "./home-client";
+import { getLocale } from "@/lib/i18n-server";
+import { t } from "@/lib/i18n";
 
 export const metadata = { title: "Ecommerce Home | Smart Solution ERP" };
 
@@ -17,6 +19,7 @@ const KEYS = [
 ];
 
 export default async function EcommerceHomePage() {
+  const locale = await getLocale();
   const supabase = await createClient();
   const { data } = await supabase.from("settings").select("key, value").in("key", KEYS);
 
@@ -30,7 +33,7 @@ export default async function EcommerceHomePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Ecommerce Home" description="Manage storefront homepage sections, address, and location map" />
+      <PageHeader title={t("webstore.home.pageTitle", locale)} description={t("webstore.home.pageDesc", locale)} />
       <EcommerceHomeClient
         bannerUrl={map.get("home_banner_url") ?? "/images/home-banner.png"}
         heroTitle={map.get("home_hero_title") ?? ""}

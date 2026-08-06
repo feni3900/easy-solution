@@ -27,6 +27,7 @@ import {
   ChevronRight,
   ArrowUpDown,
 } from "lucide-react";
+import { getClientLocale, t, translateWithVars } from "@/lib/i18n";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -41,13 +42,15 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   searchKey,
-  searchPlaceholder = "Search...",
+  searchPlaceholder,
   searchColumns,
   filterControls,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const locale = getClientLocale();
+  const resolvedSearchPlaceholder = searchPlaceholder ?? t("table.search", locale);
 
   const table = useReactTable({
     data,
@@ -69,7 +72,7 @@ export function DataTable<TData, TValue>({
         {filterControls}
         {searchKey && (
           <Input
-            placeholder={searchPlaceholder}
+            placeholder={resolvedSearchPlaceholder}
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="max-w-xs"
@@ -78,7 +81,7 @@ export function DataTable<TData, TValue>({
         {searchColumns?.map((f) => (
           <Input
             key={f.key}
-            placeholder={f.placeholder ?? `Search ${f.key}...`}
+            placeholder={f.placeholder ?? translateWithVars(t("table.searchCol", locale), { key: f.key })}
             value={table.getColumn(f.key)?.getFilterValue() as string ?? ""}
             onChange={(e) => table.getColumn(f.key)?.setFilterValue(e.target.value)}
             className="max-w-xs"
@@ -132,7 +135,7 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  No results.
+                  {t("table.noResults", locale)}
                 </TableCell>
               </TableRow>
             )}
@@ -147,7 +150,7 @@ export function DataTable<TData, TValue>({
           disabled={!table.getCanPreviousPage()}
         >
           <ChevronLeft className="size-4" />
-          Previous
+          {t("table.previous", locale)}
         </Button>
         <Button
           variant="outline"
@@ -155,7 +158,7 @@ export function DataTable<TData, TValue>({
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          Next
+          {t("table.next", locale)}
           <ChevronRight className="size-4" />
         </Button>
       </div>

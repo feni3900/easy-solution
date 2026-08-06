@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Loader2 } from "lucide-react";
+import { getClientLocale, t } from "@/lib/i18n";
 
 interface StockAlertRule {
   id: string;
@@ -28,22 +29,24 @@ interface StockAlertRule {
   created_at: string;
 }
 
-const columns: ColumnDef<StockAlertRule>[] = [
-  { accessorKey: "name", header: "Name" },
-  { accessorKey: "threshold", header: "Threshold" },
-  { accessorKey: "notify_email", header: "Notify Email" },
+const makeColumns = (locale: "en" | "bn"): ColumnDef<StockAlertRule>[] => [
+  { accessorKey: "name", header: t("app.name", locale) },
+  { accessorKey: "threshold", header: t("admin.stockAlerts.threshold", locale) },
+  { accessorKey: "notify_email", header: t("admin.stockAlerts.notifyEmail", locale) },
   {
     accessorKey: "is_active",
-    header: "Status",
+    header: t("app.status", locale),
     cell: ({ row }) => (
       <Badge variant={row.original.is_active ? "default" : "secondary"}>
-        {row.original.is_active ? "Active" : "Inactive"}
+        {row.original.is_active ? t("app.active", locale) : t("app.inactive", locale)}
       </Badge>
     ),
   },
 ];
 
 export default function AdminStockAlertsPage() {
+  const locale = getClientLocale();
+  const columns = makeColumns(locale);
   const [rules, setRules] = useState<StockAlertRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -98,10 +101,10 @@ export default function AdminStockAlertsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Stock Alert Rules" description="Configure low-stock notification thresholds" />
+      <PageHeader title={t("admin.stockAlerts.title", locale)} description={t("admin.stockAlerts.desc", locale)} />
 
       <div className="flex justify-end">
-        <Button onClick={openAdd}><Plus className="size-4" /> Add Rule</Button>
+        <Button onClick={openAdd}><Plus className="size-4" /> {t("admin.stockAlerts.addRule", locale)}</Button>
       </div>
 
       <DataTable columns={cols} data={rules} searchKey="name" />
@@ -109,28 +112,28 @@ export default function AdminStockAlertsPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Alert Rule" : "Add Alert Rule"}</DialogTitle>
-            <DialogDescription>Set up stock level alerts.</DialogDescription>
+            <DialogTitle>{editing ? t("admin.stockAlerts.editRule", locale) : t("admin.stockAlerts.addRuleTitle", locale)}</DialogTitle>
+            <DialogDescription>{t("admin.stockAlerts.dialogDesc", locale)}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label>Name</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Low Stock Warning, Critical Items" />
+              <Label>{t("app.name", locale)}</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("admin.stockAlerts.namePh", locale)} />
             </div>
             <div className="grid gap-2">
-              <Label>Threshold</Label>
+              <Label>{t("admin.stockAlerts.threshold", locale)}</Label>
               <Input type="number" value={form.threshold} onChange={(e) => setForm({ ...form, threshold: Number(e.target.value) })} />
             </div>
             <div className="grid gap-2">
-              <Label>Notify Email</Label>
+              <Label>{t("admin.stockAlerts.notifyEmail", locale)}</Label>
               <Input type="email" value={form.notify_email} onChange={(e) => setForm({ ...form, notify_email: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("app.cancel", locale)}</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="size-4 animate-spin" />}
-              {editing ? "Save Changes" : "Create"}
+              {editing ? t("crud.saveChanges", locale) : t("app.create", locale)}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -7,6 +7,7 @@ import { DataTable } from "@/components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { getClientLocale, t } from "@/lib/i18n";
 
 interface User {
   id: string;
@@ -17,31 +18,33 @@ interface User {
   created_at: string;
 }
 
-const columns: ColumnDef<User>[] = [
-  { accessorKey: "full_name", header: "Name" },
-  { accessorKey: "email", header: "Email" },
+const makeColumns = (locale: "en" | "bn"): ColumnDef<User>[] => [
+  { accessorKey: "full_name", header: t("app.name", locale) },
+  { accessorKey: "email", header: t("app.email", locale) },
   {
     accessorKey: "role",
-    header: "Role",
+    header: t("admin.users.role", locale),
     cell: ({ row }) => <Badge className="capitalize">{row.original.role}</Badge>,
   },
   {
     accessorKey: "is_active",
-    header: "Status",
+    header: t("app.status", locale),
     cell: ({ row }) => (
       <Badge variant={row.original.is_active ? "default" : "secondary"}>
-        {row.original.is_active ? "Active" : "Inactive"}
+        {row.original.is_active ? t("app.active", locale) : t("app.inactive", locale)}
       </Badge>
     ),
   },
   {
     accessorKey: "created_at",
-    header: "Joined",
+    header: t("admin.users.joined", locale),
     cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
   },
 ];
 
 export default function AdminUsersPage() {
+  const locale = getClientLocale();
+  const columns = makeColumns(locale);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -67,7 +70,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="User Management" description="Manage system users and access" />
+      <PageHeader title={t("admin.users.title", locale)} description={t("admin.users.desc", locale)} />
       <DataTable columns={columns} data={users} searchKey="full_name" />
     </div>
   );

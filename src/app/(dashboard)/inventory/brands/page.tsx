@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { getClientLocale, t, translateWithVars } from "@/lib/i18n";
 
 interface Brand {
   brand_id: number;
@@ -15,6 +16,7 @@ interface Brand {
 }
 
 export default function BrandsPage() {
+  const locale = getClientLocale();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -40,7 +42,7 @@ export default function BrandsPage() {
       await supabase.from("brands").update({ brand_name: form.brand_name }).eq("brand_id", editing.brand_id);
     } else {
       if (!form.brand_name.trim()) {
-        alert("Brand name is required.");
+        alert(t("inventory.brands.nameRequired", locale));
         return;
       }
       const { data: existing } = await supabase
@@ -48,7 +50,7 @@ export default function BrandsPage() {
         .select("brand_id")
         .ilike("brand_name", form.brand_name.trim());
       if (existing && existing.length > 0) {
-        alert(`Brand "${form.brand_name.trim()}" already exists.`);
+        alert(translateWithVars(t("inventory.brands.exists", locale), { name: form.brand_name.trim() }));
         return;
       }
       await supabase.from("brands").insert({ brand_name: form.brand_name });
@@ -58,7 +60,7 @@ export default function BrandsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete?")) return;
+    if (!confirm(t("app.deleteConfirm", locale))) return;
     const supabase = createClient();
     await supabase.from("brands").delete().eq("brand_id", id);
     load();
@@ -67,8 +69,8 @@ export default function BrandsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Brands</h1>
-        <Button onClick={openCreate}><Plus className="size-4 mr-2" />Add Brand</Button>
+        <h1 className="text-2xl font-semibold">{t("inventory.brands.title", locale)}</h1>
+        <Button onClick={openCreate}><Plus className="size-4 mr-2" />{t("inventory.brands.add", locale)}</Button>
       </div>
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="size-6 animate-spin" /></div>
@@ -77,9 +79,9 @@ export default function BrandsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left font-medium">Name</th>
-                <th className="p-3 text-center font-medium">Status</th>
-                <th className="p-3 text-right font-medium">Actions</th>
+                <th className="p-3 text-left font-medium">{t("app.name", locale)}</th>
+                <th className="p-3 text-center font-medium">{t("app.status", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("app.actions", locale)}</th>
               </tr>
             </thead>
             <tbody>
@@ -88,7 +90,7 @@ export default function BrandsPage() {
                   <td className="p-3 font-medium">{b.brand_name}</td>
                   <td className="p-3 text-center">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${b.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                      {b.is_active ? "Active" : "Inactive"}
+                      {b.is_active ? t("app.active", locale) : t("app.inactive", locale)}
                     </span>
                   </td>
                   <td className="p-3 text-right">
@@ -103,14 +105,14 @@ export default function BrandsPage() {
       )}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editing ? "Edit Brand" : "Add Brand"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? t("inventory.brands.edit", locale) : t("inventory.brands.add", locale)}</DialogTitle></DialogHeader>
           <div className="space-y-1">
-            <Label>Brand Name</Label>
+            <Label>{t("inventory.brands.brandName", locale)}</Label>
             <Input value={form.brand_name} onChange={(e) => setForm({ ...form, brand_name: e.target.value })} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editing ? "Update" : "Create"}</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("app.cancel", locale)}</Button>
+            <Button onClick={handleSave}>{editing ? t("app.update", locale) : t("app.create", locale)}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

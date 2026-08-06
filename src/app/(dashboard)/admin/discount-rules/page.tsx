@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Loader2 } from "lucide-react";
+import { getClientLocale, t } from "@/lib/i18n";
 
 interface DiscountRule {
   rule_id: number;
@@ -37,18 +38,20 @@ interface Product {
   product_name: string;
 }
 
-const columns: ColumnDef<DiscountRule>[] = [
-  { accessorKey: "category", header: "Category" },
-  { accessorKey: "min_quantity", header: "Min Qty" },
+const makeColumns = (locale: "en" | "bn"): ColumnDef<DiscountRule>[] => [
+  { accessorKey: "category", header: t("admin.discountRules.category", locale) },
+  { accessorKey: "min_quantity", header: t("admin.discountRules.minQty", locale) },
   {
     accessorKey: "discount_percentage",
-    header: "Discount %",
+    header: t("admin.discountRules.discountPct", locale),
     cell: ({ row }) => `${row.original.discount_percentage}%`,
   },
-  { accessorKey: "item_name", header: "Item Name" },
+  { accessorKey: "item_name", header: t("admin.discountRules.itemName", locale) },
 ];
 
 export default function AdminDiscountRulesPage() {
+  const locale = getClientLocale();
+  const columns = makeColumns(locale);
   const [rules, setRules] = useState<DiscountRule[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -118,10 +121,10 @@ export default function AdminDiscountRulesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Bulk Discount Rules" description="Quantity-based discount configurations" />
+      <PageHeader title={t("admin.discountRules.title", locale)} description={t("admin.discountRules.desc", locale)} />
 
       <div className="flex justify-end">
-        <Button onClick={openAdd}><Plus className="size-4" /> Add Rule</Button>
+        <Button onClick={openAdd}><Plus className="size-4" /> {t("admin.discountRules.addRule", locale)}</Button>
       </div>
 
       <DataTable columns={cols} data={rules} searchKey="name" />
@@ -129,18 +132,18 @@ export default function AdminDiscountRulesPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Discount Rule" : "Add Discount Rule"}</DialogTitle>
-            <DialogDescription>Configure bulk discount thresholds.</DialogDescription>
+            <DialogTitle>{editing ? t("admin.discountRules.editRule", locale) : t("admin.discountRules.addRuleTitle", locale)}</DialogTitle>
+            <DialogDescription>{t("admin.discountRules.dialogDesc", locale)}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label>Category</Label>
+              <Label>{t("admin.discountRules.category", locale)}</Label>
               <select
                 className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                 value={form.category}
                 onChange={(e) => { const cat = e.target.value; setForm({ ...form, category: cat, item_name: "all" }); fetchProducts(cat); }}
               >
-                <option value="">Select category</option>
+                <option value="">{t("admin.discountRules.selectCategory", locale)}</option>
                 {categories.map((cat) => (
                   <option key={cat.category_id} value={cat.category_name}>
                     {cat.category_name}
@@ -149,15 +152,15 @@ export default function AdminDiscountRulesPage() {
               </select>
             </div>
             <div className="grid gap-2">
-              <Label>Min Quantity</Label>
+              <Label>{t("admin.discountRules.minQuantity", locale)}</Label>
               <Input type="number" value={form.min_quantity} onChange={(e) => setForm({ ...form, min_quantity: Number(e.target.value) })} />
             </div>
             <div className="grid gap-2">
-              <Label>Discount Percent</Label>
+              <Label>{t("admin.discountRules.discountPercent", locale)}</Label>
               <Input type="number" value={form.discount_percent} onChange={(e) => setForm({ ...form, discount_percent: Number(e.target.value) })} />
             </div>
             <div className="grid gap-2">
-              <Label>Item Name</Label>
+              <Label>{t("admin.discountRules.itemName", locale)}</Label>
               <select
                 className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                 value={form.item_name}
@@ -174,10 +177,10 @@ export default function AdminDiscountRulesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("app.cancel", locale)}</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="size-4 animate-spin" />}
-              {editing ? "Save Changes" : "Create"}
+              {editing ? t("crud.saveChanges", locale) : t("app.create", locale)}
             </Button>
           </DialogFooter>
         </DialogContent>

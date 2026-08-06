@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import { getClientLocale, t, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface GalleryImage {
   id: number;
@@ -15,6 +16,7 @@ interface GalleryImage {
 }
 
 export default function ImageEditorPage() {
+  const locale = getClientLocale();
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -142,7 +144,7 @@ export default function ImageEditorPage() {
       formData.append("file", blob, `edited-${Date.now()}.png`);
       await fetch("/api/gallery", { method: "POST", body: formData });
       setProcessing(false);
-      alert("Saved to gallery!");
+      alert(t("gallery.savedToGallery", locale));
       // Reload gallery
       const supabase = createClient();
       const { data } = await supabase.from("gallery").select("id, url, filename").order("created_at", { ascending: false });
@@ -188,7 +190,7 @@ export default function ImageEditorPage() {
       if (!win) return;
       win.document.write(`
         <html>
-          <head><title>Print</title>
+          <head><title>${t("gallery.printTitle", locale)}</title>
           <style>
             @media print { body { margin: 0; } img { width: 100%; } }
             body { display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
@@ -210,17 +212,17 @@ export default function ImageEditorPage() {
         <Link href="/gallery">
           <Button variant="ghost" size="icon"><ArrowLeft className="size-5" /></Button>
         </Link>
-        <h1 className="text-2xl font-semibold">Image Editor</h1>
+        <h1 className="text-2xl font-semibold">{t("gallery.imageEditor", locale)}</h1>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left: Image Selection */}
         <div className="space-y-4">
           <div className="rounded-lg border bg-card p-4">
-            <h3 className="text-sm font-medium mb-3">Select Image</h3>
+            <h3 className="text-sm font-medium mb-3">{t("gallery.selectImage", locale)}</h3>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
             <Button variant="outline" className="w-full mb-3" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="size-4 mr-2" /> Upload New
+              <Upload className="size-4 mr-2" /> {t("inventory.products.uploadNew", locale)}
             </Button>
             {loading ? (
               <Loader2 className="size-4 animate-spin" />
@@ -241,22 +243,22 @@ export default function ImageEditorPage() {
 
           {/* Controls */}
           <div className="rounded-lg border bg-card p-4 space-y-4">
-            <h3 className="text-sm font-medium">Edit Controls</h3>
+            <h3 className="text-sm font-medium">{t("gallery.editControls", locale)}</h3>
 
             <div className="space-y-2">
-              <Label>Size (px)</Label>
+              <Label>{t("gallery.sizePx", locale)}</Label>
               <div className="flex gap-2">
                 <Input type="number" value={width} onChange={(e) => setWidth(parseInt(e.target.value) || 100)} className="flex-1" />
                 <span className="flex items-center text-muted-foreground">×</span>
                 <Input type="number" value={height} onChange={(e) => setHeight(parseInt(e.target.value) || 100)} className="flex-1" />
               </div>
               <Button variant="outline" size="sm" onClick={handleResize} className="w-full">
-                <Maximize2 className="size-3 mr-1" /> Apply Size
+                <Maximize2 className="size-3 mr-1" /> {t("gallery.applySize", locale)}
               </Button>
             </div>
 
             <div className="space-y-2">
-              <Label>Background</Label>
+              <Label>{t("gallery.background", locale)}</Label>
               <div className="flex gap-2">
                 <input type="color" value={bgColor} onChange={(e) => handleBgColorChange(e.target.value)} className="size-9 rounded border cursor-pointer" />
                 <Input value={bgColor} onChange={(e) => handleBgColorChange(e.target.value)} className="flex-1" />
@@ -264,22 +266,22 @@ export default function ImageEditorPage() {
             </div>
 
             <Button variant="outline" onClick={handleRemoveBg} className="w-full">
-              <Scissors className="size-3 mr-1" /> Remove White Background
+              <Scissors className="size-3 mr-1" /> {t("gallery.removeWhiteBg", locale)}
             </Button>
 
             <div className="border-t pt-4 space-y-2">
-              <Label>Print Layout</Label>
+              <Label>{t("gallery.printLayout", locale)}</Label>
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <p className="text-[10px] text-muted-foreground">Rows</p>
+                  <p className="text-[10px] text-muted-foreground">{t("gallery.rows", locale)}</p>
                   <Input type="number" value={printRows} onChange={(e) => setPrintRows(parseInt(e.target.value) || 1)} min={1} max={10} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[10px] text-muted-foreground">Per Row</p>
+                  <p className="text-[10px] text-muted-foreground">{t("gallery.perRow", locale)}</p>
                   <Input type="number" value={copiesPerRow} onChange={(e) => setCopiesPerRow(parseInt(e.target.value) || 1)} min={1} max={10} />
                 </div>
               </div>
-              <p className="text-[10px] text-muted-foreground">{printRows * copiesPerRow} copies total</p>
+              <p className="text-[10px] text-muted-foreground">{translateWithVars(t("gallery.copiesTotal", locale), { n: fmtInt(printRows * copiesPerRow, locale) })}</p>
             </div>
           </div>
         </div>
@@ -287,14 +289,14 @@ export default function ImageEditorPage() {
         {/* Right: Canvas Preview */}
         <div className="lg:col-span-2 space-y-4">
           <div className="rounded-lg border bg-card p-4">
-            <h3 className="text-sm font-medium mb-3">Preview ({width} × {height})</h3>
+            <h3 className="text-sm font-medium mb-3">{translateWithVars(t("gallery.previewSize", locale), { w: fmtInt(width, locale), h: fmtInt(height, locale) })}</h3>
             {selectedImage ? (
               <div className="flex justify-center bg-[repeating-conic-gradient(#e5e5e5_0%_25%,transparent_0%_50%)] bg-[length:20px_20px] rounded">
                 <canvas ref={canvasRef} className="max-w-full max-h-[50vh] object-contain" />
               </div>
             ) : (
               <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
-                Select or upload an image to start editing
+                {t("gallery.selectImageToEdit", locale)}
               </div>
             )}
           </div>
@@ -302,11 +304,11 @@ export default function ImageEditorPage() {
           <div className="flex gap-2">
             <Button onClick={handleSaveToGallery} disabled={!selectedImage || processing} className="flex-1">
               {processing ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Save className="size-4 mr-2" />}
-              Save to Gallery
+              {t("gallery.saveToGallery", locale)}
             </Button>
             <Button onClick={handlePrint} disabled={!selectedImage} variant="outline" className="flex-1">
               <Printer className="size-4 mr-2" />
-              Print ({printRows * copiesPerRow} copies)
+              {translateWithVars(t("gallery.printCopies", locale), { n: fmtInt(printRows * copiesPerRow, locale) })}
             </Button>
           </div>
 

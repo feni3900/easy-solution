@@ -3,6 +3,8 @@
 import { DataTable } from "@/components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
+import { t } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 
 interface ReviewRow {
   id: string;
@@ -19,27 +21,27 @@ const getName = (v: { name?: string }[] | { name?: string } | null | undefined) 
   return v?.name ?? "—";
 };
 
-const columns: ColumnDef<ReviewRow>[] = [
-  { header: "Product", cell: ({ row }) => row.original.products?.name ?? "—" },
-  { header: "Customer", cell: ({ row }) => getName(row.original.customers) },
+const makeColumns = (locale: Locale): ColumnDef<ReviewRow>[] => [
+  { header: t("webstore.products.product", locale), cell: ({ row }) => row.original.products?.name ?? "—" },
+  { header: t("app.customer", locale), cell: ({ row }) => getName(row.original.customers) },
   {
     accessorKey: "rating",
-    header: "Rating",
+    header: t("webstore.reviews.rating", locale),
     cell: ({ row }) => "★".repeat(row.original.rating) + "☆".repeat(5 - row.original.rating),
   },
-  { accessorKey: "comment", header: "Comment" },
+  { accessorKey: "comment", header: t("webstore.reviews.comment", locale) },
   {
     accessorKey: "status",
-    header: "Status",
+    header: t("app.status", locale),
     cell: ({ row }) => <Badge className="capitalize">{row.original.status}</Badge>,
   },
   {
     accessorKey: "date",
-    header: "Date",
+    header: t("app.date", locale),
     cell: ({ row }) => new Date(row.original.date).toLocaleDateString(),
   },
 ];
 
-export function ReviewsClient({ reviews }: { reviews: ReviewRow[] }) {
-  return <DataTable columns={columns} data={reviews} searchKey="comment" />;
+export function ReviewsClient({ reviews, locale }: { reviews: ReviewRow[]; locale: Locale }) {
+  return <DataTable columns={makeColumns(locale)} data={reviews} searchKey="comment" />;
 }

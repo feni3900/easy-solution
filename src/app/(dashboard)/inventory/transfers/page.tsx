@@ -1,10 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { TransfersClient } from "./transfers-client";
+import { getLocale } from "@/lib/i18n-server";
+import { t } from "@/lib/i18n";
 
 export const metadata = { title: "Stock Transfers | Smart Solution ERP" };
 
 export default async function TransfersPage() {
+  const locale = await getLocale();
   const supabase = await createClient();
   const { data } = await supabase
     .from("stock_transfers")
@@ -13,8 +16,8 @@ export default async function TransfersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Stock Transfers" description="Movement history between warehouses" />
-      <TransfersClient transfers={data ?? []} />
+      <PageHeader title={t("inventory.transfers.title", locale)} description={t("inventory.transfers.desc", locale)} />
+      <TransfersClient transfers={data ?? []} locale={locale} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Loader2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getClientLocale, t, fmtMoney, translateWithVars } from "@/lib/i18n";
 
 interface OrderItem {
   product_name_snapshot: string;
@@ -32,6 +33,19 @@ export default function OnlineOrdersPage() {
   const [orders, setOrders] = useState<WebOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewOrder, setViewOrder] = useState<WebOrder | null>(null);
+  const locale = getClientLocale();
+
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case "Pending": return t("sales.online.statusPending", locale);
+      case "Confirmed": return t("sales.online.statusConfirmed", locale);
+      case "Processing": return t("sales.online.statusProcessing", locale);
+      case "Shipped": return t("sales.online.statusShipped", locale);
+      case "Delivered": return t("sales.online.statusDelivered", locale);
+      case "Cancelled": return t("sales.online.statusCancelled", locale);
+      default: return status;
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -87,7 +101,7 @@ export default function OnlineOrdersPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Online Orders</h1>
+      <h1 className="text-2xl font-semibold">{t("sales.online.title", locale)}</h1>
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="size-6 animate-spin" /></div>
       ) : (
@@ -95,13 +109,13 @@ export default function OnlineOrdersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left font-medium">Order #</th>
-                <th className="p-3 text-left font-medium">Customer</th>
-                <th className="p-3 text-left font-medium">City</th>
-                <th className="p-3 text-right font-medium">Amount</th>
-                <th className="p-3 text-center font-medium">Payment</th>
-                <th className="p-3 text-center font-medium">Status</th>
-                <th className="p-3 text-center font-medium">Actions</th>
+                <th className="p-3 text-left font-medium">{t("sales.online.orderNo", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.customer", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.city", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("app.amount", locale)}</th>
+                <th className="p-3 text-center font-medium">{t("app.paymentStatus", locale)}</th>
+                <th className="p-3 text-center font-medium">{t("sales.online.orderStatus", locale)}</th>
+                <th className="p-3 text-center font-medium">{t("app.actions", locale)}</th>
               </tr>
             </thead>
             <tbody>
@@ -110,31 +124,31 @@ export default function OnlineOrdersPage() {
                   <td className="p-3 font-medium">{o.order_no}</td>
                   <td className="p-3">{o.shipping_full_name}</td>
                   <td className="p-3 text-muted-foreground">{o.shipping_city}</td>
-                  <td className="p-3 text-right">৳{Number(o.total_amount).toFixed(2)}</td>
+                  <td className="p-3 text-right">{fmtMoney(Number(o.total_amount), locale)}</td>
                   <td className="p-3 text-center">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${o.payment_status === "Paid" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
-                      {o.payment_status}
+                      {o.payment_status === "Paid" ? t("app.paymentStatusPaid", locale) : t("app.paymentStatusUnpaid", locale)}
                     </span>
                   </td>
                   <td className="p-3 text-center">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor(o.order_status)}`}>{o.order_status}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor(o.order_status)}`}>{statusLabel(o.order_status)}</span>
                   </td>
                   <td className="p-3 text-center space-x-1">
                     <Button variant="ghost" size="icon" onClick={() => setViewOrder(o)}><Eye className="size-4" /></Button>
                     {o.order_status === "Pending" && (
-                      <Button variant="outline" size="sm" onClick={() => updateStatus(o.order_id, "Confirmed")}>Confirm</Button>
+                      <Button variant="outline" size="sm" onClick={() => updateStatus(o.order_id, "Confirmed")}>{t("sales.online.confirm", locale)}</Button>
                     )}
                     {o.order_status === "Confirmed" && (
-                      <Button variant="outline" size="sm" onClick={() => updateStatus(o.order_id, "Processing")}>Process</Button>
+                      <Button variant="outline" size="sm" onClick={() => updateStatus(o.order_id, "Processing")}>{t("sales.online.process", locale)}</Button>
                     )}
                     {o.order_status === "Processing" && (
-                      <Button variant="outline" size="sm" onClick={() => updateStatus(o.order_id, "Shipped")}>Ship</Button>
+                      <Button variant="outline" size="sm" onClick={() => updateStatus(o.order_id, "Shipped")}>{t("sales.online.ship", locale)}</Button>
                     )}
                   </td>
                 </tr>
               ))}
               {orders.length === 0 && (
-                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No online orders yet.</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">{t("sales.online.noOrders", locale)}</td></tr>
               )}
             </tbody>
           </table>
@@ -142,25 +156,25 @@ export default function OnlineOrdersPage() {
       )}
       <Dialog open={!!viewOrder} onOpenChange={() => setViewOrder(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Order {viewOrder?.order_no}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{translateWithVars(t("sales.online.orderNo", locale), { no: viewOrder?.order_no ?? "" })}</DialogTitle></DialogHeader>
           <div className="space-y-2 text-sm">
-            <p>Customer: {viewOrder?.shipping_full_name}</p>
-            <p>Phone: {viewOrder?.shipping_phone}</p>
-            <p>City: {viewOrder?.shipping_city}</p>
-            <p>Payment: {viewOrder?.payment_method} ({viewOrder?.payment_status})</p>
-            {viewOrder?.tracking_number && <p>Tracking: {viewOrder.tracking_number}</p>}
+            <p>{t("sales.online.customer", locale)} {viewOrder?.shipping_full_name}</p>
+            <p>{t("sales.online.phone", locale)} {viewOrder?.shipping_phone}</p>
+            <p>{t("sales.online.city", locale)} {viewOrder?.shipping_city}</p>
+            <p>{t("sales.online.payment", locale)} {viewOrder?.payment_method} ({statusLabel(viewOrder?.payment_status ?? "")})</p>
+            {viewOrder?.tracking_number && <p>{t("sales.online.tracking", locale)} {viewOrder.tracking_number}</p>}
             {viewOrder?.items && viewOrder.items.length > 0 && (
               <div className="mt-3">
-                <p className="font-medium mb-1">Products:</p>
+                <p className="font-medium mb-1">{t("sales.online.products", locale)}</p>
                 <div className="rounded-md border divide-y">
                   {viewOrder.items.map((item, i) => (
                     <div key={i} className="flex justify-between p-2">
                       <span>{item.product_name_snapshot} × {item.quantity}</span>
-                      <span>৳{Number(item.total_price).toFixed(2)}</span>
+                      <span>{fmtMoney(Number(item.total_price), locale)}</span>
                     </div>
                   ))}
                 </div>
-                <p className="text-right font-medium mt-2">Total: ৳{viewOrder?.total_amount.toFixed(2)}</p>
+                <p className="text-right font-medium mt-2">{t("sales.totalLabel", locale)} {fmtMoney(Number(viewOrder?.total_amount ?? 0), locale)}</p>
               </div>
             )}
           </div>

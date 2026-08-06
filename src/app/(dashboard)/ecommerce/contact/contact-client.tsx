@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Save, MapPin, Phone, Mail, Clock, Map, FileText, Building2 } from "lucide-react";
+import { getClientLocale, t } from "@/lib/i18n";
 
 interface ContactPageClientProps {
   heading: string;
@@ -51,37 +52,38 @@ function AddressCard({ label, street, street2, city, state, postal, country, set
   setLabel: (v: string) => void; setStreet: (v: string) => void; setStreet2: (v: string) => void;
   setCity: (v: string) => void; setState: (v: string) => void; setPostal: (v: string) => void; setCountry: (v: string) => void;
 }) {
+  const locale = getClientLocale();
   return (
     <CardContent className="space-y-4">
       <div className="grid gap-2">
-        <Label>Label</Label>
-        <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. Head Office" />
+        <Label>{t("webstore.contacts.label", locale)}</Label>
+        <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t("webstore.contacts.labelPh", locale)} />
       </div>
       <div className="grid gap-2">
-        <Label>Street Address</Label>
+        <Label>{t("webstore.contacts.streetAddress", locale)}</Label>
         <Input value={street} onChange={(e) => setStreet(e.target.value)} />
       </div>
       <div className="grid gap-2">
-        <Label>Street Address Line 2</Label>
+        <Label>{t("webstore.contacts.streetAddress2", locale)}</Label>
         <Input value={street2} onChange={(e) => setStreet2(e.target.value)} />
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label>City</Label>
+          <Label>{t("app.city", locale)}</Label>
           <Input value={city} onChange={(e) => setCity(e.target.value)} />
         </div>
         <div className="grid gap-2">
-          <Label>State / Division</Label>
+          <Label>{t("webstore.contacts.stateDivision", locale)}</Label>
           <Input value={state} onChange={(e) => setState(e.target.value)} />
         </div>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label>Postal Code</Label>
+          <Label>{t("store.checkout.postalCode", locale)}</Label>
           <Input value={postal} onChange={(e) => setPostal(e.target.value)} />
         </div>
         <div className="grid gap-2">
-          <Label>Country</Label>
+          <Label>{t("webstore.contacts.country", locale)}</Label>
           <Input value={country} onChange={(e) => setCountry(e.target.value)} />
         </div>
       </div>
@@ -90,6 +92,7 @@ function AddressCard({ label, street, street2, city, state, postal, country, set
 }
 
 export function ContactPageClient(props: ContactPageClientProps) {
+  const locale = getClientLocale();
   const router = useRouter();
   const [heading, setHeading] = useState(props.heading);
   const [subhead, setSubhead] = useState(props.subhead);
@@ -181,15 +184,15 @@ export function ContactPageClient(props: ContactPageClientProps) {
       {/* Page Header */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Page Header</CardTitle>
+          <CardTitle className="text-base">{t("webstore.contacts.pageHeader", locale)}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label>Heading</Label>
+            <Label>{t("webstore.contacts.heading", locale)}</Label>
             <Input value={heading} onChange={(e) => setHeading(e.target.value)} />
           </div>
           <div className="grid gap-2">
-            <Label>Subheading</Label>
+            <Label>{t("webstore.contacts.subheading", locale)}</Label>
             <textarea
               value={subhead}
               onChange={(e) => setSubhead(e.target.value)}
@@ -204,14 +207,14 @@ export function ContactPageClient(props: ContactPageClientProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <MapPin className="size-4" /> Addresses
+            <MapPin className="size-4" /> {t("webstore.contacts.addresses", locale)}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="address1">
             <TabsList>
-              <TabsTrigger value="address1">Address 1</TabsTrigger>
-              <TabsTrigger value="address2">Address 2</TabsTrigger>
+              <TabsTrigger value="address1">{t("webstore.contacts.address1", locale)}</TabsTrigger>
+              <TabsTrigger value="address2">{t("webstore.contacts.address2", locale)}</TabsTrigger>
             </TabsList>
             <TabsContent value="address1" className="pt-4">
               <AddressCard
@@ -233,17 +236,17 @@ export function ContactPageClient(props: ContactPageClientProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Phone className="size-4" /> Phone
+            <Phone className="size-4" /> {t("app.phone", locale)}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label>Phone 1</Label>
-            <Input value={ph1} onChange={(e) => setPh1(e.target.value)} placeholder="+880 1712 345 678" />
+            <Label>{t("webstore.contacts.phone1", locale)}</Label>
+            <Input value={ph1} onChange={(e) => setPh1(e.target.value)} placeholder={t("webstore.contacts.phone1Ph", locale)} />
           </div>
           <div className="grid gap-2">
-            <Label>Phone 2</Label>
-            <Input value={ph2} onChange={(e) => setPh2(e.target.value)} placeholder="+30 210 000 0000" />
+            <Label>{t("webstore.contacts.phone2", locale)}</Label>
+            <Input value={ph2} onChange={(e) => setPh2(e.target.value)} placeholder={t("webstore.contacts.phone2Ph", locale)} />
           </div>
         </CardContent>
       </Card>
@@ -252,17 +255,17 @@ export function ContactPageClient(props: ContactPageClientProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Mail className="size-4" /> Email
+            <Mail className="size-4" /> {t("app.email", locale)}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label>Email 1</Label>
-            <Input value={em1} onChange={(e) => setEm1(e.target.value)} placeholder="info@example.com" />
+            <Label>{t("webstore.contacts.email1", locale)}</Label>
+            <Input value={em1} onChange={(e) => setEm1(e.target.value)} placeholder={t("webstore.contacts.emailPh", locale)} />
           </div>
           <div className="grid gap-2">
-            <Label>Email 2</Label>
-            <Input value={em2} onChange={(e) => setEm2(e.target.value)} placeholder="info@example.com" />
+            <Label>{t("webstore.contacts.email2", locale)}</Label>
+            <Input value={em2} onChange={(e) => setEm2(e.target.value)} placeholder={t("webstore.contacts.emailPh", locale)} />
           </div>
         </CardContent>
       </Card>
@@ -271,17 +274,17 @@ export function ContactPageClient(props: ContactPageClientProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Clock className="size-4" /> Business Hours
+            <Clock className="size-4" /> {t("webstore.contacts.businessHours", locale)}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label>Hours Line 1</Label>
-            <Input value={h1} onChange={(e) => setH1(e.target.value)} placeholder="e.g. Sun–Thu: 9am–6pm" />
+            <Label>{t("webstore.contacts.hours1", locale)}</Label>
+            <Input value={h1} onChange={(e) => setH1(e.target.value)} placeholder={t("webstore.contacts.hours1Ph", locale)} />
           </div>
           <div className="grid gap-2">
-            <Label>Hours Line 2</Label>
-            <Input value={h2} onChange={(e) => setH2(e.target.value)} placeholder="e.g. Fri–Sat: 10am–4pm" />
+            <Label>{t("webstore.contacts.hours2", locale)}</Label>
+            <Input value={h2} onChange={(e) => setH2(e.target.value)} placeholder={t("webstore.contacts.hours2Ph", locale)} />
           </div>
         </CardContent>
       </Card>
@@ -290,39 +293,39 @@ export function ContactPageClient(props: ContactPageClientProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <FileText className="size-4" /> Contract / Company Information
+            <FileText className="size-4" /> {t("webstore.contacts.contractInfo", locale)}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label>Section Heading</Label>
+            <Label>{t("webstore.contacts.sectionHeading", locale)}</Label>
             <Input value={contractH} onChange={(e) => setContractH(e.target.value)} />
           </div>
           <div className="grid gap-2">
-            <Label>Company Name</Label>
+            <Label>{t("webstore.contacts.companyName", locale)}</Label>
             <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label>Trade License</Label>
+              <Label>{t("webstore.contacts.tradeLicense", locale)}</Label>
               <Input value={tradeLicense} onChange={(e) => setTradeLicense(e.target.value)} />
             </div>
             <div className="grid gap-2">
-              <Label>Company Registration No</Label>
+              <Label>{t("webstore.contacts.regNo", locale)}</Label>
               <Input value={regNo} onChange={(e) => setRegNo(e.target.value)} />
             </div>
           </div>
           <div className="grid gap-2 sm:grid-cols-3">
             <div className="grid gap-2">
-              <Label>BIN</Label>
+              <Label>{t("webstore.contacts.bin", locale)}</Label>
               <Input value={bin} onChange={(e) => setBin(e.target.value)} />
             </div>
             <div className="grid gap-2">
-              <Label>TIN</Label>
+              <Label>{t("webstore.contacts.tin", locale)}</Label>
               <Input value={tin} onChange={(e) => setTin(e.target.value)} />
             </div>
             <div className="grid gap-2">
-              <Label>VAT Registration</Label>
+              <Label>{t("webstore.contacts.vatReg", locale)}</Label>
               <Input value={vatReg} onChange={(e) => setVatReg(e.target.value)} />
             </div>
           </div>
@@ -333,16 +336,16 @@ export function ContactPageClient(props: ContactPageClientProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Building2 className="size-4" /> Message CTA
+            <Building2 className="size-4" /> {t("webstore.contacts.messageCta", locale)}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label>Section Heading</Label>
+            <Label>{t("webstore.contacts.sectionHeading", locale)}</Label>
             <Input value={formH} onChange={(e) => setFormH(e.target.value)} />
           </div>
           <div className="grid gap-2">
-            <Label>Subtext</Label>
+            <Label>{t("webstore.contacts.subtext", locale)}</Label>
             <textarea
               value={formS}
               onChange={(e) => setFormS(e.target.value)}
@@ -351,8 +354,8 @@ export function ContactPageClient(props: ContactPageClientProps) {
             />
           </div>
           <div className="grid gap-2">
-            <Label>CTA Email Address</Label>
-            <Input value={ctaE} onChange={(e) => setCtaE(e.target.value)} placeholder="info@example.com" />
+            <Label>{t("webstore.contacts.ctaEmail", locale)}</Label>
+            <Input value={ctaE} onChange={(e) => setCtaE(e.target.value)} placeholder={t("webstore.contacts.emailPh", locale)} />
           </div>
         </CardContent>
       </Card>
@@ -361,19 +364,19 @@ export function ContactPageClient(props: ContactPageClientProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Map className="size-4" /> Location Map
+            <Map className="size-4" /> {t("webstore.contacts.locationMap", locale)}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label>Google Maps Embed URL</Label>
+            <Label>{t("webstore.contacts.mapsEmbedUrl", locale)}</Label>
             <Input
               value={mapUrl}
               onChange={(e) => setMapUrl(e.target.value)}
-              placeholder="https://www.google.com/maps/embed?pb=..."
+              placeholder={t("webstore.contacts.mapsPh", locale)}
             />
             <p className="text-xs text-muted-foreground">
-              Go to Google Maps, search for your location, click Share &gt; Embed, and paste the URL.
+              {t("webstore.contacts.mapsHelp", locale)}
             </p>
           </div>
           {mapUrl && (
@@ -396,9 +399,9 @@ export function ContactPageClient(props: ContactPageClientProps) {
       <div className="flex items-center gap-3">
         <Button onClick={save} disabled={saving}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          Save Changes
+          {t("crud.saveChanges", locale)}
         </Button>
-        {saved && <span className="text-sm text-emerald-600">Saved.</span>}
+        {saved && <span className="text-sm text-emerald-600">{t("webstore.contacts.saved", locale)}</span>}
       </div>
     </div>
   );

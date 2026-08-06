@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
+import { getClientLocale, t, fmtInt } from "@/lib/i18n";
 
 interface JournalEntry {
   journal_id: number;
@@ -17,6 +18,7 @@ interface JournalEntry {
 }
 
 export default function StockJournalPage() {
+  const locale = getClientLocale();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,7 +51,7 @@ export default function StockJournalPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Stock Journal</h1>
+      <h1 className="text-2xl font-semibold">{t("inventory.stockJournal.title", locale)}</h1>
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="size-6 animate-spin" /></div>
       ) : (
@@ -57,13 +59,13 @@ export default function StockJournalPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left font-medium">Date</th>
-                <th className="p-3 text-left font-medium">Product</th>
-                <th className="p-3 text-center font-medium">Type</th>
-                <th className="p-3 text-right font-medium">Change</th>
-                <th className="p-3 text-right font-medium">Before</th>
-                <th className="p-3 text-right font-medium">After</th>
-                <th className="p-3 text-left font-medium">Reference</th>
+                <th className="p-3 text-left font-medium">{t("app.date", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("sales.returns.product", locale)}</th>
+                <th className="p-3 text-center font-medium">{t("app.type", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("inventory.stockJournal.change", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("inventory.stockJournal.before", locale)}</th>
+                <th className="p-3 text-right font-medium">{t("inventory.stockJournal.after", locale)}</th>
+                <th className="p-3 text-left font-medium">{t("app.reference", locale)}</th>
               </tr>
             </thead>
             <tbody>
@@ -75,15 +77,15 @@ export default function StockJournalPage() {
                     <span className={`text-xs px-2 py-0.5 rounded-full ${typeColor(e.movement_type)}`}>{e.movement_type}</span>
                   </td>
                   <td className={`p-3 text-right font-medium ${e.quantity_change > 0 ? "text-green-600" : "text-red-600"}`}>
-                    {e.quantity_change > 0 ? "+" : ""}{e.quantity_change}
+                    {e.quantity_change > 0 ? "+" : ""}{fmtInt(e.quantity_change, locale)}
                   </td>
-                  <td className="p-3 text-right text-muted-foreground">{e.stock_before}</td>
-                  <td className="p-3 text-right">{e.stock_after}</td>
+                  <td className="p-3 text-right text-muted-foreground">{fmtInt(e.stock_before, locale)}</td>
+                  <td className="p-3 text-right">{fmtInt(e.stock_after, locale)}</td>
                   <td className="p-3 text-muted-foreground">{e.reference_no ?? "-"}</td>
                 </tr>
               ))}
               {entries.length === 0 && (
-                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No stock movements recorded.</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">{t("inventory.stockJournal.noMovements", locale)}</td></tr>
               )}
             </tbody>
           </table>
