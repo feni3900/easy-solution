@@ -6,6 +6,8 @@ import { ShoppingCart, Menu, X, Store, LogOut, User as UserIcon, Phone, MessageC
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { LanguageToggle } from "@/components/language-toggle";
+import { getClientLocale, t } from "@/lib/i18n";
 
 export function StorefrontHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -13,6 +15,7 @@ export function StorefrontHeader() {
   const [checked, setChecked] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const router = useRouter();
+  const locale = getClientLocale();
 
   useEffect(() => {
     const supabase = createClient();
@@ -54,13 +57,14 @@ export function StorefrontHeader() {
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
-          <Link href="/" className="text-sm hover:text-foreground">Home</Link>
-          <Link href="/shop" className="text-sm hover:text-foreground">Shop</Link>
-          <Link href="/about" className="text-sm hover:text-foreground">About</Link>
-          <Link href="/contact" className="text-sm hover:text-foreground">Contact</Link>
+          <Link href="/" className="text-sm hover:text-foreground">{t("store.home", locale)}</Link>
+          <Link href="/shop" className="text-sm hover:text-foreground">{t("store.shop", locale)}</Link>
+          <Link href="/about" className="text-sm hover:text-foreground">{t("store.about", locale)}</Link>
+          <Link href="/contact" className="text-sm hover:text-foreground">{t("store.contact", locale)}</Link>
         </nav>
 
         <div className="flex items-center gap-2">
+          <LanguageToggle />
           <a href="tel:+8801831579666" className="hidden items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary sm:flex" title="Call +88 01831579666">
             <Phone className="size-4 text-primary" />
             +88 01831579666
@@ -73,7 +77,7 @@ export function StorefrontHeader() {
             title="WhatsApp"
           >
             <MessageCircle className="size-4 text-primary" />
-            WhatsApp
+            {t("store.whatsapp", locale)}
           </a>
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="relative">
@@ -88,7 +92,7 @@ export function StorefrontHeader() {
           {checked && (
             loggedIn ? (
               <div className="flex items-center gap-2">
-                <span className="hidden text-xs text-muted-foreground sm:inline">Admin</span>
+                <span className="hidden text-xs text-muted-foreground sm:inline">{t("common.admin", locale)}</span>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   <LogOut className="size-4" />
                 </Button>
@@ -96,7 +100,7 @@ export function StorefrontHeader() {
             ) : (
               <Link href="/login">
                 <Button variant="ghost" size="sm">
-                  <UserIcon className="size-4 mr-1" /> Login
+                  <UserIcon className="size-4 mr-1" /> {t("common.login", locale)}
                 </Button>
               </Link>
             )
@@ -115,10 +119,10 @@ export function StorefrontHeader() {
       {mobileOpen && (
         <div className="border-t md:hidden">
           <nav className="flex flex-col p-4 space-y-2">
-            <Link href="/" onClick={() => setMobileOpen(false)} className="text-sm py-2 hover:text-foreground">Home</Link>
-            <Link href="/shop" onClick={() => setMobileOpen(false)} className="text-sm py-2 hover:text-foreground">Shop</Link>
-            <Link href="/about" onClick={() => setMobileOpen(false)} className="text-sm py-2 hover:text-foreground">About</Link>
-            <Link href="/contact" onClick={() => setMobileOpen(false)} className="text-sm py-2 hover:text-foreground">Contact</Link>
+            <Link href="/" onClick={() => setMobileOpen(false)} className="text-sm py-2 hover:text-foreground">{t("store.home", locale)}</Link>
+            <Link href="/shop" onClick={() => setMobileOpen(false)} className="text-sm py-2 hover:text-foreground">{t("store.shop", locale)}</Link>
+            <Link href="/about" onClick={() => setMobileOpen(false)} className="text-sm py-2 hover:text-foreground">{t("store.about", locale)}</Link>
+            <Link href="/contact" onClick={() => setMobileOpen(false)} className="text-sm py-2 hover:text-foreground">{t("store.contact", locale)}</Link>
           </nav>
         </div>
       )}

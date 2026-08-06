@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Hind_Siliguri } from "next/font/google";
+import { getLocale } from "@/lib/i18n-server";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,21 +13,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const hindSiliguri = Hind_Siliguri({
+  variable: "--font-hind-siliguri",
+  weight: ["300", "400", "500", "600", "700"],
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Smart Solution ERP",
   description:
     "Unified ERP for multi-company, multi-branch inventory, POS, accounts and ecommerce.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang={locale}
+      className={`${geistSans.variable} ${geistMono.variable} ${hindSiliguri.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

@@ -2,9 +2,12 @@ import { createClient } from "@/lib/supabase/server";
 import { getWebSettings } from "@/lib/store";
 import Link from "next/link";
 import { ArrowRight, Truck, BadgePercent, Package, Clock, TrendingUp, Star } from "lucide-react";
+import { getLocale } from "@/lib/i18n-server";
+import { t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
 
 export default async function StorefrontHome() {
   const supabase = await createClient();
+  const locale = await getLocale();
 
   const [{ data: section1 }, { data: products }, { data: topSelling }, webSettings] = await Promise.all([
     supabase
@@ -64,37 +67,37 @@ export default async function StorefrontHome() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
             <div className="absolute inset-0 flex flex-col items-center justify-start pt-20 gap-4 px-4 text-center">
-              <h1 className="max-w-3xl text-3xl font-bold text-white sm:text-5xl">
-                {section1.hero_title ?? "Smart ERP Store"}
-              </h1>
-              <p className="max-w-xl text-xl sm:text-2xl text-white/90">
-                {section1.hero_subtitle ?? "Quality Products, Best Prices"}
-              </p>
-              <div className="flex flex-wrap justify-center gap-3">
-                <Link
-                  href="/shop"
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                >
-                  Shop Now <ArrowRight className="size-4" />
-                </Link>
-              </div>
+                <h1 className="max-w-3xl text-3xl font-bold text-white sm:text-5xl">
+                  {section1.hero_title ?? t("store.home.welcome", locale)}
+                </h1>
+                <p className="max-w-xl text-xl sm:text-2xl text-white/90">
+                  {section1.hero_subtitle ?? t("store.home.tagline", locale)}
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <Link
+                    href="/shop"
+                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    {t("store.home.shopNow", locale)} <ArrowRight className="size-4" />
+                  </Link>
+                </div>
             </div>
           </>
         ) : (
           <div className="bg-gradient-to-br from-primary/10 via-background to-primary/5">
             <div className="mx-auto max-w-7xl px-4 py-16 sm:py-24 text-center">
               <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
-                {section1?.hero_title ?? "Smart ERP Store"}
+                {section1?.hero_title ?? t("store.home.welcome", locale)}
               </h1>
               <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-                {section1?.hero_subtitle ?? "Quality Products, Best Prices — Shop with confidence"}
+                {section1?.hero_subtitle ?? t("store.home.tagline", locale)}
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Link
                   href="/shop"
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
                 >
-                  Shop Now <ArrowRight className="size-4" />
+                  {t("store.home.shopNow", locale)} <ArrowRight className="size-4" />
                 </Link>
               </div>
             </div>
@@ -110,8 +113,8 @@ export default async function StorefrontHome() {
               <Truck className="size-5" />
             </div>
             <div>
-              <p className="font-medium">{section1?.col1_title ?? "Fast Delivery"}</p>
-              <p className="text-sm text-muted-foreground">{section1?.col1_desc ?? "Quick courier delivery nationwide"}</p>
+              <p className="font-medium">{section1?.col1_title ?? t("store.home.fastDelivery", locale)}</p>
+              <p className="text-sm text-muted-foreground">{section1?.col1_desc ?? t("store.home.fastDeliveryDesc", locale)}</p>
             </div>
           </div>
           <div className="flex items-start gap-3 rounded-lg border p-4">
@@ -119,8 +122,8 @@ export default async function StorefrontHome() {
               <BadgePercent className="size-5" />
             </div>
             <div>
-              <p className="font-medium">{section1?.col2_title ?? "Bulk Discounts"}</p>
-              <p className="text-sm text-muted-foreground">{section1?.col2_desc ?? "Save up to 20% on 12+ items"}</p>
+              <p className="font-medium">{section1?.col2_title ?? t("store.home.authenticProducts", locale)}</p>
+              <p className="text-sm text-muted-foreground">{section1?.col2_desc ?? t("store.home.authenticProductsDesc", locale)}</p>
             </div>
           </div>
           <div className="flex items-start gap-3 rounded-lg border p-4">
@@ -128,8 +131,8 @@ export default async function StorefrontHome() {
               <Package className="size-5" />
             </div>
             <div>
-              <p className="font-medium">{section1?.col3_title ?? "Quality Products"}</p>
-              <p className="text-sm text-muted-foreground">{section1?.col3_desc ?? "100% authentic products"}</p>
+              <p className="font-medium">{section1?.col3_title ?? t("store.home.securePayment", locale)}</p>
+              <p className="text-sm text-muted-foreground">{section1?.col3_desc ?? t("store.home.securePaymentDesc", locale)}</p>
             </div>
           </div>
         </div>
@@ -140,10 +143,10 @@ export default async function StorefrontHome() {
         <section className="mx-auto max-w-7xl px-4 py-8">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="text-xl font-semibold tracking-tight sm:text-2xl flex items-center gap-2">
-              <Clock className="size-5 text-blue-500" /> Hot Sell
+              <Clock className="size-5 text-blue-500" /> {t("store.home.hotSell", locale)}
             </h2>
             <Link href="/shop" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
-              View all <ArrowRight className="size-4" />
+              {t("store.home.viewAll", locale)} <ArrowRight className="size-4" />
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -162,9 +165,9 @@ export default async function StorefrontHome() {
                 </div>
                 <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary">{p.product_name}</h3>
                 <p className="mt-1 flex items-center gap-2">
-                  <span className="font-semibold">৳{Number(p.selling_price).toFixed(2)}</span>
+                  <span className="font-semibold">{fmtMoney(Number(p.selling_price), locale)}</span>
                   <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
-                    {bulkDiscountPct}% off {bulkDiscountMin}+
+                    {translateWithVars(t("store.bulkOff", locale), { p: fmtInt(bulkDiscountPct, locale), m: fmtInt(bulkDiscountMin, locale) })}
                   </span>
                 </p>
               </Link>
@@ -178,10 +181,10 @@ export default async function StorefrontHome() {
         <section className="mx-auto max-w-7xl px-4 py-8">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="text-xl font-semibold tracking-tight sm:text-2xl flex items-center gap-2">
-              <Star className="size-5 text-yellow-500" /> Popular Products
+              <Star className="size-5 text-yellow-500" /> {t("store.home.popular", locale)}
             </h2>
             <Link href="/shop" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
-              View all <ArrowRight className="size-4" />
+              {t("store.home.viewAll", locale)} <ArrowRight className="size-4" />
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -200,9 +203,9 @@ export default async function StorefrontHome() {
                 </div>
                 <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary">{p.product_name}</h3>
                 <p className="mt-1 flex items-center gap-2">
-                  <span className="font-semibold">৳{Number(p.selling_price).toFixed(2)}</span>
+                  <span className="font-semibold">{fmtMoney(Number(p.selling_price), locale)}</span>
                   <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
-                    {bulkDiscountPct}% off {bulkDiscountMin}+
+                    {translateWithVars(t("store.bulkOff", locale), { p: fmtInt(bulkDiscountPct, locale), m: fmtInt(bulkDiscountMin, locale) })}
                   </span>
                 </p>
               </Link>
@@ -216,10 +219,10 @@ export default async function StorefrontHome() {
         <section className="mx-auto max-w-7xl px-4 py-8">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="text-xl font-semibold tracking-tight sm:text-2xl flex items-center gap-2">
-              <TrendingUp className="size-5 text-red-500" /> Top Selling
+              <TrendingUp className="size-5 text-red-500" /> {t("store.home.topSelling", locale)}
             </h2>
             <Link href="/shop" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
-              View all <ArrowRight className="size-4" />
+              {t("store.home.viewAll", locale)} <ArrowRight className="size-4" />
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -238,9 +241,9 @@ export default async function StorefrontHome() {
                 </div>
                 <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary">{p.product_name}</h3>
                 <p className="mt-1 flex items-center gap-2">
-                  <span className="font-semibold">৳{Number(p.selling_price).toFixed(2)}</span>
+                  <span className="font-semibold">{fmtMoney(Number(p.selling_price), locale)}</span>
                   <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
-                    {bulkDiscountPct}% off {bulkDiscountMin}+
+                    {translateWithVars(t("store.bulkOff", locale), { p: fmtInt(bulkDiscountPct, locale), m: fmtInt(bulkDiscountMin, locale) })}
                   </span>
                 </p>
               </Link>
@@ -251,15 +254,15 @@ export default async function StorefrontHome() {
 
       {/* CTA */}
       <section className="mx-auto max-w-7xl px-4 py-12 text-center">
-        <h2 className="text-xl font-semibold sm:text-2xl">Browse the Full Catalog</h2>
+        <h2 className="text-xl font-semibold sm:text-2xl">{t("store.home.browseCatalog", locale)}</h2>
         <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
-          Every product in our catalog is available with cash on delivery.
+          {t("store.home.browseCatalogDesc", locale)}
         </p>
         <Link
           href="/shop"
           className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
-          Go to Shop <ArrowRight className="size-4" />
+          {t("store.home.goToShop", locale)} <ArrowRight className="size-4" />
         </Link>
       </section>
     </div>

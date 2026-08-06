@@ -4,17 +4,20 @@ import { useState } from "react";
 import { ShoppingCart, Plus, Minus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { t, type Locale } from "@/lib/i18n";
 
 export function AddToCartButton({
   productId,
   productName,
   price,
   inStock,
+  locale,
 }: {
   productId: number;
   productName: string;
   price: number;
   inStock: boolean;
+  locale: Locale;
 }) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -63,18 +66,18 @@ export function AddToCartButton({
           {added ? (
             <>
               <Check className="size-4 mr-2" />
-              Added!
+              {t("store.product.added", locale)}
             </>
           ) : (
             <>
               <ShoppingCart className="size-4 mr-2" />
-              Add to Cart
+              {t("store.product.addToCart", locale)}
             </>
           )}
         </Button>
         <Link href="/cart" className="flex-1">
           <Button variant="outline" className="w-full">
-            View Cart
+            {t("store.product.viewCart", locale)}
           </Button>
         </Link>
       </div>

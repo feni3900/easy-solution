@@ -373,6 +373,9 @@
   html {
     @apply font-sans;
   }
+  html[lang="bn"] {
+    --font-sans: var(--font-hind-siliguri), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  }
   input[type="text"],
   input:not([type]),
   textarea,

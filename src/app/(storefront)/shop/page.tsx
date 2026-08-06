@@ -3,6 +3,8 @@ import { getWebSettings } from "@/lib/store";
 import Link from "next/link";
 import { Package, Search } from "lucide-react";
 import ShopFilters from "./shop-filters";
+import { getLocale } from "@/lib/i18n-server";
+import { t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
 
 export default async function ShopPage({
   searchParams,
@@ -11,6 +13,7 @@ export default async function ShopPage({
 }) {
   const params = await searchParams;
   const supabase = await createClient();
+  const locale = await getLocale();
 
   let query = supabase
     .from("products")
@@ -42,7 +45,7 @@ export default async function ShopPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="text-2xl font-semibold mb-6">Shop</h1>
+      <h1 className="text-2xl font-semibold mb-6">{t("store.shop.title", locale)}</h1>
 
       {/* Search & Filters */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row">
@@ -51,12 +54,13 @@ export default async function ShopPage({
           <input
             type="text"
             name="q"
-            placeholder="Search products..."
+            placeholder={t("store.searchPlaceholder", locale)}
             defaultValue={params.q}
             className="w-full rounded-lg border bg-card pl-10 pr-4 py-2 text-sm"
           />
         </form>
         <ShopFilters
+          locale={locale}
           categories={(categories ?? []).map((c) => ({ id: c.category_id, label: c.category_name }))}
           brands={(brands ?? []).map((b) => ({ id: b.brand_id, label: b.brand_name }))}
           category={params.category ?? ""}
@@ -68,7 +72,7 @@ export default async function ShopPage({
       {allProducts.length === 0 ? (
         <div className="text-center py-16">
           <Package className="mx-auto size-12 text-muted-foreground" />
-          <p className="mt-4 text-muted-foreground">No products found.</p>
+          <p className="mt-4 text-muted-foreground">{t("store.noProducts", locale)}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -96,13 +100,13 @@ export default async function ShopPage({
               </p>
               <div className="mt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold">৳{Number(p.selling_price).toFixed(2)}</p>
+                  <p className="font-semibold">{fmtMoney(Number(p.selling_price), locale)}</p>
                   <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
-                    {bulkDiscountPct}% off {bulkDiscountMin}+
+                    {translateWithVars(t("store.bulkOff", locale), { p: fmtInt(bulkDiscountPct, locale), m: fmtInt(bulkDiscountMin, locale) })}
                   </span>
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded-full ${p.current_stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                  {p.current_stock > 0 ? "In Stock" : "Out of Stock"}
+                  {p.current_stock > 0 ? t("store.inStock", locale) : t("store.outOfStock", locale)}
                 </span>
               </div>
             </Link>

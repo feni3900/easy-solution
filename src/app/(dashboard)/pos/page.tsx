@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Search, Package, Plus, Minus, ShoppingCart, X, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getClientLocale, t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface Product {
   product_id: number;
@@ -67,6 +68,7 @@ export default function POSPage() {
   const [heldOrders, setHeldOrders] = useState<CartItem[][]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const locale = getClientLocale();
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
@@ -229,7 +231,7 @@ export default function POSPage() {
   const handleConfirm = async () => {
     if (cart.length === 0 || submitting) return;
     if (!customerId && due > 0) {
-      alert("Walk-in customers must pay full amount. No due allowed.");
+      alert(t("pos.walkinDue", locale));
       setSubmitting(false);
       return;
     }
@@ -318,9 +320,9 @@ export default function POSPage() {
       setNotes("");
       loadProducts();
 
-      alert(`Invoice ${invoiceNo} created successfully!`);
+      alert(translateWithVars(t("pos.invoiceCreated", locale), { no: invoiceNo }));
     } catch (error) {
-      alert(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+      alert(`${t("pos.error", locale)}${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setSubmitting(false);
     }
@@ -337,7 +339,7 @@ export default function POSPage() {
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
             >
-              <option value="">All Categories</option>
+              <option value="">{t("pos.allCategories", locale)}</option>
               {categories.map((c) => (
                 <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
               ))}
@@ -347,7 +349,7 @@ export default function POSPage() {
               value={brandFilter}
               onChange={(e) => setBrandFilter(e.target.value)}
             >
-              <option value="">All Brands</option>
+              <option value="">{t("pos.allBrands", locale)}</option>
               {brands.map((b) => (
                 <option key={b.brand_id} value={b.brand_id}>{b.brand_name}</option>
               ))}
@@ -358,7 +360,7 @@ export default function POSPage() {
             <input
               ref={searchRef}
               type="text"
-              placeholder="Search SKU or name..."
+              placeholder={t("pos.searchPlaceholder", locale)}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-lg border bg-card pl-10 pr-4 py-2 text-sm"
@@ -366,7 +368,7 @@ export default function POSPage() {
           </div>
           <Button className="w-full md:hidden" onClick={() => setCartOpen(true)}>
             <ShoppingCart className="size-4 mr-2" />
-            View Cart ({cart.reduce((s, i) => s + i.quantity, 0)})
+            {translateWithVars(t("pos.viewCartCount", locale), { n: fmtInt(cart.reduce((s, i) => s + i.quantity, 0), locale) })}
           </Button>
         </div>
         <div className="flex-1 overflow-y-auto p-3">
@@ -375,7 +377,7 @@ export default function POSPage() {
               <Loader2 className="size-6 animate-spin text-muted-foreground" />
             </div>
           ) : filteredProducts.length === 0 ? (
-            <p className="text-center text-muted-foreground py-12">No products found.</p>
+            <p className="text-center text-muted-foreground py-12">{t("pos.noProducts", locale)}</p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
               {filteredProducts.map((product) => (
@@ -401,7 +403,7 @@ export default function POSPage() {
                     {product.storage_location && <span>{product.storage_location}</span>}
                   </p>
                   <div className="flex items-center justify-between mt-1">
-                    <p className="text-sm font-bold">৳{product.selling_price.toFixed(0)}</p>
+                    <p className="text-sm font-bold">{fmtMoney(Number(product.selling_price), locale)}</p>
                     <span className={`text-[10px] px-1 rounded ${product.current_stock > 5 ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
                       {product.current_stock}
                     </span>
@@ -419,7 +421,7 @@ export default function POSPage() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <ShoppingCart className="size-4" />
-              <span className="font-medium text-sm">Cart ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
+              <span className="font-medium text-sm">{translateWithVars(t("pos.cartTitle", locale), { n: fmtInt(cart.reduce((s, i) => s + i.quantity, 0), locale) })}</span>
             </div>
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setCartOpen(false)}>
               <X className="size-4" />
@@ -427,7 +429,7 @@ export default function POSPage() {
           </div>
           <div className="flex gap-2">
             <Input
-              placeholder="Customer mobile"
+              placeholder={t("pos.customerMobile", locale)}
               value={customerMobile}
               onChange={(e) => {
                 setCustomerMobile(e.target.value);
@@ -438,20 +440,20 @@ export default function POSPage() {
           </div>
           {customerName && (
             <p className="text-xs text-muted-foreground mt-1">
-              {customerName} {previousDue > 0 && <span className="text-amber-600">· Due: ৳{previousDue.toFixed(2)}</span>}
+              {customerName} {previousDue > 0 && <span className="text-amber-600">· {translateWithVars(t("pos.customerDue", locale), { a: fmtMoney(previousDue, locale) })}</span>}
             </p>
           )}
           <div className="flex gap-2 mt-2">
             <Button variant="outline" size="sm" onClick={holdOrder} disabled={cart.length === 0} className="flex-1 text-xs">
-              Hold
+              {t("pos.holdOrder", locale)}
             </Button>
             <Button variant="outline" size="sm" onClick={newOrder} className="flex-1 text-xs">
-              New Order
+              {t("pos.newOrder", locale)}
             </Button>
           </div>
           {heldOrders.length > 0 && (
             <div className="mt-2 space-y-1">
-              <p className="text-[10px] text-muted-foreground">Held Orders ({heldOrders.length}):</p>
+              <p className="text-[10px] text-muted-foreground">{translateWithVars(t("pos.heldOrders", locale), { n: fmtInt(heldOrders.length, locale) })}</p>
               <div className="flex flex-wrap gap-1">
                 {heldOrders.map((order, idx) => (
                   <button
@@ -459,7 +461,7 @@ export default function POSPage() {
                     onClick={() => recallHeldOrder(idx)}
                     className="text-[10px] rounded bg-amber-100 text-amber-800 px-2 py-0.5 hover:bg-amber-200"
                   >
-                    #{idx + 1} ({order.length} items)
+                    {translateWithVars(t("pos.heldOrderItem", locale), { n: fmtInt(idx + 1, locale), count: fmtInt(order.length, locale) })}
                   </button>
                 ))}
               </div>
@@ -469,14 +471,14 @@ export default function POSPage() {
 
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {cart.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8 text-sm">Cart is empty</p>
+            <p className="text-center text-muted-foreground py-8 text-sm">{t("pos.emptyCart", locale)}</p>
           ) : (
             cart.map((item) => (
               <div key={item.product_id} className="rounded-md border p-2 space-y-1">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium truncate">{item.product_name}</p>
-                    <p className="text-[10px] text-muted-foreground">৳{item.unit_price.toFixed(0)} each</p>
+                    <p className="text-[10px] text-muted-foreground">{fmtMoney(Number(item.unit_price), locale)} {t("pos.each", locale)}</p>
                   </div>
                   <button onClick={() => removeCartItem(item.product_id)} className="text-destructive hover:bg-destructive/10 rounded p-0.5">
                     <X className="size-3" />
@@ -492,7 +494,7 @@ export default function POSPage() {
                       <Plus className="size-3" />
                     </button>
                   </div>
-                  <p className="text-xs font-bold">৳{(item.unit_price * item.quantity).toFixed(0)}</p>
+                  <p className="text-xs font-bold">{fmtMoney(Number(item.unit_price * item.quantity), locale)}</p>
                 </div>
               </div>
             ))
@@ -502,12 +504,12 @@ export default function POSPage() {
         {/* Summary */}
         <div className="border-t p-3 space-y-2">
           <div className="space-y-1 text-xs">
-            <div className="flex justify-between"><span>Subtotal</span><span>৳{subtotal.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span>{t("pos.subtotal", locale)}</span><span>{fmtMoney(subtotal, locale)}</span></div>
             {totalDiscount > 0 && (
-              <div className="flex justify-between text-green-600"><span>Bulk Discount</span><span>-৳{totalDiscount.toFixed(2)}</span></div>
+              <div className="flex justify-between text-green-600"><span>{t("pos.bulkDiscount", locale)}</span><span>-{fmtMoney(totalDiscount, locale)}</span></div>
             )}
             <div className="flex justify-between">
-              <span>Manual Disc.</span>
+              <span>{t("pos.manualDiscount", locale)}</span>
               <input
                 type="number"
                 value={manualDiscount || ""}
@@ -517,12 +519,12 @@ export default function POSPage() {
               />
             </div>
             <div className="flex justify-between font-bold text-sm border-t pt-1">
-              <span>Total</span><span>৳{total.toFixed(2)}</span>
+              <span>{t("pos.total", locale)}</span><span>{fmtMoney(total, locale)}</span>
             </div>
           </div>
 
           <Input
-            placeholder="Paid amount"
+            placeholder={t("pos.paidAmount", locale)}
             type="number"
             value={paidAmount}
             onChange={(e) => setPaidAmount(e.target.value)}
@@ -530,11 +532,11 @@ export default function POSPage() {
           />
 
           {due > 0 && (
-            <p className="text-xs text-amber-600">Due: ৳{due.toFixed(2)}</p>
+            <p className="text-xs text-amber-600">{translateWithVars(t("pos.dueAmount", locale), { a: fmtMoney(due, locale) })}</p>
           )}
 
           <textarea
-            placeholder="Notes (optional)"
+            placeholder={t("pos.notes", locale)}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             className="w-full rounded border px-2 py-1 text-xs resize-none"
@@ -547,7 +549,7 @@ export default function POSPage() {
             className="w-full"
           >
             {submitting ? <Loader2 className="size-4 animate-spin mr-2" /> : <FileText className="size-4 mr-2" />}
-            Place Order
+            {t("pos.placeOrder", locale)}
           </Button>
         </div>
       </div>

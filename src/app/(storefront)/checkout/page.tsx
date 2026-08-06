@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getClientLocale, t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface CartItem {
   productId: number;
@@ -33,6 +34,10 @@ interface CourierService {
   max_delivery_days: number | null;
 }
 
+function makeOrderNo() {
+  return `WEB-${Date.now()}`;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -50,6 +55,7 @@ export default function CheckoutPage() {
   const [courierCharge, setCourierCharge] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "Instant Payment">("COD");
   const [notes, setNotes] = useState("");
+  const locale = getClientLocale();
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -89,11 +95,11 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (!fullName.trim() || !phone.trim() || !address.trim() || !city.trim()) {
-      alert("Please fill in all required shipping fields.");
+      alert(t("store.checkout.fillRequired", locale));
       return;
     }
     if (cart.length === 0) {
-      alert("Your cart is empty.");
+      alert(t("store.cart.empty", locale));
       return;
     }
 
@@ -125,7 +131,7 @@ export default function CheckoutPage() {
     }
 
     // Create order
-    const orderNo = `WEB-${Date.now()}`;
+    const orderNo = makeOrderNo();
     const { data: order, error: orderError } = await supabase
       .from("web_orders")
       .insert({
@@ -196,9 +202,9 @@ export default function CheckoutPage() {
     return (
       <div className="mx-auto max-w-7xl px-4 py-16 text-center">
         <ShoppingBag className="mx-auto size-16 text-muted-foreground" />
-        <h1 className="mt-4 text-2xl font-semibold">Your cart is empty</h1>
-        <p className="mt-2 text-muted-foreground">Add some products before checkout.</p>
-        <Link href="/shop"><Button className="mt-6">Browse Shop</Button></Link>
+        <h1 className="mt-4 text-2xl font-semibold">{t("store.cart.empty", locale)}</h1>
+        <p className="mt-2 text-muted-foreground">{t("store.checkout.emptyDesc", locale)}</p>
+        <Link href="/shop"><Button className="mt-6">{t("store.cart.browseShop", locale)}</Button></Link>
       </div>
     );
   }
@@ -206,109 +212,112 @@ export default function CheckoutPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <Link href="/cart" className="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-6">
-        <ArrowLeft className="size-4" /> Back to Cart
+        <ArrowLeft className="size-4" /> {t("store.checkout.backToCart", locale)}
       </Link>
-      <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
+      <h1 className="text-2xl font-semibold mb-6">{t("store.checkout.title", locale)}</h1>
 
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Shipping Form */}
         <div className="lg:col-span-2 space-y-6">
           <div className="rounded-lg border bg-card p-6 space-y-4">
-            <h2 className="text-lg font-semibold">Shipping Information</h2>
+            <h2 className="text-lg font-semibold">{t("store.checkout.shippingInfo", locale)}</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1">
-                <Label>Full Name *</Label>
-                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" />
+                <Label>{t("store.checkout.fullName", locale)} *</Label>
+                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t("store.checkout.fullNamePh", locale)} />
               </div>
               <div className="space-y-1">
-                <Label>Mobile Number *</Label>
+                <Label>{t("store.checkout.mobile", locale)} *</Label>
                 <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01XXXXXXXXX" />
               </div>
             </div>
             <div className="space-y-1">
-              <Label>Address *</Label>
-              <Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="House no, road, area, landmarks" className="h-16 resize-none" />
+              <Label>{t("store.checkout.address", locale)} *</Label>
+              <Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("store.checkout.addressPh", locale)} className="h-16 resize-none" />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1">
-                <Label>City *</Label>
-                <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Dhaka, Chittagong" />
+                <Label>{t("store.checkout.city", locale)} *</Label>
+                <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t("store.checkout.cityPh", locale)} />
               </div>
               <div className="space-y-1">
-                <Label>Postal Code</Label>
-                <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="Optional" />
+                <Label>{t("store.checkout.postalCode", locale)}</Label>
+                <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder={t("store.checkout.optional", locale)} />
               </div>
             </div>
           </div>
 
           <div className="rounded-lg border bg-card p-6 space-y-4">
-            <h2 className="text-lg font-semibold">Delivery & Payment</h2>
+            <h2 className="text-lg font-semibold">{t("store.checkout.deliveryPayment", locale)}</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1">
-                <Label>Courier Service</Label>
+                <Label>{t("store.checkout.courierService", locale)}</Label>
                 <select value={courierId} onChange={(e) => handleCourierChange(Number(e.target.value))} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
                   {couriers.map((c) => (
                     <option key={c.service_id} value={c.service_id}>
-                      {c.service_name} — ৳{c.base_rate} {c.min_delivery_days != null ? `(${c.min_delivery_days}-${c.max_delivery_days} days)` : ""}
+                      {c.service_name} — {fmtMoney(Number(c.base_rate), locale)}{" "}
+                      {c.min_delivery_days != null && c.max_delivery_days != null
+                        ? `(${fmtInt(c.min_delivery_days, locale)}-${fmtInt(c.max_delivery_days, locale)} ${t("store.checkout.days", locale)})`
+                        : ""}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="space-y-1">
-                <Label>Payment Method</Label>
+                <Label>{t("store.checkout.paymentMethod", locale)}</Label>
                 <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as "COD" | "Instant Payment")} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
-                  <option value="COD">Cash on Delivery (COD)</option>
-                  <option value="Instant Payment">Instant Payment</option>
+                  <option value="COD">{t("store.checkout.cod", locale)}</option>
+                  <option value="Instant Payment">{t("store.checkout.instantPayment", locale)}</option>
                 </select>
               </div>
             </div>
             <div className="space-y-1">
-              <Label>Order Notes</Label>
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any special instructions..." className="h-16 resize-none" />
+              <Label>{t("store.checkout.orderNotes", locale)}</Label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("store.checkout.notesPh", locale)} className="h-16 resize-none" />
             </div>
           </div>
         </div>
 
         {/* Order Summary */}
         <div className="rounded-lg border bg-card p-6 space-y-4 h-fit">
-          <h2 className="text-lg font-semibold">Order Summary</h2>
+          <h2 className="text-lg font-semibold">{t("store.cart.orderSummary", locale)}</h2>
           <div className="space-y-3">
             {cart.map((item) => (
               <div key={item.productId} className="flex justify-between text-sm">
                 <span className="flex-1 truncate">{item.productName} × {item.quantity}</span>
-                <span className="ml-2 font-medium">৳{(item.price * item.quantity).toFixed(2)}</span>
+                <span className="ml-2 font-medium">{fmtMoney(item.price * item.quantity, locale)}</span>
               </div>
             ))}
           </div>
           <div className="border-t pt-3 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span>Subtotal ({totalItems} items)</span>
-              <span>৳{subtotal.toFixed(2)}</span>
+              <span>{translateWithVars(t("store.checkout.subtotalItems", locale), { n: fmtInt(totalItems, locale) })}</span>
+              <span>{fmtMoney(subtotal, locale)}</span>
             </div>
             {bulkDiscountPercent > 0 && (
               <div className="flex justify-between text-green-600">
-                <span>Bulk Discount ({bulkDiscountPercent}%)</span>
-                <span>-৳{discountAmount.toFixed(2)}</span>
+                <span>{translateWithVars(t("store.cart.bulkDiscount", locale), { p: fmtInt(bulkDiscountPercent, locale) })}</span>
+                <span>-{fmtMoney(discountAmount, locale)}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span>After Discount</span>
-              <span>৳{afterDiscount.toFixed(2)}</span>
+              <span>{t("store.checkout.afterDiscount", locale)}</span>
+              <span>{fmtMoney(afterDiscount, locale)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Courier Charge</span>
-              <span>৳{courierCharge.toFixed(2)}</span>
+              <span>{t("store.checkout.courierCharge", locale)}</span>
+              <span>{fmtMoney(courierCharge, locale)}</span>
             </div>
             <div className="border-t pt-2 flex justify-between font-semibold text-lg">
-              <span>Grand Total</span>
-              <span>৳{grandTotal.toFixed(2)}</span>
+              <span>{t("store.checkout.grandTotal", locale)}</span>
+              <span>{fmtMoney(grandTotal, locale)}</span>
             </div>
           </div>
           <Button className="w-full" onClick={handlePlaceOrder} disabled={placing}>
             {placing ? (
-              <><Loader2 className="size-4 mr-2 animate-spin" /> Placing Order...</>
+              <><Loader2 className="size-4 mr-2 animate-spin" /> {t("store.checkout.placing", locale)}</>
             ) : (
-              <><Check className="size-4 mr-2" /> Place Order — ৳{grandTotal.toFixed(2)}</>
+              <><Check className="size-4 mr-2" /> {translateWithVars(t("store.checkout.placeOrderAmount", locale), { a: fmtMoney(grandTotal, locale) })}</>
             )}
           </Button>
         </div>

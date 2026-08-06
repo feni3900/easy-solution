@@ -46,12 +46,14 @@ export const STOCK_MOVEMENT_TYPES = [
 
 export interface NavChild {
   title: string;
+  titleKey: string;
   href: string;
   children?: NavChild[];
 }
 
 export interface NavItem {
   title: string;
+  titleKey: string;
   href: string;
   icon: string;
   children?: NavChild[];
@@ -60,109 +62,120 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   {
     title: "Dashboard",
+    titleKey: "nav.dashboard",
     href: "/dashboard",
     icon: "LayoutDashboard",
   },
   {
     title: "POS Terminal",
+    titleKey: "nav.pos",
     href: "/pos",
     icon: "Monitor",
   },
   {
     title: "Inventory",
+    titleKey: "nav.inventory",
     href: "/inventory",
     icon: "Package",
     children: [
-      { title: "Display Products", href: "/inventory/products" },
-      { title: "Stock Journal", href: "/inventory/stock-journal" },
-      { title: "Damages", href: "/inventory/damages" },
+      { title: "Display Products", titleKey: "nav.inventory.displayProducts", href: "/inventory/products" },
+      { title: "Stock Journal", titleKey: "nav.inventory.stockJournal", href: "/inventory/stock-journal" },
+      { title: "Damages", titleKey: "nav.inventory.damages", href: "/inventory/damages" },
     ],
   },
   {
     title: "Add/Remove",
+    titleKey: "nav.addRemove",
     href: "/inventory/add-remove",
     icon: "ListPlus",
     children: [
-      { title: "Suppliers", href: "/inventory/add-remove/suppliers" },
-      { title: "Categories", href: "/inventory/add-remove/categories" },
-      { title: "Brands", href: "/inventory/add-remove/brands" },
-      { title: "Products", href: "/inventory/add-remove/products" },
-      { title: "Sizes", href: "/inventory/add-remove/sizes" },
-      { title: "Units", href: "/inventory/add-remove/units" },
+      { title: "Suppliers", titleKey: "nav.addRemove.suppliers", href: "/inventory/add-remove/suppliers" },
+      { title: "Categories", titleKey: "nav.addRemove.categories", href: "/inventory/add-remove/categories" },
+      { title: "Brands", titleKey: "nav.addRemove.brands", href: "/inventory/add-remove/brands" },
+      { title: "Products", titleKey: "nav.addRemove.products", href: "/inventory/add-remove/products" },
+      { title: "Sizes", titleKey: "nav.addRemove.sizes", href: "/inventory/add-remove/sizes" },
+      { title: "Units", titleKey: "nav.addRemove.units", href: "/inventory/add-remove/units" },
     ],
   },
   {
     title: "Purchases",
+    titleKey: "nav.purchases",
     href: "/purchases",
     icon: "Truck",
     children: [
-      { title: "New Purchase", href: "/purchases/new" },
-      { title: "Purchase History", href: "/purchases/history" },
-      { title: "Suppliers", href: "/purchases/suppliers" },
-      { title: "Supplier Ledger", href: "/purchases/supplier-ledger" },
+      { title: "New Purchase", titleKey: "nav.purchases.new", href: "/purchases/new" },
+      { title: "Purchase History", titleKey: "nav.purchases.history", href: "/purchases/history" },
+      { title: "Suppliers", titleKey: "nav.purchases.suppliers", href: "/purchases/suppliers" },
+      { title: "Supplier Ledger", titleKey: "nav.purchases.supplierLedger", href: "/purchases/supplier-ledger" },
     ],
   },
   {
     title: "Sales",
+    titleKey: "nav.sales",
     href: "/sales",
     icon: "ShoppingCart",
     children: [
-      { title: "POS Invoices", href: "/sales/invoices" },
-      { title: "Online Orders", href: "/sales/online-orders" },
-      { title: "Returns", href: "/sales/returns" },
-      { title: "Customers", href: "/customers" },
-      { title: "Customers Ledger", href: "/customers/ledger" },
+      { title: "POS Invoices", titleKey: "nav.sales.invoices", href: "/sales/invoices" },
+      { title: "Online Orders", titleKey: "nav.sales.onlineOrders", href: "/sales/online-orders" },
+      { title: "Returns", titleKey: "nav.sales.returns", href: "/sales/returns" },
+      { title: "Customers", titleKey: "nav.sales.customers", href: "/customers" },
+      { title: "Customers Ledger", titleKey: "nav.sales.customersLedger", href: "/customers/ledger" },
     ],
   },
   {
     title: "Gallery",
+    titleKey: "nav.gallery",
     href: "/gallery",
     icon: "Image",
   },
   {
     title: "Reports",
+    titleKey: "nav.reports",
     href: "/reports",
     icon: "BarChart3",
     children: [
-      { title: "Sales Report", href: "/reports/sales" },
-      { title: "Inventory Movement", href: "/reports/inventory" },
-      { title: "Customers Due", href: "/reports/customer-due" },
+      { title: "Sales Report", titleKey: "nav.reports.sales", href: "/reports/sales" },
+      { title: "Inventory Movement", titleKey: "nav.reports.inventory", href: "/reports/inventory" },
+      { title: "Customers Due", titleKey: "nav.reports.customersDue", href: "/reports/customer-due" },
     ],
   },
   {
     title: "Accounts",
+    titleKey: "nav.accounts",
     href: "/accounts",
     icon: "BookOpen",
     children: [
-      { title: "Cash In / Out", href: "/accounts/cash-register" },
-      { title: "Chart of Accounts", href: "/accounts/chart-of-accounts" },
-      { title: "Journal Entries", href: "/accounts/journal" },
-      { title: "Trial Balance", href: "/accounts/trial-balance" },
-      { title: "Profit & Loss", href: "/accounts/profit-loss" },
-      { title: "Balance Sheet", href: "/accounts/balance-sheet" },
+      { title: "Cash In / Out", titleKey: "nav.accounts.cashInOut", href: "/accounts/cash-register" },
+      { title: "Chart of Accounts", titleKey: "nav.accounts.chartOfAccounts", href: "/accounts/chart-of-accounts" },
+      { title: "Journal Entries", titleKey: "nav.accounts.journal", href: "/accounts/journal" },
+      { title: "Trial Balance", titleKey: "nav.accounts.trialBalance", href: "/accounts/trial-balance" },
+      { title: "Profit & Loss", titleKey: "nav.accounts.profitLoss", href: "/accounts/profit-loss" },
+      { title: "Balance Sheet", titleKey: "nav.accounts.balanceSheet", href: "/accounts/balance-sheet" },
     ],
   },
   {
     title: "Web Store",
+    titleKey: "nav.webStore",
     href: "/web-store",
     icon: "Globe",
     children: [
-      { title: "Settings", href: "/web-store/settings" },
-      { title: "Page Sections", href: "/web-store/pages" },
-      { title: "Courier Services", href: "/web-store/couriers" },
-      { title: "Contact Submissions", href: "/web-store/contacts" },
+      { title: "Settings", titleKey: "nav.webStore.settings", href: "/web-store/settings" },
+      { title: "Page Sections", titleKey: "nav.webStore.pageSections", href: "/web-store/pages" },
+      { title: "Courier Services", titleKey: "nav.webStore.couriers", href: "/web-store/couriers" },
+      { title: "Contact Submissions", titleKey: "nav.webStore.contacts", href: "/web-store/contacts" },
     ],
   },
   {
     title: "Admin",
+    titleKey: "nav.admin",
     href: "/admin",
     icon: "Shield",
     children: [
-      { title: "Users", href: "/admin/users" },
-      { title: "Roles & Permissions", href: "/admin/roles" },
-      { title: "Bulk Discount Rules", href: "/admin/discount-rules" },
-      { title: "Stock Alert Rules", href: "/admin/stock-alerts" },
-      { title: "Audit Log", href: "/admin/audit-log" },
+      { title: "Users", titleKey: "nav.admin.users", href: "/admin/users" },
+      { title: "Roles & Permissions", titleKey: "nav.admin.roles", href: "/admin/roles" },
+      { title: "Bulk Discount Rules", titleKey: "nav.admin.discountRules", href: "/admin/discount-rules" },
+      { title: "Stock Alert Rules", titleKey: "nav.admin.stockAlerts", href: "/admin/stock-alerts" },
+      { title: "Audit Log", titleKey: "nav.admin.auditLog", href: "/admin/audit-log" },
     ],
   },
 ];

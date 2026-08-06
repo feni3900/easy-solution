@@ -22,6 +22,7 @@ import {
   ListPlus,
 } from "lucide-react";
 import { NAV_ITEMS, type NavItem, type NavChild } from "@/lib/constants";
+import { getClientLocale, t, type Locale } from "@/lib/i18n";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
@@ -43,15 +44,18 @@ function NavChildLink({
   pathname,
   depth,
   onClose,
+  locale,
 }: {
   child: NavChild;
   pathname: string;
   depth: number;
   onClose?: () => void;
+  locale: Locale;
 }) {
   const [open, setOpen] = useState(false);
   const isActive = pathname === child.href;
   const hasChildren = child.children && child.children.length > 0;
+  const label = t(child.titleKey, locale);
 
   if (!hasChildren) {
     return (
@@ -65,7 +69,7 @@ function NavChildLink({
         }`}
         style={{ paddingLeft: `${8 + depth * 12}px` }}
       >
-        {child.title}
+        {label}
       </Link>
     );
   }
@@ -81,7 +85,7 @@ function NavChildLink({
         }`}
         style={{ paddingLeft: `${8 + depth * 12}px` }}
       >
-        <span className="flex-1 text-left">{child.title}</span>
+        <span className="flex-1 text-left">{label}</span>
         {open ? (
           <ChevronDown className="size-3" />
         ) : (
@@ -97,6 +101,7 @@ function NavChildLink({
               pathname={pathname}
               depth={depth + 1}
               onClose={onClose}
+              locale={locale}
             />
           ))}
         </div>
@@ -109,16 +114,19 @@ function NavItemComponent({
   item,
   pathname,
   onClose,
+  locale,
 }: {
   item: NavItem;
   pathname: string;
   onClose?: () => void;
+  locale: Locale;
 }) {
   const [open, setOpen] = useState(false);
   const Icon = iconMap[item.icon] || Package;
   const isActive =
     pathname === item.href || pathname.startsWith(item.href + "/");
   const hasChildren = item.children && item.children.length > 0;
+  const label = t(item.titleKey, locale);
 
   if (!hasChildren) {
     return (
@@ -132,7 +140,7 @@ function NavItemComponent({
         }`}
       >
         <Icon className="size-4 shrink-0" />
-        {item.title}
+        {label}
       </Link>
     );
   }
@@ -148,7 +156,7 @@ function NavItemComponent({
         }`}
       >
         <Icon className="size-4 shrink-0" />
-        <span className="flex-1 text-left">{item.title}</span>
+        <span className="flex-1 text-left">{label}</span>
         {open ? (
           <ChevronDown className="size-3" />
         ) : (
@@ -164,6 +172,7 @@ function NavItemComponent({
               pathname={pathname}
               depth={0}
               onClose={onClose}
+              locale={locale}
             />
           ))}
         </div>
@@ -174,6 +183,7 @@ function NavItemComponent({
 
 export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
+  const locale = getClientLocale();
 
   return (
     <>
@@ -191,7 +201,7 @@ export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => voi
         <div className="flex h-14 items-center justify-between border-b px-4">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Store className="size-5 text-primary" />
-            <span className="text-lg font-semibold">Smart ERP</span>
+            <span className="text-lg font-semibold">{t("common.brand", locale)}</span>
           </Link>
           {onClose && (
             <button onClick={onClose} className="lg:hidden">
@@ -206,6 +216,7 @@ export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => voi
               item={item}
               pathname={pathname}
               onClose={onClose}
+              locale={locale}
             />
           ))}
         </nav>

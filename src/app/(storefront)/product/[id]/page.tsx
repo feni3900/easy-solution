@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Package } from "lucide-react";
 import { AddToCartButton } from "./add-to-cart-button";
+import { getLocale } from "@/lib/i18n-server";
+import { t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
 
 export default async function ProductDetailPage({
   params,
@@ -12,6 +14,7 @@ export default async function ProductDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const locale = await getLocale();
 
   const [{ data: product }, webSettings] = await Promise.all([
     supabase
@@ -44,7 +47,7 @@ export default async function ProductDetailPage({
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <Link href="/shop" className="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-6">
-        <ArrowLeft className="size-4" /> Back to Shop
+        <ArrowLeft className="size-4" /> {t("store.product.backToShop", locale)}
       </Link>
 
       <div className="grid gap-8 lg:grid-cols-2">
@@ -64,19 +67,21 @@ export default async function ProductDetailPage({
               {category?.category_name ?? ""} {brand?.brand_name ? `· ${brand.brand_name}` : ""}
             </p>
             <h1 className="text-2xl font-bold mt-1">{product.product_name}</h1>
-            <p className="text-sm text-muted-foreground mt-1">SKU: {product.sku}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("store.product.sku", locale)}: {product.sku}</p>
           </div>
 
           <div className="flex items-center gap-2">
-            <p className="text-3xl font-bold">৳{Number(product.selling_price).toFixed(2)}</p>
+            <p className="text-3xl font-bold">{fmtMoney(Number(product.selling_price), locale)}</p>
             <span className="rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
-              {bulkDiscountPct}% off {bulkDiscountMin}+
+              {translateWithVars(t("store.bulkOff", locale), { p: fmtInt(bulkDiscountPct, locale), m: fmtInt(bulkDiscountMin, locale) })}
             </span>
           </div>
 
           <div className="flex items-center gap-2">
             <span className={`text-sm px-2 py-0.5 rounded-full ${effectiveStock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-              {effectiveStock > 0 ? `${effectiveStock} in stock` : "Out of stock"}
+              {effectiveStock > 0
+                ? translateWithVars(t("store.product.inStockCount", locale), { n: fmtInt(effectiveStock, locale) })
+                : t("store.product.outOfStock", locale)}
             </span>
           </div>
 
@@ -86,14 +91,14 @@ export default async function ProductDetailPage({
 
           {variants.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium mb-2">Variants</h3>
+              <h3 className="text-sm font-medium mb-2">{t("store.product.variants", locale)}</h3>
               <div className="grid grid-cols-2 gap-2">
                 {variants.map((v) => (
                   <div key={v.variant_id} className="rounded-md border p-2 text-sm">
                     <span className="font-medium">{v.variant_key}:</span> {v.variant_value}
                     {v.price_adjustment !== 0 && (
                       <span className="text-muted-foreground ml-1">
-                        (৳{Number(product.selling_price + v.price_adjustment).toFixed(2)})
+                        ({fmtMoney(Number(product.selling_price + v.price_adjustment), locale)})
                       </span>
                     )}
                   </div>
@@ -107,6 +112,7 @@ export default async function ProductDetailPage({
             productName={product.product_name}
             price={Number(product.selling_price)}
             inStock={effectiveStock > 0}
+            locale={locale}
           />
         </div>
       </div>

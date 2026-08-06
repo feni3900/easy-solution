@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { t, type Locale } from "@/lib/i18n";
 
 interface FilterOption {
   id: number;
@@ -12,11 +13,13 @@ export default function ShopFilters({
   brands,
   category,
   brand,
+  locale,
 }: {
   categories: FilterOption[];
   brands: FilterOption[];
   category: string;
   brand: string;
+  locale: Locale;
 }) {
   const router = useRouter();
 
@@ -35,7 +38,7 @@ export default function ShopFilters({
         defaultValue={category}
         onChange={(e) => apply(e.target.value, brand)}
       >
-        <option value="">All Categories</option>
+        <option value="">{t("store.allCategories", locale)}</option>
         {categories.map((c) => (
           <option key={c.id} value={c.id}>{c.label}</option>
         ))}
@@ -45,7 +48,7 @@ export default function ShopFilters({
         defaultValue={brand}
         onChange={(e) => apply(category, e.target.value)}
       >
-        <option value="">All Brands</option>
+        <option value="">{t("store.allBrands", locale)}</option>
         {brands.map((b) => (
           <option key={b.id} value={b.id}>{b.label}</option>
         ))}

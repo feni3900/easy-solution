@@ -5,6 +5,7 @@ import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { getClientLocale, t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
 
 interface CartItem {
   productId: number;
@@ -18,6 +19,7 @@ export default function CartPage() {
   const [loaded, setLoaded] = useState(false);
   const [bulkDiscountPct, setBulkDiscountPct] = useState(20);
   const [bulkDiscountMin, setBulkDiscountMin] = useState(6);
+  const locale = getClientLocale();
 
   useEffect(() => {
     const load = async () => {
@@ -74,10 +76,10 @@ export default function CartPage() {
     return (
       <div className="mx-auto max-w-7xl px-4 py-16 text-center">
         <ShoppingBag className="mx-auto size-16 text-muted-foreground" />
-        <h1 className="mt-4 text-2xl font-semibold">Your cart is empty</h1>
-        <p className="mt-2 text-muted-foreground">Add some products to get started.</p>
+        <h1 className="mt-4 text-2xl font-semibold">{t("store.cart.empty", locale)}</h1>
+        <p className="mt-2 text-muted-foreground">{t("store.cart.emptyDesc", locale)}</p>
         <Link href="/shop">
-          <Button className="mt-6">Browse Shop</Button>
+          <Button className="mt-6">{t("store.cart.browseShop", locale)}</Button>
         </Link>
       </div>
     );
@@ -85,7 +87,7 @@ export default function CartPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="text-2xl font-semibold mb-6">Shopping Cart</h1>
+      <h1 className="text-2xl font-semibold mb-6">{t("store.cart.title", locale)}</h1>
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
@@ -94,7 +96,7 @@ export default function CartPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium leading-snug">{item.productName}</h3>
-                  <p className="mt-0.5 text-sm text-muted-foreground">৳{item.price.toFixed(2)} each</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">{fmtMoney(item.price, locale)} {t("store.cart.each", locale)}</p>
                 </div>
                 <Button variant="ghost" size="icon" className="shrink-0" onClick={() => removeItem(item.productId)}>
                   <Trash2 className="size-4 text-destructive" />
@@ -110,48 +112,53 @@ export default function CartPage() {
                     <Plus className="size-3" />
                   </Button>
                 </div>
-                <p className="font-medium">৳{(item.price * item.quantity).toFixed(2)}</p>
+                <p className="font-medium">{fmtMoney(item.price * item.quantity, locale)}</p>
               </div>
             </div>
           ))}
         </div>
 
         <div className="rounded-lg border bg-card p-6 space-y-4 h-fit">
-          <h2 className="text-lg font-semibold">Order Summary</h2>
+          <h2 className="text-lg font-semibold">{t("store.cart.orderSummary", locale)}</h2>
           <div className="space-y-2 text-sm">
             {cart.map((item, index) => (
               <div key={item.productId} className="flex justify-between">
                 <span className="text-muted-foreground">{index + 1}. {item.productName} × {item.quantity}</span>
-                <span className="font-medium ml-2">৳{(item.price * item.quantity).toFixed(2)}</span>
+                <span className="font-medium ml-2">{fmtMoney(item.price * item.quantity, locale)}</span>
               </div>
             ))}
             <div className="border-t pt-2 flex justify-between">
-              <span>Subtotal ({totalItems} pcs)</span>
-              <span>৳{subtotal.toFixed(2)}</span>
+              <span>{translateWithVars(t("store.cart.subtotal", locale), { n: fmtInt(totalItems, locale) })}</span>
+              <span>{fmtMoney(subtotal, locale)}</span>
             </div>
             {bulkDiscountPercent > 0 && (
               <div className="flex justify-between text-green-600">
-                <span>Bulk Discount ({bulkDiscountPercent}%)</span>
-                <span>-৳{discountAmount.toFixed(2)}</span>
+                <span>{translateWithVars(t("store.cart.bulkDiscount", locale), { n: fmtInt(bulkDiscountPercent, locale) })}</span>
+                <span>-{fmtMoney(discountAmount, locale)}</span>
               </div>
             )}
             {bulkDiscountPercent === 0 && (
               <div className="flex justify-between text-muted-foreground">
-                <span>Add {Math.max(0, bulkDiscountMin - totalItems)} more for {bulkDiscountPct}% bulk discount</span>
+                <span>
+                  {translateWithVars(t("store.cart.addMore", locale), {
+                    n: fmtInt(Math.max(0, bulkDiscountMin - totalItems), locale),
+                    p: fmtInt(bulkDiscountPct, locale),
+                  })}
+                </span>
                 <span></span>
               </div>
             )}
             <div className="border-t pt-2 flex justify-between font-semibold text-lg">
-              <span>Total</span>
-              <span>৳{total.toFixed(2)}</span>
+              <span>{t("store.cart.total", locale)}</span>
+              <span>{fmtMoney(total, locale)}</span>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">Courier charge calculated at checkout.</p>
+          <p className="text-xs text-muted-foreground">{t("store.cart.courierNote", locale)}</p>
           <Link href="/checkout" className="block">
-            <Button className="w-full">Proceed to Checkout</Button>
+            <Button className="w-full">{t("store.cart.checkout", locale)}</Button>
           </Link>
           <Link href="/shop" className="block text-center text-sm text-primary hover:underline">
-            Continue Shopping
+            {t("store.cart.continueShopping", locale)}
           </Link>
         </div>
       </div>
