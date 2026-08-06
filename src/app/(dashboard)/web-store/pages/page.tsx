@@ -167,18 +167,18 @@ export default function WebStorePagesPage() {
           onClick={() => setEditing(null)}
         >
           <div
-            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-card p-6"
+            className="w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-lg bg-card p-4 sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h2 className="text-base sm:text-lg font-semibold">
                 Edit {editing.page_name} - Section {editing.section_number}
               </h2>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setEditing(null)}>
+              <div className="flex gap-2 shrink-0">
+                <Button variant="outline" size="sm" onClick={() => setEditing(null)}>
                   Cancel
                 </Button>
-                <Button onClick={handleSave} disabled={saving}>
+                <Button size="sm" onClick={handleSave} disabled={saving}>
                   {saving ? (
                     <Loader2 className="size-4 mr-2 animate-spin" />
                   ) : (
@@ -236,7 +236,7 @@ export default function WebStorePagesPage() {
                   />
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label>Feature 1 Title</Label>
                   <Input
@@ -318,7 +318,7 @@ export default function WebStorePagesPage() {
                   No images in gallery. Upload some first.
                 </p>
               ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {galleryImages.map((img) => (
                     <button
                       key={img.id}

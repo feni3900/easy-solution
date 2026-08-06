@@ -37,7 +37,7 @@ export default async function ContactPage() {
             <Phone className="mx-auto size-8 text-primary mb-3" />
             <h3 className="font-semibold">{section1?.col2_title ?? "Call Us"}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              {settings.contact_phone ?? "+880 1700-000000"}
+              {section1?.col2_desc ?? settings.contact_phone ?? "+880 1700-000000"}
             </p>
             {settings.whatsapp_number && (
               <a
@@ -54,7 +54,7 @@ export default async function ContactPage() {
             <Mail className="mx-auto size-8 text-primary mb-3" />
             <h3 className="font-semibold">{section1?.col3_title ?? "Email Us"}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              {settings.contact_email ?? "info@smarterp.com"}
+              {section1?.col3_desc ?? settings.contact_email ?? "info@smarterp.com"}
             </p>
           </div>
         </div>

@@ -50,14 +50,22 @@ export default function InventoryReportPage() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase
-      .from("products")
-      .select("product_id, product_name, sku, selling_price, cost_price, min_stock_threshold, current_stock")
-      .order("product_name")
-      .then(({ data }) => {
-        setProducts(data ?? []);
+    (async () => {
+      const { data: purchasedRows } = await supabase.from("purchase_items").select("product_id");
+      const purchasedIds = Array.from(new Set((purchasedRows ?? []).map((r) => r.product_id)));
+      if (purchasedIds.length === 0) {
+        setProducts([]);
         setLoading(false);
-      });
+        return;
+      }
+      const { data } = await supabase
+        .from("products")
+        .select("product_id, product_name, sku, selling_price, cost_price, min_stock_threshold, current_stock")
+        .in("product_id", purchasedIds)
+        .order("product_name");
+      setProducts(data ?? []);
+      setLoading(false);
+    })();
   }, []);
 
   const stockValue = products.reduce((s, p) => s + p.current_stock * Number(p.cost_price), 0);

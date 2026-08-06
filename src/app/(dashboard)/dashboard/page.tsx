@@ -1,4 +1,12 @@
+import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
+
+const quickLinks = [
+  { href: "/inventory/products", label: "Inventory → Products", description: "add products" },
+  { href: "/pos", label: "POS Terminal", description: "start selling" },
+  { href: "/web-store/settings", label: "Web Store → Settings", description: "configure your store" },
+  { href: "/admin/users", label: "Admin → Users", description: "manage user accounts" },
+];
 
 export default async function DashboardPage() {
   const profile = await requireProfile();
@@ -36,10 +44,13 @@ export default async function DashboardPage() {
       <div className="rounded-lg border bg-card p-6">
         <h3 className="text-base font-medium mb-2">Quick Start</h3>
         <ul className="space-y-2 text-sm text-muted-foreground">
-          <li>• Go to <strong>Inventory → Products</strong> to add products</li>
-          <li>• Go to <strong>POS Terminal</strong> to start selling</li>
-          <li>• Go to <strong>Web Store → Settings</strong> to configure your store</li>
-          <li>• Go to <strong>Admin → Users</strong> to manage user accounts</li>
+          {quickLinks.map((item) => (
+            <li key={item.href}>
+              <Link href={item.href} className="hover:text-primary hover:underline">
+                Go to <strong>{item.label}</strong> to {item.description}
+              </Link>
+            </li>
+          ))}
         </ul>
       </div>
     </div>

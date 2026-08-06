@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 interface DueEntry {
   id: string;
   customer_name: string;
+  mobile_number: string;
   invoice_no: string;
   total_amount: number;
   paid_amount: number;
@@ -21,6 +22,11 @@ interface DueEntry {
 
 const columns: ColumnDef<DueEntry>[] = [
   { accessorKey: "customer_name", header: "Customer" },
+  {
+    accessorKey: "mobile_number",
+    header: "Mobile No",
+    cell: ({ row }) => <span className="font-mono text-sm">{row.original.mobile_number}</span>,
+  },
   { accessorKey: "invoice_no", header: "Invoice" },
   {
     accessorKey: "total_amount",
@@ -65,7 +71,7 @@ export default function CustomerDueLedgerPage() {
     const supabase = createClient();
     supabase
       .from("sales_invoices")
-      .select("invoice_id, invoice_no, total_amount, paid_amount, due_amount, payment_status, sale_date, customers(full_name)")
+      .select("invoice_id, invoice_no, total_amount, paid_amount, due_amount, payment_status, sale_date, customers(full_name, mobile_number)")
       .gt("due_amount", 0)
       .order("sale_date", { ascending: false })
       .then(({ data }) => {
@@ -78,10 +84,11 @@ export default function CustomerDueLedgerPage() {
             due_amount: number;
             payment_status: string;
             sale_date: string;
-            customers: { full_name: string | null } | { full_name: string | null }[] | null;
+            customers: { full_name: string | null; mobile_number: string | null } | { full_name: string | null; mobile_number: string | null }[] | null;
           }) => ({
             id: String(inv.invoice_id),
             customer_name: Array.isArray(inv.customers) ? inv.customers[0]?.full_name ?? "Walk-in" : inv.customers?.full_name ?? "Walk-in",
+            mobile_number: Array.isArray(inv.customers) ? inv.customers[0]?.mobile_number ?? "—" : inv.customers?.mobile_number ?? "—",
             invoice_no: inv.invoice_no,
             total_amount: inv.total_amount,
             paid_amount: inv.paid_amount,
@@ -105,7 +112,14 @@ export default function CustomerDueLedgerPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Customer Due Ledger" description="Track outstanding customer payments" />
-      <DataTable columns={columns} data={entries} searchKey="customer_name" />
+      <DataTable
+        columns={columns}
+        data={entries}
+        searchColumns={[
+          { key: "customer_name", placeholder: "Search by name..." },
+          { key: "mobile_number", placeholder: "Search mobile no..." },
+        ]}
+      />
     </div>
   );
 }

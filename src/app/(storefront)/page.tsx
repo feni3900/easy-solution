@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
+import { getWebSettings } from "@/lib/store";
 import Link from "next/link";
 import { ArrowRight, Truck, BadgePercent, Package, Clock, TrendingUp, Star } from "lucide-react";
 
 export default async function StorefrontHome() {
   const supabase = await createClient();
 
-  const [{ data: section1 }, { data: products }, { data: topSelling }] = await Promise.all([
+  const [{ data: section1 }, { data: products }, { data: topSelling }, webSettings] = await Promise.all([
     supabase
       .from("page_sections")
       .select("*")
@@ -22,6 +23,7 @@ export default async function StorefrontHome() {
       .from("stock_journal")
       .select("product_id")
       .in("movement_type", ["Sale_POS", "Sale_Online"]),
+    getWebSettings(),
   ]);
 
   const allProducts = products ?? [];
@@ -46,6 +48,9 @@ export default async function StorefrontHome() {
     .filter((p): p is NonNullable<typeof p> => !!p)
     .slice(0, 8);
 
+  const bulkDiscountPct = webSettings?.bulk_discount_percent ?? 20;
+  const bulkDiscountMin = webSettings?.bulk_discount_min_items ?? 6;
+
   return (
     <div>
       {/* Hero / Banner */}
@@ -55,11 +60,11 @@ export default async function StorefrontHome() {
             <img
               src={section1.banner_image_url}
               alt={section1.hero_title ?? "Banner"}
-              className="h-screen w-full object-cover"
+              className="h-[70vh] w-full object-cover object-bottom"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
             <div className="absolute inset-0 flex flex-col items-center justify-start pt-20 gap-4 px-4 text-center">
-              <h1 className="max-w-3xl text-3xl font-bold text-yellow-400 sm:text-5xl">
+              <h1 className="max-w-3xl text-3xl font-bold text-white sm:text-5xl">
                 {section1.hero_title ?? "Smart ERP Store"}
               </h1>
               <p className="max-w-xl text-xl sm:text-2xl text-white/90">
@@ -130,6 +135,44 @@ export default async function StorefrontHome() {
         </div>
       </section>
 
+      {/* Hot Sell */}
+      {comingSoon.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-8">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl flex items-center gap-2">
+              <Clock className="size-5 text-blue-500" /> Hot Sell
+            </h2>
+            <Link href="/shop" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+              View all <ArrowRight className="size-4" />
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {comingSoon.map((p) => (
+              <Link
+                key={p.product_id}
+                href={`/product/${p.product_id}`}
+                className="group rounded-lg border bg-card p-4 transition-shadow hover:shadow-md"
+              >
+                <div className="aspect-square rounded-md bg-muted mb-3 flex items-center justify-center overflow-hidden">
+                  {p.image_url ? (
+                    <img src={p.image_url} alt={p.product_name} className="h-full w-full object-cover" />
+                  ) : (
+                    <Package className="size-8 text-muted-foreground" />
+                  )}
+                </div>
+                <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary">{p.product_name}</h3>
+                <p className="mt-1 flex items-center gap-2">
+                  <span className="font-semibold">৳{Number(p.selling_price).toFixed(2)}</span>
+                  <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
+                    {bulkDiscountPct}% off {bulkDiscountMin}+
+                  </span>
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Popular Products */}
       {popular.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-8">
@@ -156,7 +199,12 @@ export default async function StorefrontHome() {
                   )}
                 </div>
                 <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary">{p.product_name}</h3>
-                <p className="mt-1 font-semibold">৳{Number(p.selling_price).toFixed(2)}</p>
+                <p className="mt-1 flex items-center gap-2">
+                  <span className="font-semibold">৳{Number(p.selling_price).toFixed(2)}</span>
+                  <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
+                    {bulkDiscountPct}% off {bulkDiscountMin}+
+                  </span>
+                </p>
               </Link>
             ))}
           </div>
@@ -189,40 +237,13 @@ export default async function StorefrontHome() {
                   )}
                 </div>
                 <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary">{p.product_name}</h3>
-                <p className="mt-1 font-semibold">৳{Number(p.selling_price).toFixed(2)}</p>
+                <p className="mt-1 flex items-center gap-2">
+                  <span className="font-semibold">৳{Number(p.selling_price).toFixed(2)}</span>
+                  <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
+                    {bulkDiscountPct}% off {bulkDiscountMin}+
+                  </span>
+                </p>
               </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Coming Soon */}
-      {comingSoon.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 py-8">
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl flex items-center gap-2">
-              <Clock className="size-5 text-blue-500" /> Coming Soon
-            </h2>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {comingSoon.map((p) => (
-              <div
-                key={p.product_id}
-                className="group rounded-lg border bg-card p-4 transition-shadow hover:shadow-md relative"
-              >
-                <div className="absolute top-2 right-2 z-10 rounded-full bg-blue-500 text-white text-xs px-2 py-0.5 font-medium">
-                  Coming Soon
-                </div>
-                <div className="aspect-square rounded-md bg-muted mb-3 flex items-center justify-center overflow-hidden">
-                  {p.image_url ? (
-                    <img src={p.image_url} alt={p.product_name} className="h-full w-full object-cover" />
-                  ) : (
-                    <Package className="size-8 text-muted-foreground" />
-                  )}
-                </div>
-                <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary">{p.product_name}</h3>
-                <p className="mt-1 font-semibold">৳{Number(p.selling_price).toFixed(2)}</p>
-              </div>
             ))}
           </div>
         </section>

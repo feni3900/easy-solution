@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import Link from "next/link";
 
 interface Purchase {
   purchase_id: number;
@@ -73,7 +74,7 @@ export default function PurchasesHistoryPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left font-medium">Invoice #</th>
+                <th className="p-3 text-left font-medium">Purchase No</th>
                 <th className="p-3 text-left font-medium">Date</th>
                 <th className="p-3 text-left font-medium">Supplier</th>
                 <th className="p-3 text-center font-medium">Payment</th>
@@ -84,7 +85,16 @@ export default function PurchasesHistoryPage() {
             <tbody>
               {purchases.map((p) => (
                 <tr key={p.purchase_id} className="border-b hover:bg-muted/30 cursor-pointer" onClick={() => viewDetails(p)}>
-                  <td className="p-3 font-medium">{p.invoice_no}</td>
+                  <td className="p-3 font-medium">
+                    <span>{p.invoice_no}</span>
+                    <Link
+                      href={`/purchases/new?edit=${p.purchase_id}`}
+                      title={`Edit purchase ${p.invoice_no}`}
+                      className="ml-2 inline-flex items-center text-muted-foreground hover:text-primary"
+                    >
+                      <Pencil className="size-3.5" />
+                    </Link>
+                  </td>
                   <td className="p-3 text-muted-foreground">{p.purchase_date}</td>
                   <td className="p-3">{(p.suppliers as { supplier_name?: string })?.supplier_name ?? "-"}</td>
                   <td className="p-3 text-center">{p.payment_type}</td>
@@ -104,8 +114,14 @@ export default function PurchasesHistoryPage() {
 
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{selected?.invoice_no} — Purchase Items</DialogTitle>
+          <DialogHeader className="flex-row items-center justify-between">
+            <DialogTitle>{selected?.invoice_no} — Purchase Items</DialogTitle>            {selected && (
+              <Link href={`/purchases/new?edit=${selected.purchase_id}`}>
+                <Button size="sm" variant="outline">
+                  <Pencil className="size-3.5 mr-1" />Edit
+                </Button>
+              </Link>
+            )}
           </DialogHeader>
           {loadingItems ? (
             <div className="flex justify-center py-8"><Loader2 className="size-6 animate-spin" /></div>

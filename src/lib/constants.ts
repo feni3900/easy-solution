@@ -44,11 +44,17 @@ export const STOCK_MOVEMENT_TYPES = [
   { value: "Write_Off", label: "Write Off" },
 ] as const;
 
+export interface NavChild {
+  title: string;
+  href: string;
+  children?: NavChild[];
+}
+
 export interface NavItem {
   title: string;
   href: string;
   icon: string;
-  children?: { title: string; href: string }[];
+  children?: NavChild[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -67,11 +73,22 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/inventory",
     icon: "Package",
     children: [
-      { title: "Products", href: "/inventory/products" },
-      { title: "Categories", href: "/inventory/categories" },
-      { title: "Brands", href: "/inventory/brands" },
+      { title: "Display Products", href: "/inventory/products" },
       { title: "Stock Journal", href: "/inventory/stock-journal" },
       { title: "Damages", href: "/inventory/damages" },
+    ],
+  },
+  {
+    title: "Add/Remove",
+    href: "/inventory/add-remove",
+    icon: "ListPlus",
+    children: [
+      { title: "Suppliers", href: "/inventory/add-remove/suppliers" },
+      { title: "Categories", href: "/inventory/add-remove/categories" },
+      { title: "Brands", href: "/inventory/add-remove/brands" },
+      { title: "Products", href: "/inventory/add-remove/products" },
+      { title: "Sizes", href: "/inventory/add-remove/sizes" },
+      { title: "Units", href: "/inventory/add-remove/units" },
     ],
   },
   {
@@ -82,6 +99,7 @@ export const NAV_ITEMS: NavItem[] = [
       { title: "New Purchase", href: "/purchases/new" },
       { title: "Purchase History", href: "/purchases/history" },
       { title: "Suppliers", href: "/purchases/suppliers" },
+      { title: "Supplier Ledger", href: "/purchases/supplier-ledger" },
     ],
   },
   {
@@ -92,15 +110,8 @@ export const NAV_ITEMS: NavItem[] = [
       { title: "POS Invoices", href: "/sales/invoices" },
       { title: "Online Orders", href: "/sales/online-orders" },
       { title: "Returns", href: "/sales/returns" },
-    ],
-  },
-  {
-    title: "Customers",
-    href: "/customers",
-    icon: "Users",
-    children: [
-      { title: "All Customers", href: "/customers" },
-      { title: "Due Ledger", href: "/customers/due-ledger" },
+      { title: "Customers", href: "/customers" },
+      { title: "Customers Ledger", href: "/customers/ledger" },
     ],
   },
   {
@@ -115,7 +126,20 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { title: "Sales Report", href: "/reports/sales" },
       { title: "Inventory Movement", href: "/reports/inventory" },
-      { title: "Customer Due", href: "/reports/customer-due" },
+      { title: "Customers Due", href: "/reports/customer-due" },
+    ],
+  },
+  {
+    title: "Accounts",
+    href: "/accounts",
+    icon: "BookOpen",
+    children: [
+      { title: "Cash In / Out", href: "/accounts/cash-register" },
+      { title: "Chart of Accounts", href: "/accounts/chart-of-accounts" },
+      { title: "Journal Entries", href: "/accounts/journal" },
+      { title: "Trial Balance", href: "/accounts/trial-balance" },
+      { title: "Profit & Loss", href: "/accounts/profit-loss" },
+      { title: "Balance Sheet", href: "/accounts/balance-sheet" },
     ],
   },
   {

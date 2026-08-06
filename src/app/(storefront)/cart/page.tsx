@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 interface CartItem {
@@ -15,10 +16,25 @@ interface CartItem {
 export default function CartPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [bulkDiscountPct, setBulkDiscountPct] = useState(20);
+  const [bulkDiscountMin, setBulkDiscountMin] = useState(6);
 
   useEffect(() => {
-    setCart(JSON.parse(localStorage.getItem("cart") || "[]"));
-    setLoaded(true);
+    const load = async () => {
+      setCart(JSON.parse(localStorage.getItem("cart") || "[]"));
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("web_settings")
+        .select("bulk_discount_percent, bulk_discount_min_items")
+        .limit(1)
+        .single();
+      if (data) {
+        setBulkDiscountPct(data.bulk_discount_percent ?? 20);
+        setBulkDiscountMin(data.bulk_discount_min_items ?? 6);
+      }
+      setLoaded(true);
+    };
+    load();
   }, []);
 
   const updateQuantity = (productId: number, delta: number) => {
@@ -41,10 +57,7 @@ export default function CartPage() {
   const totalItems = cart.reduce((s, item) => s + item.quantity, 0);
 
   // Bulk discount calculation
-  let bulkDiscountPercent = 0;
-  if (totalItems >= 12) bulkDiscountPercent = 20;
-  else if (totalItems >= 5) bulkDiscountPercent = 10;
-  else if (totalItems >= 2) bulkDiscountPercent = 5;
+  const bulkDiscountPercent = totalItems >= bulkDiscountMin ? bulkDiscountPct : 0;
 
   const discountAmount = (subtotal * bulkDiscountPercent) / 100;
   const total = subtotal - discountAmount;
@@ -116,6 +129,12 @@ export default function CartPage() {
               <div className="flex justify-between text-green-600">
                 <span>Bulk Discount ({bulkDiscountPercent}%)</span>
                 <span>-৳{discountAmount.toFixed(2)}</span>
+              </div>
+            )}
+            {bulkDiscountPercent === 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Add {Math.max(0, bulkDiscountMin - totalItems)} more for {bulkDiscountPct}% bulk discount</span>
+                <span></span>
               </div>
             )}
             <div className="border-t pt-2 flex justify-between font-semibold text-lg">

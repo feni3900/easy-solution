@@ -12,6 +12,8 @@ import { Loader2 } from "lucide-react";
 interface CustomerDue {
   id: string;
   customer_name: string;
+  mobile_number: string;
+  sales_person: string;
   invoice_no: string;
   total_amount: number;
   paid_amount: number;
@@ -22,6 +24,8 @@ interface CustomerDue {
 
 const columns: ColumnDef<CustomerDue>[] = [
   { accessorKey: "customer_name", header: "Customer" },
+  { accessorKey: "mobile_number", header: "Mobile" },
+  { accessorKey: "sales_person", header: "Sales Person" },
   { accessorKey: "invoice_no", header: "Invoice" },
   {
     accessorKey: "total_amount",
@@ -61,7 +65,7 @@ export default function CustomerDueReportPage() {
     const supabase = createClient();
     supabase
       .from("sales_invoices")
-      .select("invoice_id, invoice_no, total_amount, paid_amount, due_amount, payment_status, sale_date, customers(full_name)")
+      .select("invoice_id, invoice_no, total_amount, paid_amount, due_amount, payment_status, sale_date, salesperson_nickname, customers(full_name, mobile_number)")
       .gt("due_amount", 0)
       .order("sale_date", { ascending: false })
       .then(({ data }) => {
@@ -74,10 +78,13 @@ export default function CustomerDueReportPage() {
             due_amount: number;
             payment_status: string;
             sale_date: string;
-            customers: { full_name: string | null } | { full_name: string | null }[] | null;
+            salesperson_nickname: string | null;
+            customers: { full_name: string | null; mobile_number: string | null } | { full_name: string | null; mobile_number: string | null }[] | null;
           }) => ({
             id: String(inv.invoice_id),
             customer_name: Array.isArray(inv.customers) ? inv.customers[0]?.full_name ?? "Walk-in" : inv.customers?.full_name ?? "Walk-in",
+            mobile_number: Array.isArray(inv.customers) ? inv.customers[0]?.mobile_number ?? "—" : inv.customers?.mobile_number ?? "—",
+            sales_person: inv.salesperson_nickname ?? "—",
             invoice_no: inv.invoice_no,
             total_amount: inv.total_amount,
             paid_amount: inv.paid_amount,
@@ -110,6 +117,14 @@ export default function CustomerDueReportPage() {
         <StatCard title="Unpaid Invoices" value={String(unpaidCount)} />
       </div>
 
-      <DataTable columns={columns} data={dues} searchKey="customer_name" />    </div>
+      <DataTable
+        columns={columns}
+        data={dues}
+        searchColumns={[
+          { key: "invoice_no", placeholder: "Search invoice no..." },
+          { key: "mobile_number", placeholder: "Search mobile no..." },
+        ]}
+      />
+    </div>
   );
 }

@@ -23,6 +23,15 @@ export default function AddBrandModal({ onClose, onAdded }: Props) {
     }
     setSaving(true);
     const supabase = createClient();
+    const { data: existing } = await supabase
+      .from("brands")
+      .select("brand_id")
+      .ilike("brand_name", name.trim());
+    if (existing && existing.length > 0) {
+      setSaving(false);
+      alert(`Brand "${name.trim()}" already exists.`);
+      return;
+    }
     const { data, error } = await supabase
       .from("brands")
       .insert({ brand_name: name.trim(), is_active: true })

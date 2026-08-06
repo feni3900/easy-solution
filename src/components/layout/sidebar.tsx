@@ -18,8 +18,10 @@ import {
   Store,
   X,
   Image,
+  BookOpen,
+  ListPlus,
 } from "lucide-react";
-import { NAV_ITEMS, type NavItem } from "@/lib/constants";
+import { NAV_ITEMS, type NavItem, type NavChild } from "@/lib/constants";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
@@ -32,7 +34,76 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Globe,
   Shield,
   Image,
+  BookOpen,
+  ListPlus,
 };
+
+function NavChildLink({
+  child,
+  pathname,
+  depth,
+  onClose,
+}: {
+  child: NavChild;
+  pathname: string;
+  depth: number;
+  onClose?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const isActive = pathname === child.href;
+  const hasChildren = child.children && child.children.length > 0;
+
+  if (!hasChildren) {
+    return (
+      <Link
+        href={child.href}
+        onClick={onClose}
+        className={`block rounded-lg px-3 py-1.5 text-sm transition-colors ${
+          isActive
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        }`}
+        style={{ paddingLeft: `${8 + depth * 12}px` }}
+      >
+        {child.title}
+      </Link>
+    );
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+          isActive || open
+            ? "text-primary font-medium"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        }`}
+        style={{ paddingLeft: `${8 + depth * 12}px` }}
+      >
+        <span className="flex-1 text-left">{child.title}</span>
+        {open ? (
+          <ChevronDown className="size-3" />
+        ) : (
+          <ChevronRight className="size-3" />
+        )}
+      </button>
+      {open && (
+        <div className="mt-1 space-y-1">
+          {child.children!.map((sub) => (
+            <NavChildLink
+              key={sub.href}
+              child={sub}
+              pathname={pathname}
+              depth={depth + 1}
+              onClose={onClose}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function NavItemComponent({
   item,
@@ -86,23 +157,15 @@ function NavItemComponent({
       </button>
       {open && (
         <div className="ml-4 mt-1 space-y-1">
-          {item.children!.map((child) => {
-            const isChildActive = pathname === child.href;
-            return (
-              <Link
-                key={child.href}
-                href={child.href}
-                onClick={onClose}
-                className={`block rounded-lg px-3 py-1.5 text-sm transition-colors ${
-                  isChildActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                {child.title}
-              </Link>
-            );
-          })}
+          {item.children!.map((child) => (
+            <NavChildLink
+              key={child.href}
+              child={child}
+              pathname={pathname}
+              depth={0}
+              onClose={onClose}
+            />
+          ))}
         </div>
       )}
     </div>

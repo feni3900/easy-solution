@@ -1,18 +1,36 @@
--- Generic audit trigger function
+-- Generic audit trigger function (no hardcoded column references)
 CREATE OR REPLACE FUNCTION public.audit_trigger_func()
 RETURNS TRIGGER AS $$
+DECLARE
+  rec_id INT;
+  row_data JSONB;
 BEGIN
+  row_data := to_jsonb(CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END);
+
+  -- Extract the primary key generically from the row JSON.
+  -- ->'key' returns NULL for missing keys, so this never errors
+  -- regardless of which table the trigger is attached to.
+  rec_id := COALESCE(
+    (row_data->>'product_id')::INT,
+    (row_data->>'invoice_id')::INT,
+    (row_data->>'order_id')::INT,
+    (row_data->>'purchase_id')::INT,
+    (row_data->>'customer_id')::INT,
+    (row_data->>'supplier_id')::INT,
+    (row_data->>'id')::INT
+  );
+
   IF TG_OP = 'INSERT' THEN
     INSERT INTO public.audit_log (action, table_name, record_id, new_value)
-    VALUES ('INSERT', TG_TABLE_NAME, NEW.product_id, to_jsonb(NEW));
+    VALUES ('INSERT', TG_TABLE_NAME, rec_id, row_data);
     RETURN NEW;
   ELSIF TG_OP = 'UPDATE' THEN
     INSERT INTO public.audit_log (action, table_name, record_id, old_value, new_value)
-    VALUES ('UPDATE', TG_TABLE_NAME, NEW.product_id, to_jsonb(OLD), to_jsonb(NEW));
+    VALUES ('UPDATE', TG_TABLE_NAME, rec_id, to_jsonb(OLD), row_data);
     RETURN NEW;
   ELSIF TG_OP = 'DELETE' THEN
     INSERT INTO public.audit_log (action, table_name, record_id, old_value)
-    VALUES ('DELETE', TG_TABLE_NAME, OLD.product_id, to_jsonb(OLD));
+    VALUES ('DELETE', TG_TABLE_NAME, rec_id, to_jsonb(OLD));
     RETURN OLD;
   END IF;
 END;

@@ -23,6 +23,15 @@ export default function AddCategoryModal({ onClose, onAdded }: Props) {
     }
     setSaving(true);
     const supabase = createClient();
+    const { data: existing } = await supabase
+      .from("categories")
+      .select("category_id")
+      .ilike("category_name", name.trim());
+    if (existing && existing.length > 0) {
+      setSaving(false);
+      alert(`Category "${name.trim()}" already exists.`);
+      return;
+    }
     const { data, error } = await supabase
       .from("categories")
       .insert({ category_name: name.trim(), is_active: true })

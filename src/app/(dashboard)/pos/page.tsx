@@ -14,7 +14,10 @@ interface Product {
   current_stock: number;
   image_url: string | null;
   size: string | null;
+  unit: string | null;
   storage_location: string | null;
+  category_id: number | null;
+  brand_id: number | null;
   categories: { category_name: string } | null;
   brands: { brand_name: string } | null;
   product_variants: { variant_id: number; variant_key: string; variant_value: string; price_adjustment: number; stock_adjustment: number }[];
@@ -45,6 +48,10 @@ interface DiscountRule {
 
 export default function POSPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<{ category_id: number; category_name: string }[]>([]);
+  const [brands, setBrands] = useState<{ brand_id: number; brand_name: string }[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [brandFilter, setBrandFilter] = useState("");
   const [discountRules, setDiscountRules] = useState<DiscountRule[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState("");
@@ -63,12 +70,18 @@ export default function POSPage() {
   const loadProducts = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
-    const { data } = await supabase
-      .from("products")
-      .select("*, categories(category_name), brands(brand_name), product_variants(*), size, storage_location")
-      .eq("is_active", true)
-      .order("product_name");
+    const [{ data }, { data: cats }, { data: brs }] = await Promise.all([
+      supabase
+        .from("products")
+        .select("*, categories(category_name), brands(brand_name), product_variants(*), size, unit, storage_location")
+        .eq("is_active", true)
+        .order("product_name"),
+      supabase.from("categories").select("category_id, category_name").eq("is_active", true).order("category_name"),
+      supabase.from("brands").select("brand_id, brand_name").eq("is_active", true).order("brand_name"),
+    ]);
     setProducts(data ?? []);
+    setCategories(cats ?? []);
+    setBrands(brs ?? []);
     setLoading(false);
   }, []);
 
@@ -89,7 +102,8 @@ export default function POSPage() {
   const filteredProducts = products.filter((p) =>
     p.product_name.toLowerCase().includes(search.toLowerCase()) ||
     p.sku.toLowerCase().includes(search.toLowerCase())
-  );
+  ).filter((p) => !categoryFilter || String(p.category_id) === categoryFilter)
+    .filter((p) => !brandFilter || String(p.brand_id) === brandFilter);
 
   const addToCart = useCallback((product: Product) => {
     setCart((prev) => {
@@ -315,7 +329,7 @@ export default function POSPage() {
     <div className="flex h-[calc(100vh-3.5rem)]">
       {/* Product Grid */}
       <div className="flex-1 flex flex-col border-r">
-        <div className="p-3 border-b">
+        <div className="p-3 border-b space-y-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
@@ -326,6 +340,28 @@ export default function POSPage() {
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-lg border bg-card pl-10 pr-4 py-2 text-sm"
             />
+          </div>
+          <div className="flex gap-2">
+            <select
+              className="rounded-lg border bg-card px-3 py-2 text-sm flex-1"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="">All Categories</option>
+              {categories.map((c) => (
+                <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
+              ))}
+            </select>
+            <select
+              className="rounded-lg border bg-card px-3 py-2 text-sm flex-1"
+              value={brandFilter}
+              onChange={(e) => setBrandFilter(e.target.value)}
+            >
+              <option value="">All Brands</option>
+              {brands.map((b) => (
+                <option key={b.brand_id} value={b.brand_id}>{b.brand_name}</option>
+              ))}
+            </select>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-3">
@@ -352,7 +388,12 @@ export default function POSPage() {
                   </div>
                   <p className="text-xs font-medium line-clamp-2">{product.product_name}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {product.size ? `${product.size} • ` : ""}{product.storage_location || ""}
+                    {product.size ? `${product.size} • ` : ""}{product.unit || ""}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {product.categories?.category_name && <span>{product.categories.category_name} · </span>}
+                    {product.brands?.brand_name && <span>{product.brands.brand_name} · </span>}
+                    {product.storage_location && <span>{product.storage_location}</span>}
                   </p>
                   <div className="flex items-center justify-between mt-1">
                     <p className="text-sm font-bold">৳{product.selling_price.toFixed(0)}</p>

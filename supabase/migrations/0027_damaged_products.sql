@@ -22,3 +22,7 @@ CREATE POLICY "Public read access" ON damaged_products FOR SELECT TO anon USING 
 
 DROP POLICY IF EXISTS "Authenticated full access" ON damaged_products;
 CREATE POLICY "Authenticated full access" ON damaged_products FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.damaged_products TO authenticated;
+GRANT SELECT ON public.damaged_products TO anon;
+GRANT ALL ON public.damaged_products TO service_role;

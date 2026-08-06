@@ -41,6 +41,18 @@ export default function CategoriesPage() {
     if (editing) {
       await supabase.from("categories").update(payload).eq("category_id", editing.category_id);
     } else {
+      if (!form.category_name.trim()) {
+        alert("Category name is required.");
+        return;
+      }
+      const { data: existing } = await supabase
+        .from("categories")
+        .select("category_id")
+        .ilike("category_name", form.category_name.trim());
+      if (existing && existing.length > 0) {
+        alert(`Category "${form.category_name.trim()}" already exists.`);
+        return;
+      }
       await supabase.from("categories").insert(payload);
     }
     setDialogOpen(false);

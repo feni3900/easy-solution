@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import { getWebSettings } from "@/lib/store";
 import Link from "next/link";
 import { Package, Search } from "lucide-react";
-import { getWebSettings } from "@/lib/store";
+import ShopFilters from "./shop-filters";
 
 export default async function ShopPage({
   searchParams,
@@ -30,10 +31,14 @@ export default async function ShopPage({
   const { data: products } = await query;
   const allProducts = products ?? [];
 
-  const [{ data: categories }, { data: brands }] = await Promise.all([
+  const [{ data: categories }, { data: brands }, webSettings] = await Promise.all([
     supabase.from("categories").select("category_id, category_name").eq("is_active", true).order("category_name"),
     supabase.from("brands").select("brand_id, brand_name").eq("is_active", true).order("brand_name"),
+    getWebSettings(),
   ]);
+
+  const bulkDiscountPct = webSettings?.bulk_discount_percent ?? 20;
+  const bulkDiscountMin = webSettings?.bulk_discount_min_items ?? 6;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -51,27 +56,12 @@ export default async function ShopPage({
             className="w-full rounded-lg border bg-card pl-10 pr-4 py-2 text-sm"
           />
         </form>
-        <div className="flex gap-2">
-          <select
-            className="rounded-lg border bg-card px-3 py-2 text-sm"
-            defaultValue={params.category ?? ""}
-            onChange={undefined}
-          >
-            <option value="">All Categories</option>
-            {(categories ?? []).map((c) => (
-              <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
-            ))}
-          </select>
-          <select
-            className="rounded-lg border bg-card px-3 py-2 text-sm"
-            defaultValue={params.brand ?? ""}
-          >
-            <option value="">All Brands</option>
-            {(brands ?? []).map((b) => (
-              <option key={b.brand_id} value={b.brand_id}>{b.brand_name}</option>
-            ))}
-          </select>
-        </div>
+        <ShopFilters
+          categories={(categories ?? []).map((c) => ({ id: c.category_id, label: c.category_name }))}
+          brands={(brands ?? []).map((b) => ({ id: b.brand_id, label: b.brand_name }))}
+          category={params.category ?? ""}
+          brand={params.brand ?? ""}
+        />
       </div>
 
       {/* Product Grid */}
@@ -105,7 +95,12 @@ export default async function ShopPage({
                 {p.unit ? ` ${p.unit}` : ""}
               </p>
               <div className="mt-2 flex items-center justify-between">
-                <p className="font-semibold">৳{Number(p.selling_price).toFixed(2)}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold">৳{Number(p.selling_price).toFixed(2)}</p>
+                  <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
+                    {bulkDiscountPct}% off {bulkDiscountMin}+
+                  </span>
+                </div>
                 <span className={`text-xs px-2 py-0.5 rounded-full ${p.current_stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                   {p.current_stock > 0 ? "In Stock" : "Out of Stock"}
                 </span>

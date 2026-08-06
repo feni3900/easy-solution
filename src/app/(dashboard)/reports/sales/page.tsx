@@ -30,6 +30,8 @@ interface WebOrder {
 export default function SalesReportPage() {
   const [posInvoices, setPosInvoices] = useState<Invoice[]>([]);
   const [webOrders, setWebOrders] = useState<WebOrder[]>([]);
+  const [posProfit, setPosProfit] = useState(0);
+  const [onlineProfit, setOnlineProfit] = useState(0);
   const [loading, setLoading] = useState(true);
   const today = new Date().toISOString().split("T")[0];
   const [dateFrom, setDateFrom] = useState(today);
@@ -55,6 +57,57 @@ export default function SalesReportPage() {
     ]);
     setPosInvoices(posRes.data ?? []);
     setWebOrders(webRes.data ?? []);
+
+    const invoiceIds = (posRes.data ?? []).map((i) => i.invoice_id);
+    const orderIds = (webRes.data ?? []).map((o) => o.order_id);
+
+    let posProfitTotal = 0;
+    let onlineProfitTotal = 0;
+
+    if (invoiceIds.length > 0) {
+      const { data: items } = await supabase
+        .from("sales_items")
+        .select("invoice_id, product_id, quantity, unit_price, total_price, discount_applied")
+        .in("invoice_id", invoiceIds);
+      const itemRows = items ?? [];
+      const productIds = [...new Set(itemRows.map((i) => i.product_id))];
+      let costMap = new Map<number, number>();
+      if (productIds.length > 0) {
+        const { data: products } = await supabase
+          .from("products")
+          .select("product_id, cost_price")
+          .in("product_id", productIds);
+        costMap = new Map((products ?? []).map((p) => [p.product_id, Number(p.cost_price)]));
+      }
+      posProfitTotal = itemRows.reduce((s, item) => {
+        const cost = costMap.get(item.product_id);
+        return s + (cost != null ? Number(item.total_price) - cost * item.quantity - Number(item.discount_applied ?? 0) : 0);
+      }, 0);
+    }
+
+    if (orderIds.length > 0) {
+      const { data: items } = await supabase
+        .from("order_items")
+        .select("product_id, quantity, total_price")
+        .in("order_id", orderIds);
+      const itemRows = items ?? [];
+      const productIds = [...new Set(itemRows.map((i) => i.product_id))];
+      let costMap = new Map<number, number>();
+      if (productIds.length > 0) {
+        const { data: products } = await supabase
+          .from("products")
+          .select("product_id, cost_price")
+          .in("product_id", productIds);
+        costMap = new Map((products ?? []).map((p) => [p.product_id, Number(p.cost_price)]));
+      }
+      onlineProfitTotal = itemRows.reduce((s, item) => {
+        const cost = costMap.get(item.product_id);
+        return s + (cost != null ? Number(item.total_price) - cost * item.quantity : 0);
+      }, 0);
+    }
+
+    setPosProfit(posProfitTotal);
+    setOnlineProfit(onlineProfitTotal);
     setLoading(false);
   }, []);
 
@@ -63,6 +116,7 @@ export default function SalesReportPage() {
   const posSales = posInvoices.reduce((s, o) => s + Number(o.total_amount), 0);
   const onlineSales = webOrders.reduce((s, o) => s + Number(o.total_amount), 0);
   const totalSales = posSales + onlineSales;
+  const totalProfit = posProfit + onlineProfit;
   const cashSales = posInvoices
     .filter((o) => o.payment_status === "Cash")
     .reduce((s, o) => s + Number(o.total_amount), 0);
@@ -99,8 +153,11 @@ export default function SalesReportPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total Sales" value={`৳${totalSales.toFixed(2)}`} icon={<ShoppingCart className="size-4" />} />
-        <StatCard title="POS Sales" value={`৳${posSales.toFixed(2)}`} icon={<TrendingUp className="size-4" />} />
+        <StatCard title="Total Profit" value={`৳${totalProfit.toFixed(2)}`} icon={<TrendingUp className="size-4" />} variant={totalProfit > 0 ? "default" : "destructive"} />
+        <StatCard title="POS Sales" value={`৳${posSales.toFixed(2)}`} icon={<ShoppingCart className="size-4" />} />
         <StatCard title="Online Sales" value={`৳${onlineSales.toFixed(2)}`} icon={<ShoppingCart className="size-4" />} />
+        <StatCard title="POS Profit" value={`৳${posProfit.toFixed(2)}`} icon={<TrendingUp className="size-4" />} />
+        <StatCard title="Online Profit" value={`৳${onlineProfit.toFixed(2)}`} icon={<TrendingUp className="size-4" />} />
         <StatCard title="Orders" value={String(totalOrders)} icon={<Users className="size-4" />} />
       </div>
 

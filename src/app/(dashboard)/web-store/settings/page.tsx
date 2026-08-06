@@ -15,6 +15,8 @@ interface WebSettings {
   favicon_url: string;
   courier_flat_rate: number;
   free_shipping_threshold: number;
+  bulk_discount_percent: number;
+  bulk_discount_min_items: number;
   online_cod_enabled: boolean;
   online_payment_gateway_enabled: boolean;
   seo_title: string;
@@ -241,6 +243,14 @@ export default function WebStoreSettingsPage() {
               <Input type="number" value={settings.free_shipping_threshold ?? ""} onChange={(e) => updateSetting("free_shipping_threshold", parseFloat(e.target.value) || 0)} placeholder="0 = no free shipping" />
             </div>
             <div className="space-y-1">
+              <Label>Bulk Discount (%)</Label>
+              <Input type="number" value={settings.bulk_discount_percent ?? 20} onChange={(e) => updateSetting("bulk_discount_percent", parseFloat(e.target.value) || 0)} placeholder="e.g. 20" />
+            </div>
+            <div className="space-y-1">
+              <Label>Bulk Discount Min Items</Label>
+              <Input type="number" value={settings.bulk_discount_min_items ?? 6} onChange={(e) => updateSetting("bulk_discount_min_items", parseInt(e.target.value) || 0)} placeholder="e.g. 6" />
+            </div>
+            <div className="space-y-1">
               <Label>COD Enabled</Label>
               <select value={settings.online_cod_enabled ? "true" : "false"} onChange={(e) => updateSetting("online_cod_enabled", e.target.value === "true")} className="w-full rounded-md border px-3 py-2 text-sm">
                 <option value="true">Yes</option>
@@ -321,14 +331,14 @@ export default function WebStoreSettingsPage() {
       {/* Edit Section Modal */}
       {editingSection && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setEditingSection(null)}>
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-card p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">
+          <div className="w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-lg bg-card p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h2 className="text-base sm:text-lg font-semibold">
                 Edit {editingSection.page_name} - Section {editingSection.section_number}
               </h2>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setEditingSection(null)}>Cancel</Button>
-                <Button onClick={handleSaveSection} disabled={saving}>
+              <div className="flex gap-2 shrink-0">
+                <Button variant="outline" size="sm" onClick={() => setEditingSection(null)}>Cancel</Button>
+                <Button size="sm" onClick={handleSaveSection} disabled={saving}>
                   {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Save className="size-4 mr-2" />}
                   Save
                 </Button>
@@ -355,7 +365,7 @@ export default function WebStoreSettingsPage() {
                   <img src={editingSection.banner_image_url} alt="Banner preview" className="mt-2 h-20 rounded border object-cover" />
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label>Feature 1 Title</Label>
                   <Input value={editingSection.col1_title ?? ""} onChange={(e) => updateSection("col1_title", e.target.value)} />
@@ -398,7 +408,7 @@ export default function WebStoreSettingsPage() {
               {galleryImages.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">No images in gallery. Upload some first.</p>
               ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {galleryImages.map((img) => (
                     <button
                       key={img.id}

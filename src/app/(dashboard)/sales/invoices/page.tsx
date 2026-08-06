@@ -31,7 +31,7 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
-  const [viewItems, setViewItems] = useState<{ product_name_snapshot: string; unit_price: number; quantity: number; total_price: number }[]>([]);
+  const [viewItems, setViewItems] = useState<{ product_name_snapshot: string; unit_price: number; quantity: number; total_price: number; discount_applied: number; cost_price: number | null }[]>([]);
   const [viewReturns, setViewReturns] = useState<ReturnItem[]>([]);
 
   const load = useCallback(async () => {
@@ -53,14 +53,35 @@ export default function InvoicesPage() {
     const [itemsRes, returnsRes] = await Promise.all([
       supabase
         .from("sales_items")
-        .select("product_name_snapshot, unit_price, quantity, total_price")
+        .select("product_name_snapshot, unit_price, quantity, total_price, discount_applied, product_id")
         .eq("invoice_id", invoice.invoice_id),
       supabase
         .from("sales_returns")
         .select("product_id, quantity, reason, date")
         .eq("invoice_id", invoice.invoice_id),
     ]);
-    setViewItems(itemsRes.data ?? []);
+
+    const itemsData = itemsRes.data ?? [];
+    const itemProductIds = [...new Set(itemsData.map((i) => i.product_id))];
+    let costMap = new Map<number, number | null>();
+    if (itemProductIds.length > 0) {
+      const { data: products } = await supabase
+        .from("products")
+        .select("product_id, cost_price")
+        .in("product_id", itemProductIds);
+      costMap = new Map((products ?? []).map((p) => [p.product_id, p.cost_price]));
+    }
+
+    setViewItems(
+      itemsData.map((item) => ({
+        product_name_snapshot: item.product_name_snapshot,
+        unit_price: Number(item.unit_price),
+        quantity: item.quantity,
+        total_price: Number(item.total_price),
+        discount_applied: Number(item.discount_applied ?? 0),
+        cost_price: costMap.get(item.product_id) ?? null,
+      }))
+    );
 
     const returns = returnsRes.data ?? [];
     if (returns.length > 0) {
@@ -141,37 +162,54 @@ export default function InvoicesPage() {
             <p>Salesperson: {viewInvoice?.salesperson_nickname}</p>
             <p>Channel: {viewInvoice?.channel}</p>
             <p>Date: {viewInvoice ? new Date(viewInvoice.sale_date).toLocaleString() : ""}</p>
-            <table className="w-full mt-4">
-              <thead><tr className="border-b"><th className="p-2 text-left">Item</th><th className="text-right">Qty</th><th className="text-right">Price</th><th className="text-right">Total</th></tr></thead>
-              <tbody>
-                {viewItems.map((item, i) => (
-                  <tr key={i} className="border-b">
-                    <td className="p-2">{item.product_name_snapshot}</td>
-                    <td className="text-right">{item.quantity}</td>
-                    <td className="text-right">৳{Number(item.unit_price).toFixed(2)}</td>
-                    <td className="text-right">৳{Number(item.total_price).toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full mt-4 min-w-[480px]">
+                <thead><tr className="border-b"><th className="p-2 text-left">Item</th><th className="text-right">Qty</th><th className="text-right">Price</th><th className="text-right">Total</th><th className="text-right">Profit</th></tr></thead>
+                <tbody>
+                  {viewItems.map((item, i) => {
+                    const profit = item.cost_price != null
+                      ? Number(item.total_price) - (item.cost_price * item.quantity) - Number(item.discount_applied)
+                      : null;
+                    return (
+                      <tr key={i} className="border-b">
+                        <td className="p-2">{item.product_name_snapshot}</td>
+                        <td className="text-right whitespace-nowrap">{item.quantity}</td>
+                        <td className="text-right whitespace-nowrap">৳{Number(item.unit_price).toFixed(2)}</td>
+                        <td className="text-right whitespace-nowrap">৳{Number(item.total_price).toFixed(2)}</td>
+                        <td className={`text-right whitespace-nowrap ${profit != null && profit >= 0 ? "text-green-600" : profit != null ? "text-red-600" : "text-muted-foreground"}`}>
+                          {profit != null ? `৳${profit.toFixed(2)}` : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
             {viewReturns.length > 0 && (
               <>
                 <p className="font-medium text-red-600 mt-3">Returned Items</p>
-                <table className="w-full">
-                  <thead><tr className="border-b"><th className="p-2 text-left">Item</th><th className="text-right">Qty</th><th className="text-left">Reason</th></tr></thead>
-                  <tbody>
-                    {viewReturns.map((r, i) => (
-                      <tr key={i} className="border-b text-red-600">
-                        <td className="p-2">{r.product_name_snapshot}</td>
-                        <td className="text-right">-{r.quantity}</td>
-                        <td className="text-left text-muted-foreground">{r.reason ?? "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[320px]">
+                    <thead><tr className="border-b"><th className="p-2 text-left">Item</th><th className="text-right">Qty</th><th className="text-left">Reason</th></tr></thead>
+                    <tbody>
+                      {viewReturns.map((r, i) => (
+                        <tr key={i} className="border-b text-red-600">
+                          <td className="p-2">{r.product_name_snapshot}</td>
+                          <td className="text-right whitespace-nowrap">-{r.quantity}</td>
+                          <td className="text-left text-muted-foreground">{r.reason ?? "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </>
             )}
-            <div className="text-right font-bold mt-2">Total: ৳{viewInvoice?.total_amount.toFixed(2)}</div>
+            <div className="flex justify-between items-center mt-2">
+              <div className="text-sm font-bold text-green-600">
+                Profit: ৳{viewItems.reduce((s, item) => s + (item.cost_price != null ? Number(item.total_price) - item.cost_price * item.quantity - Number(item.discount_applied) : 0), 0).toFixed(2)}
+              </div>
+              <div className="text-right font-bold">Total: ৳{viewInvoice?.total_amount.toFixed(2)}</div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

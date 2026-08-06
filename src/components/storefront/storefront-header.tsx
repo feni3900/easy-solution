@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { ShoppingCart, Menu, X, Store, LogOut, User as UserIcon } from "lucide-react";
+import { ShoppingCart, Menu, X, Store, LogOut, User as UserIcon, Phone, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -46,8 +46,11 @@ export function StorefrontHeader() {
     <header className="sticky top-0 z-50 border-b bg-card">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
-          <Store className="size-5 text-primary" />
-          <span className="text-lg font-semibold">Smart ERP Store</span>
+          <Store className="size-6 text-primary" />
+          <span className="leading-tight">
+            <span className="block text-sm font-semibold">Maruf Enterprise</span>
+            <span className="block text-sm font-semibold">Feni Garden City</span>
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
@@ -58,6 +61,20 @@ export function StorefrontHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <a href="tel:+8801831579666" className="hidden items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary sm:flex" title="Call +88 01831579666">
+            <Phone className="size-4 text-primary" />
+            +88 01831579666
+          </a>
+          <a
+            href="https://wa.me/8801831579666"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary sm:flex"
+            title="WhatsApp"
+          >
+            <MessageCircle className="size-4 text-primary" />
+            WhatsApp
+          </a>
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="size-5" />

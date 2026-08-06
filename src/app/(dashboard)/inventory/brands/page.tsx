@@ -39,6 +39,18 @@ export default function BrandsPage() {
     if (editing) {
       await supabase.from("brands").update({ brand_name: form.brand_name }).eq("brand_id", editing.brand_id);
     } else {
+      if (!form.brand_name.trim()) {
+        alert("Brand name is required.");
+        return;
+      }
+      const { data: existing } = await supabase
+        .from("brands")
+        .select("brand_id")
+        .ilike("brand_name", form.brand_name.trim());
+      if (existing && existing.length > 0) {
+        alert(`Brand "${form.brand_name.trim()}" already exists.`);
+        return;
+      }
       await supabase.from("brands").insert({ brand_name: form.brand_name });
     }
     setDialogOpen(false);

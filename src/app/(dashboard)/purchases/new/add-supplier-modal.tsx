@@ -47,8 +47,8 @@ export default function AddSupplierModal({ onClose, onAdded }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-lg border bg-card p-4 sm:p-6 shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Add New Supplier</h2>
           <Button variant="ghost" size="icon" onClick={onClose}><X className="size-4" /></Button>
@@ -73,7 +73,7 @@ export default function AddSupplierModal({ onClose, onAdded }: Props) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 mt-6">
+        <div className="flex justify-end gap-2 mt-6 flex-col-reverse sm:flex-row">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}

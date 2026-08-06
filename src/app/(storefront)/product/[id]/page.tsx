@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getWebSettings } from "@/lib/store";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Package } from "lucide-react";
@@ -12,14 +13,20 @@ export default async function ProductDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: product } = await supabase
-    .from("products")
-    .select("*, categories(category_name), brands(brand_name), product_variants(*)")
-    .eq("product_id", id)
-    .eq("is_active", true)
-    .single();
+  const [{ data: product }, webSettings] = await Promise.all([
+    supabase
+      .from("products")
+      .select("*, categories(category_name), brands(brand_name), product_variants(*)")
+      .eq("product_id", id)
+      .eq("is_active", true)
+      .single(),
+    getWebSettings(),
+  ]);
 
   if (!product) notFound();
+
+  const bulkDiscountPct = webSettings?.bulk_discount_percent ?? 20;
+  const bulkDiscountMin = webSettings?.bulk_discount_min_items ?? 6;
 
   const category = product.categories as { category_name?: string } | null;
   const brand = product.brands as { brand_name?: string } | null;
@@ -60,7 +67,12 @@ export default async function ProductDetailPage({
             <p className="text-sm text-muted-foreground mt-1">SKU: {product.sku}</p>
           </div>
 
-          <p className="text-3xl font-bold">৳{Number(product.selling_price).toFixed(2)}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-3xl font-bold">৳{Number(product.selling_price).toFixed(2)}</p>
+            <span className="rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
+              {bulkDiscountPct}% off {bulkDiscountMin}+
+            </span>
+          </div>
 
           <div className="flex items-center gap-2">
             <span className={`text-sm px-2 py-0.5 rounded-full ${effectiveStock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>

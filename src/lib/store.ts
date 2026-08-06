@@ -7,6 +7,8 @@ export interface WebSettings {
   favicon_url: string | null;
   courier_flat_rate: number;
   free_shipping_threshold: number | null;
+  bulk_discount_percent: number;
+  bulk_discount_min_items: number;
   online_cod_enabled: boolean;
   online_payment_gateway_enabled: boolean;
   seo_title: string | null;
@@ -54,6 +56,8 @@ export async function getWebSettings(): Promise<WebSettings> {
     favicon_url: null,
     courier_flat_rate: 60,
     free_shipping_threshold: null,
+    bulk_discount_percent: 20,
+    bulk_discount_min_items: 6,
     online_cod_enabled: true,
     online_payment_gateway_enabled: false,
     seo_title: null,

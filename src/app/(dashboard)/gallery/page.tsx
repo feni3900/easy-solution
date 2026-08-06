@@ -219,13 +219,13 @@ export default function GalleryPage() {
       {/* Image Preview Modal */}
       {selectedImage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setSelectedImage(null)}>
-          <div className="relative max-w-4xl max-h-[90vh] w-full bg-card rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b">
-              <div>
-                <p className="font-medium">{selectedImage.filename}</p>
+          <div className="relative max-w-4xl max-h-[calc(100dvh-2rem)] w-full bg-card rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-2 p-4 border-b">
+              <div className="min-w-0">
+                <p className="font-medium truncate">{selectedImage.filename}</p>
                 <p className="text-sm text-muted-foreground">{formatSize(selectedImage.size)} · {selectedImage.mime_type}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 shrink-0">
                 <Button variant="outline" size="sm" onClick={() => copyUrl(selectedImage.url)}>
                   <Copy className="size-4 mr-1" /> Copy URL
                 </Button>

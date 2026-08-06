@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AddSupplierModal from "./add-supplier-modal";
 import AddItemDialog from "./add-item-dialog";
 
@@ -56,6 +56,8 @@ export interface PurchaseItem {
 
 export default function PurchasesNewPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editPurchaseId = searchParams.get("edit");
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -72,6 +74,7 @@ export default function PurchasesNewPage() {
   const [dueAmount, setDueAmount] = useState(0);
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<PurchaseItem[]>([]);
+  const [editingPurchaseId, setEditingPurchaseId] = useState<number | null>(null);
 
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [showItemDialog, setShowItemDialog] = useState(false);
@@ -94,11 +97,63 @@ export default function PurchasesNewPage() {
   useEffect(() => {
     const load = async () => {
       await reloadAll();
-      setPurchaseNo(`PUR-${Date.now()}`);
+      if (editPurchaseId) {
+        const id = parseInt(editPurchaseId);
+        setEditingPurchaseId(id);
+        const supabase = createClient();
+        const { data: purchase } = await supabase
+          .from("purchases")
+          .select("*")
+          .eq("purchase_id", id)
+          .single();
+        if (purchase) {
+          setSupplierId(purchase.supplier_id);
+          setPurchaseNo(purchase.invoice_no);
+          setPurchaseDate(purchase.purchase_date);
+          setPaymentType(purchase.payment_type);
+          setNotes(purchase.notes ?? "");
+          const note = purchase.notes ?? "";
+          if (purchase.payment_type === "Partial") {
+            const match = note.match(/Cash: ([0-9.]+) \| Due: ([0-9.]+)/);
+            const paidVal = Number(purchase.paid_amount ?? 0);
+            const dueVal = Number(purchase.due_amount ?? 0);
+            if (match && paidVal === 0 && dueVal === 0) {
+              setCashAmount(parseFloat(match[1]));
+              setDueAmount(parseFloat(match[2]));
+            } else {
+              setCashAmount(paidVal);
+              setDueAmount(dueVal);
+            }
+          }
+        }
+        const { data: itemsData } = await supabase
+          .from("purchase_items")
+          .select("*, products(product_name, sku, size, unit, storage_location, category_id, brand_id)")
+          .eq("purchase_id", id)
+          .order("purchase_item_id");
+        setItems(
+          (itemsData ?? []).map((it) => ({
+            product_id: it.product_id,
+            product_name: it.products?.product_name ?? "",
+            sku: it.products?.sku ?? "",
+            category_name: "",
+            brand_name: "",
+            quantity: it.quantity,
+            unit_cost: Number(it.unit_cost),
+            selling_price: Number(it.selling_price ?? 0),
+            unit: it.products?.unit ?? "",
+            variant: "",
+            size: it.products?.size ?? "",
+            storage_location: it.products?.storage_location ?? "Self",
+          }))
+        );
+      } else {
+        setPurchaseNo(`PUR-${Date.now()}`);
+      }
       setLoading(false);
     };
     load();
-  }, [reloadAll]);
+  }, [reloadAll, editPurchaseId]);
 
   const handleAddItem = (item: PurchaseItem) => {
     if (editItemIndex !== null) {
@@ -142,6 +197,8 @@ export default function PurchasesNewPage() {
       purchase_date: purchaseDate,
       payment_type: paymentType,
       total_amount: totalAmount,
+      paid_amount: paymentType === "Cash" ? totalAmount : paymentType === "Partial" ? cashAmount : 0,
+      due_amount: paymentType === "Credit" ? totalAmount : paymentType === "Partial" ? dueAmount : 0,
       notes: notes || null,
       created_by: user?.id || null,
     };
@@ -151,20 +208,50 @@ export default function PurchasesNewPage() {
       purchaseData.notes = purchaseData.notes ? `${purchaseData.notes}\n${paymentNote}` : paymentNote;
     }
 
-    const { data: purchase, error: purchaseError } = await supabase
-      .from("purchases")
-      .insert(purchaseData)
-      .select("purchase_id")
-      .single();
-
-    if (purchaseError || !purchase) {
-      alert("Error creating purchase: " + (purchaseError?.message || "Unknown"));
-      setSaving(false);
-      return;
+    let purchaseId: number;
+    if (editingPurchaseId) {
+      purchaseId = editingPurchaseId;
+      const { error: updateError } = await supabase
+        .from("purchases")
+        .update(purchaseData)
+        .eq("purchase_id", purchaseId);
+      if (updateError) {
+        alert("Error updating purchase: " + updateError.message);
+        setSaving(false);
+        return;
+      }
+      const { data: oldItems } = await supabase
+        .from("purchase_items")
+        .select("product_id, quantity")
+        .eq("purchase_id", purchaseId);
+      for (const oldItem of oldItems ?? []) {
+        await supabase.rpc("deduct_stock", {
+          p_product_id: oldItem.product_id,
+          p_quantity: oldItem.quantity,
+          p_movement_type: "Purchase_Edit",
+          p_reference_id: purchaseId,
+          p_reference_no: purchaseNo,
+          p_notes: `Reverting stock for edited purchase ${purchaseNo}`,
+          p_created_by: user?.id || null,
+        });
+      }
+      await supabase.from("purchase_items").delete().eq("purchase_id", purchaseId);
+    } else {
+      const { data: purchase, error: purchaseError } = await supabase
+        .from("purchases")
+        .insert(purchaseData)
+        .select("purchase_id")
+        .single();
+      if (purchaseError || !purchase) {
+        alert("Error creating purchase: " + (purchaseError?.message || "Unknown"));
+        setSaving(false);
+        return;
+      }
+      purchaseId = purchase.purchase_id;
     }
 
     const purchaseItems = items.map((item) => ({
-      purchase_id: purchase.purchase_id,
+      purchase_id: purchaseId,
       product_id: item.product_id,
       quantity: item.quantity,
       unit_cost: item.unit_cost,
@@ -183,7 +270,7 @@ export default function PurchasesNewPage() {
         p_product_id: item.product_id,
         p_quantity: item.quantity,
         p_movement_type: "Purchase",
-        p_reference_id: purchase.purchase_id,
+        p_reference_id: purchaseId,
         p_reference_no: purchaseNo,
         p_notes: `Purchase from ${suppliers.find((s) => s.supplier_id === supplierId)?.supplier_name || "Unknown"}`,
         p_created_by: user?.id || null,
@@ -209,7 +296,7 @@ export default function PurchasesNewPage() {
         <Link href="/purchases/history">
           <Button variant="ghost" size="icon"><ArrowLeft className="size-5" /></Button>
         </Link>
-        <h1 className="text-2xl font-semibold">Record New Purchase</h1>
+        <h1 className="text-2xl font-semibold">{editingPurchaseId ? "Edit Purchase" : "Record New Purchase"}</h1>
       </div>
 
       {/* Header Fields */}
@@ -238,8 +325,8 @@ export default function PurchasesNewPage() {
               }
             }} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
               <option value="Cash">Cash</option>
-              <option value="Credit">Credit</option>
-              <option value="Partial">Partial</option>
+              <option value="Credit">Credit / Due</option>
+              <option value="Partial">Cash + Credit</option>
             </select>
           </div>
         </div>
@@ -385,7 +472,7 @@ export default function PurchasesNewPage() {
         </Link>
         <Button onClick={handleSubmit} disabled={saving || items.length === 0 || !supplierId}>
           {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Save className="size-4 mr-2" />}
-          {saving ? "Saving..." : "Save Purchase & Update Stock"}
+          {saving ? "Saving..." : editingPurchaseId ? "Update Purchase & Stock" : "Save Purchase & Update Stock"}
         </Button>
       </div>
 

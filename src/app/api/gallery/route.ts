@@ -1,25 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "crypto";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
-
-async function uploadToImgBB(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("image", file);
-
-  const res = await fetch(
-    `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
-    { method: "POST", body: formData }
-  );
-
-  const json = await res.json();
-  if (!json.data?.url) throw new Error("ImgBB upload failed");
-  return json.data.url;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +15,16 @@ export async function POST(request: NextRequest) {
     const skipRecord = formData.get("skip_record") === "true";
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
-    const url = await uploadToImgBB(file);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `${randomUUID()}.${ext}`;
+
+    const { error: upError } = await supabaseAdmin.storage
+      .from("gallery")
+      .upload(path, file, { contentType: file.type || "image/png", upsert: false });
+    if (upError) return NextResponse.json({ error: upError.message }, { status: 500 });
+
+    const { data: urlData } = supabaseAdmin.storage.from("gallery").getPublicUrl(path);
+    const url = urlData.publicUrl;
 
     if (skipRecord) {
       return NextResponse.json({ success: true, data: { url } });
@@ -40,7 +36,7 @@ export async function POST(request: NextRequest) {
         filename: file.name,
         url: url,
         size: file.size,
-        mime_type: file.type,
+        mime_type: file.type || "image/png",
         alt_text: file.name.replace(/\.[^/.]+$/, ""),
         folder: "uploads",
       })
