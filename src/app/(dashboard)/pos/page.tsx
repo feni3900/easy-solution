@@ -65,6 +65,7 @@ export default function POSPage() {
   const [paidAmount, setPaidAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [heldOrders, setHeldOrders] = useState<CartItem[][]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const loadProducts = useCallback(async () => {
@@ -326,9 +327,9 @@ export default function POSPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] md:flex-row">
       {/* Product Grid */}
-      <div className="flex-1 flex flex-col border-r">
+      <div className="flex-1 flex flex-col md:border-r">
         <div className="p-3 border-b space-y-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -409,11 +410,16 @@ export default function POSPage() {
       </div>
 
       {/* Cart Panel */}
-      <div className="w-96 flex flex-col bg-card">
+      <div className={`fixed inset-x-0 bottom-0 z-40 max-h-[80dvh] flex-col overflow-hidden bg-card border-t shadow-xl md:static md:inset-auto md:z-auto md:max-h-none md:flex md:w-96 md:border-l md:shadow-none ${cartOpen ? "flex" : "hidden"}`}>
         <div className="p-3 border-b">
-          <div className="flex items-center gap-2 mb-2">
-            <ShoppingCart className="size-4" />
-            <span className="font-medium text-sm">Cart ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="size-4" />
+              <span className="font-medium text-sm">Cart ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
+            </div>
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setCartOpen(false)}>
+              <X className="size-4" />
+            </Button>
           </div>
           <div className="flex gap-2">
             <Input
@@ -541,6 +547,17 @@ export default function POSPage() {
           </Button>
         </div>
       </div>
+
+      {/* Mobile cart button */}
+      {!cartOpen && (
+        <button
+          onClick={() => setCartOpen(true)}
+          className="md:hidden fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg"
+        >
+          <ShoppingCart className="size-5" />
+          Cart ({cart.reduce((s, i) => s + i.quantity, 0)})
+        </button>
+      )}
     </div>
   );
 }

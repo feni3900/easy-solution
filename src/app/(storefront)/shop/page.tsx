@@ -71,7 +71,7 @@ export default async function ShopPage({
           <p className="mt-4 text-muted-foreground">No products found.</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {allProducts.map((p) => (
             <Link
               key={p.product_id}

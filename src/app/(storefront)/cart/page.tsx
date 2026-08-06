@@ -90,24 +90,28 @@ export default function CartPage() {
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
           {cart.map((item) => (
-            <div key={item.productId} className="flex items-center gap-4 rounded-lg border bg-card p-4">
-              <div className="flex-1">
-                <h3 className="font-medium">{item.productName}</h3>
-                <p className="text-sm text-muted-foreground">৳{item.price.toFixed(2)} each</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={() => updateQuantity(item.productId, -1)}>
-                  <Minus className="size-3" />
-                </Button>
-                <span className="w-8 text-center">{item.quantity}</span>
-                <Button variant="outline" size="icon" onClick={() => updateQuantity(item.productId, 1)}>
-                  <Plus className="size-3" />
+            <div key={item.productId} className="rounded-lg border bg-card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium leading-snug">{item.productName}</h3>
+                  <p className="mt-0.5 text-sm text-muted-foreground">৳{item.price.toFixed(2)} each</p>
+                </div>
+                <Button variant="ghost" size="icon" className="shrink-0" onClick={() => removeItem(item.productId)}>
+                  <Trash2 className="size-4 text-destructive" />
                 </Button>
               </div>
-              <p className="w-24 text-right font-medium">৳{(item.price * item.quantity).toFixed(2)}</p>
-              <Button variant="ghost" size="icon" onClick={() => removeItem(item.productId)}>
-                <Trash2 className="size-4 text-destructive" />
-              </Button>
+              <div className="mt-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="icon" onClick={() => updateQuantity(item.productId, -1)}>
+                    <Minus className="size-3" />
+                  </Button>
+                  <span className="w-8 text-center">{item.quantity}</span>
+                  <Button variant="outline" size="icon" onClick={() => updateQuantity(item.productId, 1)}>
+                    <Plus className="size-3" />
+                  </Button>
+                </div>
+                <p className="font-medium">৳{(item.price * item.quantity).toFixed(2)}</p>
+              </div>
             </div>
           ))}
         </div>

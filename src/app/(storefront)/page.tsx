@@ -146,7 +146,7 @@ export default async function StorefrontHome() {
               View all <ArrowRight className="size-4" />
             </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {comingSoon.map((p) => (
               <Link
                 key={p.product_id}
@@ -184,7 +184,7 @@ export default async function StorefrontHome() {
               View all <ArrowRight className="size-4" />
             </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {popular.map((p) => (
               <Link
                 key={p.product_id}
@@ -222,7 +222,7 @@ export default async function StorefrontHome() {
               View all <ArrowRight className="size-4" />
             </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {topSell.map((p) => (
               <Link
                 key={p.product_id}

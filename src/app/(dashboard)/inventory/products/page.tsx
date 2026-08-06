@@ -103,7 +103,7 @@ export default function ProductsPage() {
   const ratioFor = (p: Product) => {
     const edited = ratioEdits[p.product_id];
     if (edited !== undefined && edited.trim() !== "") return edited;
-    return p.cost_price > 0 ? (Math.round((p.selling_price / p.cost_price) * 10) / 10).toString() : "";
+    return "1";
   };
 
   const saveRatio = async (p: Product) => {
@@ -118,7 +118,7 @@ export default function ProductsPage() {
       return;
     }
     setSavingRatioId(p.product_id);
-    const sellingPrice = Math.round(p.cost_price * ratio * 100) / 100;
+    const sellingPrice = Math.round(Number(p.cost_price) * ratio * 100) / 100;
     const supabase = createClient();
     const { error } = await supabase
       .from("products")
