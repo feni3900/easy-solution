@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { isGuest } from "@/lib/auth";
 
 export async function POST() {
   try {
+    if (await isGuest()) {
+      return NextResponse.json({ error: "Guest account is read-only" }, { status: 403 });
+    }
     const supabase = createAdminClient();
 
     const categories = [

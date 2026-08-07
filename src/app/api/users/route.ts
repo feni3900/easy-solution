@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { isGuest } from "@/lib/auth";
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -9,6 +10,10 @@ export async function POST(req: Request) {
 
   if (!actor) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  if (await isGuest()) {
+    return NextResponse.json({ error: "Guest account is read-only" }, { status: 403 });
   }
 
   const admin = createAdminClient();

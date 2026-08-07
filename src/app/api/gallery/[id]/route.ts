@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { isGuest } from "@/lib/auth";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,6 +13,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (await isGuest()) {
+      return NextResponse.json({ error: "Guest account is read-only" }, { status: 403 });
+    }
     const { id } = await params;
 
     const { error } = await supabaseAdmin

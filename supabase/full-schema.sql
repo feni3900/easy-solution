@@ -41,7 +41,8 @@ CREATE TABLE roles_permissions (
 INSERT INTO roles_permissions (role_name, max_discount_percentage, allow_due) VALUES
 ('Salesperson', 5.00, FALSE),
 ('Branch Manager', 15.00, TRUE),
-('Admin', 100.00, TRUE);
+('Admin', 100.00, TRUE),
+('Guest', 0.00, FALSE);
 
 -- ============================================================
 -- 3. USERS (extends Supabase auth.users)

@@ -365,6 +365,7 @@ export const translations = {
   "app.inactive": { en: "Inactive", bn: "নিষ্ক্রিয়" },
   "app.none": { en: "None", bn: "কোনোটি নয়" },
   "app.deleteConfirm": { en: "Delete?", bn: "মুছবেন?" },
+  "app.guestBanner": { en: "Guest account — read-only. You can view everything but cannot edit.", bn: "গেস্ট অ্যাকাউন্ট — শুধু দেখার অনুমতি। সব দেখতে পারবেন তবে কোনো পরিবর্তন করতে পারবেন না।" },
 
   // Sales / Invoices
   "sales.invoices.title": { en: "POS Invoices", bn: "পিওএস ইনভয়েস" },

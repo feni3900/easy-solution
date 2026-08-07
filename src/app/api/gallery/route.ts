@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
+import { isGuest } from "@/lib/auth";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,6 +11,9 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    if (await isGuest()) {
+      return NextResponse.json({ error: "Guest account is read-only" }, { status: 403 });
+    }
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const skipRecord = formData.get("skip_record") === "true";

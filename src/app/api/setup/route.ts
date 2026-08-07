@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { isGuest } from "@/lib/auth";
 
 export async function GET() {
   try {
+    if (await isGuest()) {
+      return NextResponse.json({ error: "Guest account is read-only" }, { status: 403 });
+    }
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 

@@ -51,6 +51,11 @@ export async function isAdmin(): Promise<boolean> {
   return roleName === "Admin";
 }
 
+export async function isGuest(): Promise<boolean> {
+  const roleName = await getRoleName();
+  return roleName === "Guest";
+}
+
 export async function isBranchManager(): Promise<boolean> {
   const roleName = await getRoleName();
   return roleName === "Branch Manager";
