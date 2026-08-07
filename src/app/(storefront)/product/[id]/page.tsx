@@ -16,15 +16,24 @@ export default async function ProductDetailPage({
   const supabase = await createClient();
   const locale = await getLocale();
 
-  const [{ data: product }, webSettings] = await Promise.all([
-    supabase
-      .from("products")
-      .select("*, categories(category_name), brands(brand_name), product_variants(*)")
-      .eq("product_id", id)
-      .eq("is_active", true)
-      .single(),
+  const [{ data: purchased }, webSettings] = await Promise.all([
+    supabase.from("purchase_items").select("product_id"),
     getWebSettings(),
   ]);
+
+  const purchasedIds = Array.from(new Set((purchased ?? []).map((r) => r.product_id)));
+
+  let productQuery = supabase
+    .from("products")
+    .select("*, categories(category_name), brands(brand_name), product_variants(*)")
+    .eq("product_id", id)
+    .eq("is_active", true);
+  if (purchasedIds.length > 0) {
+    productQuery = productQuery.in("product_id", purchasedIds);
+  } else {
+    productQuery = productQuery.eq("product_id", -1);
+  }
+  const { data: product } = await productQuery.single();
 
   if (!product) notFound();
 

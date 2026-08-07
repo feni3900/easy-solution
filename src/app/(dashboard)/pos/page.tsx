@@ -73,18 +73,26 @@ export default function POSPage() {
   const loadProducts = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
-    const [{ data }, { data: cats }, { data: brs }] = await Promise.all([
-      supabase
-        .from("products")
-        .select("*, categories(category_name), brands(brand_name), product_variants(*), size, unit, storage_location")
-        .eq("is_active", true)
-        .order("product_name"),
+    const [{ data: purchased }, { data: cats }, { data: brs }] = await Promise.all([
+      supabase.from("purchase_items").select("product_id"),
       supabase.from("categories").select("category_id, category_name").eq("is_active", true).order("category_name"),
       supabase.from("brands").select("brand_id, brand_name").eq("is_active", true).order("brand_name"),
     ]);
-    setProducts(data ?? []);
     setCategories(cats ?? []);
     setBrands(brs ?? []);
+    const purchasedIds = Array.from(new Set((purchased ?? []).map((r) => r.product_id)));
+    let query = supabase
+      .from("products")
+      .select("*, categories(category_name), brands(brand_name), product_variants(*), size, unit, storage_location")
+      .eq("is_active", true)
+      .order("product_name");
+    if (purchasedIds.length > 0) {
+      query = query.in("product_id", purchasedIds);
+    } else {
+      query = query.eq("product_id", -1);
+    }
+    const { data } = await query;
+    setProducts(data ?? []);
     setLoading(false);
   }, []);
 

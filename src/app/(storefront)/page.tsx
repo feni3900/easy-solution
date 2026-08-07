@@ -9,25 +9,34 @@ export default async function StorefrontHome() {
   const supabase = await createClient();
   const locale = await getLocale();
 
-  const [{ data: section1 }, { data: products }, { data: topSelling }, webSettings] = await Promise.all([
+  const [{ data: section1 }, { data: purchased }, { data: topSelling }, webSettings] = await Promise.all([
     supabase
       .from("page_sections")
       .select("*")
       .eq("page_name", "home")
       .eq("section_number", 1)
       .single(),
-    supabase
-      .from("products")
-      .select("product_id, product_name, selling_price, image_url, is_popular, current_stock, category_id, size, unit, brands(brand_name)")
-      .eq("is_active", true)
-      .order("product_name")
-      .limit(30),
+    supabase.from("purchase_items").select("product_id"),
     supabase
       .from("stock_journal")
       .select("product_id")
       .in("movement_type", ["Sale_POS", "Sale_Online"]),
     getWebSettings(),
   ]);
+
+  const purchasedIds = Array.from(new Set((purchased ?? []).map((r) => r.product_id)));
+  let productQuery = supabase
+    .from("products")
+    .select("product_id, product_name, selling_price, image_url, is_popular, current_stock, category_id, size, unit, brands(brand_name)")
+    .eq("is_active", true)
+    .order("product_name")
+    .limit(30);
+  if (purchasedIds.length > 0) {
+    productQuery = productQuery.in("product_id", purchasedIds);
+  } else {
+    productQuery = productQuery.eq("product_id", -1);
+  }
+  const { data: products } = await productQuery;
 
   const allProducts = products ?? [];
 

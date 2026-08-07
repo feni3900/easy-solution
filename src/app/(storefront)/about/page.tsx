@@ -13,12 +13,20 @@ export default async function AboutPage() {
 
   const section1 = sections.find((s) => s.section_number === 1);
 
-  const { data: featuredProducts } = await supabase
-    .from("products")
-    .select("product_id, product_name, selling_price, image_url")
-    .eq("is_active", true)
-    .eq("is_popular", true)
-    .limit(8);
+  const [{ data: purchased }, { data: featuredProducts }] = await Promise.all([
+    supabase.from("purchase_items").select("product_id"),
+    supabase
+      .from("products")
+      .select("product_id, product_name, selling_price, image_url")
+      .eq("is_active", true)
+      .eq("is_popular", true)
+      .limit(8),
+  ]);
+
+  const purchasedIds = Array.from(new Set((purchased ?? []).map((r) => r.product_id)));
+  const visibleProducts = (featuredProducts ?? []).filter(
+    (p) => purchasedIds.length === 0 || purchasedIds.includes(p.product_id)
+  );
 
   return (
     <div>
@@ -51,11 +59,11 @@ export default async function AboutPage() {
       </section>
 
       {/* Featured Products */}
-      {featuredProducts && featuredProducts.length > 0 && (
+      {visibleProducts.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-12">
           <h2 className="text-xl font-semibold mb-6">{t("store.about.featured", locale)}</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredProducts.map((p) => (
+            {visibleProducts.map((p) => (
               <div key={p.product_id} className="rounded-lg border bg-card p-4">
                 <div className="aspect-square rounded-md bg-muted mb-3 flex items-center justify-center">
                   {p.image_url ? (

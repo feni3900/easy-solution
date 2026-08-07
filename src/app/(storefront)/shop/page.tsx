@@ -15,11 +15,26 @@ export default async function ShopPage({
   const supabase = await createClient();
   const locale = await getLocale();
 
+  const [{ data: purchased }, { data: categories }, { data: brands }, webSettings] = await Promise.all([
+    supabase.from("purchase_items").select("product_id"),
+    supabase.from("categories").select("category_id, category_name").eq("is_active", true).order("category_name"),
+    supabase.from("brands").select("brand_id, brand_name").eq("is_active", true).order("brand_name"),
+    getWebSettings(),
+  ]);
+
+  const purchasedIds = Array.from(new Set((purchased ?? []).map((r) => r.product_id)));
+
   let query = supabase
     .from("products")
     .select("product_id, product_name, sku, selling_price, image_url, current_stock, is_active, size, unit, storage_location, categories(category_name), brands(brand_name)")
     .eq("is_active", true)
     .order("product_name");
+
+  if (purchasedIds.length > 0) {
+    query = query.in("product_id", purchasedIds);
+  } else {
+    query = query.eq("product_id", -1);
+  }
 
   if (params.q) {
     query = query.or(`product_name.ilike.%${params.q}%,sku.ilike.%${params.q}%`);
@@ -33,12 +48,6 @@ export default async function ShopPage({
 
   const { data: products } = await query;
   const allProducts = products ?? [];
-
-  const [{ data: categories }, { data: brands }, webSettings] = await Promise.all([
-    supabase.from("categories").select("category_id, category_name").eq("is_active", true).order("category_name"),
-    supabase.from("brands").select("brand_id, brand_name").eq("is_active", true).order("brand_name"),
-    getWebSettings(),
-  ]);
 
   const bulkDiscountPct = webSettings?.bulk_discount_percent ?? 20;
   const bulkDiscountMin = webSettings?.bulk_discount_min_items ?? 6;
