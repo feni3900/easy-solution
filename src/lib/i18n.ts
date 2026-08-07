@@ -366,6 +366,15 @@ export const translations = {
   "app.none": { en: "None", bn: "কোনোটি নয়" },
   "app.deleteConfirm": { en: "Delete?", bn: "মুছবেন?" },
   "app.guestBanner": { en: "Guest account — read-only. You can view everything but cannot edit.", bn: "গেস্ট অ্যাকাউন্ট — শুধু দেখার অনুমতি। সব দেখতে পারবেন তবে কোনো পরিবর্তন করতে পারবেন না।" },
+  "app.addNewProduct": { en: "Add New Product", bn: "নতুন পণ্য যোগ করুন" },
+  "app.productName": { en: "Product Name", bn: "পণ্যের নাম" },
+  "app.selectBrand": { en: "Select Brand", bn: "ব্র্যান্ড নির্বাচন করুন" },
+  "app.autoIfEmpty": { en: "Auto if empty", bn: "খালি থাকলে অটো" },
+  "app.changeImage": { en: "Change Image", bn: "ছবি পরিবর্তন করুন" },
+  "app.clickToUploadImage": { en: "Click to upload image", bn: "ছবি আপলোড করতে ক্লিক করুন" },
+  "app.remove": { en: "Remove", bn: "সরান" },
+  "app.productRequired": { en: "Product name, category, and brand are required.", bn: "পণ্যের নাম, ক্যাটাগরি ও ব্র্যান্ড আবশ্যক।" },
+  "app.productExists": { en: "Product \"{name}\" already exists.", bn: "\"{name}\" পণ্যটি ইতিমধ্যে রয়েছে।" },
 
   // Sales / Invoices
   "sales.invoices.title": { en: "POS Invoices", bn: "পিওএস ইনভয়েস" },
@@ -1077,6 +1086,10 @@ export const translations = {
   "gallery.printTitle": { en: "Print", bn: "প্রিন্ট" },
   "gallery.savedToGallery": { en: "Saved to gallery!", bn: "গ্যালারিতে সংরক্ষিত হয়েছে!" },
   "gallery.altImage": { en: "Gallery image", bn: "গ্যালারির ছবি" },
+  "gallery.uploadTab": { en: "Upload", bn: "আপলোড" },
+  "gallery.fromGallery": { en: "From Gallery", bn: "গ্যালারি থেকে" },
+  "gallery.pickImage": { en: "Selected image", bn: "নির্বাচিত ছবি" },
+  "gallery.chooseFromGallery": { en: "Click an image to select it", bn: "নির্বাচন করতে একটি ছবিতে ক্লিক করুন" },
   // @MODULE-KEYS: admin
 
   // Data table
