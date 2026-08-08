@@ -56,6 +56,8 @@ export default function AddProductModal({ categories, brands, prefillCategory, p
   const [brandId, setBrandId] = useState<number>(prefillBrand || 0);
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
+  const [costPrice, setCostPrice] = useState(0);
+  const [sellRatio, setSellRatio] = useState("2");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -90,6 +92,9 @@ export default function AddProductModal({ categories, brands, prefillCategory, p
       gallerySearch === "" ||
       img.filename.toLowerCase().includes(gallerySearch.toLowerCase())
   );
+
+  const ratioNum = parseFloat(sellRatio) || 0;
+  const sellingPrice = Math.round(costPrice * ratioNum * 100) / 100;
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -143,8 +148,8 @@ export default function AddProductModal({ categories, brands, prefillCategory, p
         product_name: name.trim(),
         sku: generatedSku,
         storage_location: "Self",
-        cost_price: 0,
-        selling_price: 0,
+        cost_price: costPrice,
+        selling_price: sellingPrice,
         current_stock: 0,
         image_url: productImage,
         is_active: true,
@@ -198,6 +203,24 @@ export default function AddProductModal({ categories, brands, prefillCategory, p
           <div className="space-y-1">
             <Label>{t("app.sku", locale)}</Label>
             <Input value={sku} onChange={(e) => setSku(e.target.value)} placeholder={t("app.autoIfEmpty", locale)} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label>{t("inventory.products.pPrice", locale)}</Label>
+              <Input type="number" min={0} step={0.01} value={costPrice || ""} onChange={(e) => setCostPrice(parseFloat(e.target.value) || 0)} placeholder="0.00" />
+            </div>
+            <div className="space-y-1">
+              <Label>{t("inventory.products.sRatio", locale)}</Label>
+              <Input type="number" min={0} step={0.1} value={sellRatio} onChange={(e) => setSellRatio(e.target.value)} placeholder="2" />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label>{t("inventory.products.sPrice", locale)}</Label>
+            <div className="rounded-md border bg-muted px-3 py-2 text-sm font-medium">
+              ৳{sellingPrice.toFixed(2)}
+            </div>
           </div>
 
           <div className="space-y-1">

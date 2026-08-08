@@ -48,7 +48,7 @@ export interface PurchaseItem {
   brand_name: string;
   quantity: number;
   unit_cost: number;
-  selling_price: number;
+  selling_price: number | null;
   unit: string;
   variant: string;
   size: string;
@@ -280,7 +280,7 @@ export default function PurchasesNewPage() {
 
       await supabase
         .from("products")
-        .update({ cost_price: item.unit_cost, selling_price: item.selling_price, size: item.size || null, unit: item.unit || null, storage_location: item.storage_location || "Self" })
+        .update({ cost_price: item.unit_cost, size: item.size || null, unit: item.unit || null, storage_location: item.storage_location || "Self" })
         .eq("product_id", item.product_id);
     }
 

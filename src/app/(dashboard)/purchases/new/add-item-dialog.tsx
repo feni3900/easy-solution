@@ -53,7 +53,6 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
   const [storageNumber, setStorageNumber] = useState("");
   const [quantity, setQuantity] = useState("");
   const [unitCost, setUnitCost] = useState(0);
-  const [sellRatio, setSellRatio] = useState("2");
   const locale = getClientLocale();
 
   useEffect(() => {
@@ -69,14 +68,10 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
       setStorageNumber(editItem.storage_location?.split(" ").slice(1).join(" ") || "");
       setQuantity(editItem.quantity.toString());
       setUnitCost(editItem.unit_cost);
-      const ratio = editItem.unit_cost > 0 ? Math.round((editItem.selling_price / editItem.unit_cost) * 10) / 10 : 2;
-      setSellRatio(ratio.toString());
     }
   }, [editItem, categories, brands]);
 
   const qtyNum = parseInt(quantity) || 0;
-  const ratioNum = parseFloat(sellRatio) || 0;
-  const sellingPrice = Math.round(unitCost * ratioNum * 100) / 100;
 
   const filteredProducts = products.filter((p) => {
     if (categoryId && p.category_id !== categoryId) return false;
@@ -89,8 +84,6 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
     setProductName(p.product_name);
     setSku(p.sku);
     setUnitCost(p.cost_price);
-    const ratio = p.cost_price > 0 ? Math.round((p.selling_price / p.cost_price) * 10) / 10 : 2;
-    setSellRatio(ratio.toString());
     if (!categoryId && p.category_id) setCategoryId(p.category_id);
     if (!brandId && p.brand_id) setBrandId(p.brand_id);
   };
@@ -113,7 +106,7 @@ export default function AddItemDialog({ categories, brands, products, editItem, 
       brand_name: brands.find((b) => b.brand_id === brandId)?.brand_name || "",
       quantity: qtyNum,
       unit_cost: unitCost,
-      selling_price: sellingPrice,
+      selling_price: null,
       unit,
       variant: "",
       size,
