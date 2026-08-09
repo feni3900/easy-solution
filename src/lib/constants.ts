@@ -67,6 +67,12 @@ export const NAV_ITEMS: NavItem[] = [
     icon: "LayoutDashboard",
   },
   {
+    title: "Maruf Perfume",
+    titleKey: "nav.perfume",
+    href: "/perfume",
+    icon: "FlaskConical",
+  },
+  {
     title: "POS Terminal",
     titleKey: "nav.pos",
     href: "/pos",
@@ -121,12 +127,6 @@ export const NAV_ITEMS: NavItem[] = [
       { title: "Customers", titleKey: "nav.sales.customers", href: "/customers" },
       { title: "Customers Ledger", titleKey: "nav.sales.customersLedger", href: "/customers/ledger" },
     ],
-  },
-  {
-    title: "Maruf Perfume",
-    titleKey: "nav.perfume",
-    href: "/perfume",
-    icon: "FlaskConical",
   },
   {
     title: "Gallery",
