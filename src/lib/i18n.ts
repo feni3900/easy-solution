@@ -154,6 +154,9 @@ export const translations = {
   "store.inStock": { en: "In Stock", bn: "স্টকে আছে" },
   "store.outOfStock": { en: "Out of Stock", bn: "স্টকে নেই" },
   "store.bulkOff": { en: "{p}% off {m}+", bn: "{p}% ছাড় {m}+" },
+  "store.shop.viewGallery": { en: "Gallery", bn: "গ্যালারি" },
+  "store.shop.viewTable": { en: "Table", bn: "টেবিল" },
+  "store.view": { en: "View", bn: "দেখুন" },
 
   "store.product.backToShop": { en: "Back to Shop", bn: "শপে ফিরে যান" },
   "store.product.sku": { en: "SKU", bn: "এসকেইউ" },
@@ -280,6 +283,9 @@ export const translations = {
   "pos.allCategories": { en: "All Categories", bn: "সব ক্যাটাগরি" },
   "pos.allBrands": { en: "All Brands", bn: "সব ব্র্যান্ড" },
   "pos.noProducts": { en: "No products found.", bn: "কোনো পণ্য পাওয়া যায়নি।" },
+  "pos.viewGallery": { en: "Gallery", bn: "গ্যালারি" },
+  "pos.viewTable": { en: "Table", bn: "টেবিল" },
+  "pos.addToCart": { en: "Add", bn: "যোগ করুন" },
   "pos.customerDue": { en: "Due: {a}", bn: "বকেয়া: {a}" },
   "pos.dueAmount": { en: "Due: {a}", bn: "বকেয়া: {a}" },
 

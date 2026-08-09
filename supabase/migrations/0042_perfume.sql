@@ -206,3 +206,11 @@ end;
 $$;
 
 grant execute on function public.produce_perfume_batch(bigint, numeric, text) to authenticated;
+
+-- table-level grants (needed in addition to RLS)
+grant select, insert, update, delete on public.perfume_settings to authenticated;
+grant select, insert, update, delete on public.perfume_ingredients to authenticated;
+grant select, insert, update, delete on public.perfume_recipes to authenticated;
+grant select, insert, update, delete on public.perfume_recipe_items to authenticated;
+grant select, insert, update, delete on public.perfume_batches to authenticated;
+grant select, insert, update, delete on public.perfume_stock to authenticated;

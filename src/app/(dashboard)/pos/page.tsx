@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Search, Package, Plus, Minus, ShoppingCart, X, FileText, Loader2 } from "lucide-react";
+import { Search, Package, Plus, Minus, ShoppingCart, X, FileText, Loader2, LayoutGrid, Rows3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getClientLocale, t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
@@ -67,8 +67,18 @@ export default function POSPage() {
   const [notes, setNotes] = useState("");
   const [heldOrders, setHeldOrders] = useState<CartItem[][]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [view, setView] = useState<"gallery" | "table">("gallery");
   const searchRef = useRef<HTMLInputElement>(null);
   const locale = getClientLocale();
+
+  useEffect(() => {
+    const saved = localStorage.getItem("posView");
+    if (saved === "gallery" || saved === "table") setView(saved);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("posView", view);
+  }, [view]);
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
@@ -374,6 +384,24 @@ export default function POSPage() {
               className="w-full rounded-lg border bg-card pl-10 pr-4 py-2 text-sm"
             />
           </div>
+          <div className="flex rounded-lg border bg-card p-0.5 w-fit">
+            <button
+              type="button"
+              onClick={() => setView("gallery")}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${view === "gallery" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              <LayoutGrid className="size-3.5" />
+              {t("pos.viewGallery", locale)}
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("table")}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${view === "table" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              <Rows3 className="size-3.5" />
+              {t("pos.viewTable", locale)}
+            </button>
+          </div>
           <Button className="w-full md:hidden" onClick={() => setCartOpen(true)}>
             <ShoppingCart className="size-4 mr-2" />
             {translateWithVars(t("pos.viewCartCount", locale), { n: fmtInt(cart.reduce((s, i) => s + i.quantity, 0), locale) })}
@@ -386,6 +414,59 @@ export default function POSPage() {
             </div>
           ) : filteredProducts.length === 0 ? (
             <p className="text-center text-muted-foreground py-12">{t("pos.noProducts", locale)}</p>
+          ) : view === "table" ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs text-muted-foreground">
+                    <th className="pb-2 pr-2 font-medium">{t("pos.item", locale)}</th>
+                    <th className="pb-2 pr-2 font-medium">{t("pos.price", locale)}</th>
+                    <th className="pb-2 pr-2 font-medium">{t("pos.currentStock", locale)}</th>
+                    <th className="pb-2 font-medium text-right">{t("pos.action", locale)}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProducts.map((product) => (
+                    <tr key={product.product_id} className="border-b last:border-0">
+                      <td className="py-2 pr-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="size-9 shrink-0 rounded bg-muted flex items-center justify-center overflow-hidden">
+                            {product.image_url ? (
+                              <img src={product.image_url} alt={product.product_name} className="h-full w-full object-cover" />
+                            ) : (
+                              <Package className="size-4 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium truncate">{product.product_name}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {[product.size, product.unit, product.categories?.category_name, product.brands?.brand_name, product.storage_location]
+                                .filter(Boolean)
+                                .join(" · ") || product.sku}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-2 pr-2 text-xs font-semibold whitespace-nowrap">{fmtMoney(Number(product.selling_price), locale)}</td>
+                      <td className="py-2 pr-2 whitespace-nowrap">
+                        <span className={`text-[10px] px-1 rounded ${product.current_stock > 5 ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                          {product.current_stock}
+                        </span>
+                      </td>
+                      <td className="py-2 text-right">
+                        <button
+                          onClick={() => addToCart(product)}
+                          className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-accent transition-colors inline-flex items-center gap-1"
+                        >
+                          <Plus className="size-3" />
+                          {t("pos.addToCart", locale)}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
               {filteredProducts.map((product) => (

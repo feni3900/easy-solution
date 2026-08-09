@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { getWebSettings } from "@/lib/store";
-import Link from "next/link";
-import { Package, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import ShopFilters from "./shop-filters";
+import ProductView from "./product-view";
 import { getLocale } from "@/lib/i18n-server";
-import { t, fmtMoney, fmtInt, translateWithVars } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 
 export default async function ShopPage({
   searchParams,
@@ -80,47 +80,16 @@ export default async function ShopPage({
       {/* Product Grid */}
       {allProducts.length === 0 ? (
         <div className="text-center py-16">
-          <Package className="mx-auto size-12 text-muted-foreground" />
+          <Search className="mx-auto size-12 text-muted-foreground" />
           <p className="mt-4 text-muted-foreground">{t("store.noProducts", locale)}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {allProducts.map((p) => (
-            <Link
-              key={p.product_id}
-              href={`/product/${p.product_id}`}
-              className="group rounded-lg border bg-card p-4 transition-shadow hover:shadow-md"
-            >
-              <div className="aspect-square rounded-md bg-muted mb-3 flex items-center justify-center overflow-hidden">
-                {p.image_url ? (
-                  <img src={p.image_url} alt={p.product_name} className="h-full w-full object-cover" />
-                ) : (
-                  <Package className="size-8 text-muted-foreground" />
-                )}
-              </div>
-              <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary">
-                {p.product_name}
-              </h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {(Array.isArray(p.categories) ? p.categories[0]?.category_name : (p.categories as { category_name?: string } | null)?.category_name) ?? ""}
-                {(Array.isArray(p.brands) ? p.brands[0]?.brand_name : (p.brands as { brand_name?: string } | null)?.brand_name) ? ` · ${Array.isArray(p.brands) ? p.brands[0]?.brand_name : (p.brands as { brand_name?: string } | null)?.brand_name}` : ""}
-                {p.size ? ` · ${p.size}` : ""}
-                {p.unit ? ` ${p.unit}` : ""}
-              </p>
-              <div className="mt-2 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold">{fmtMoney(Number(p.selling_price), locale)}</p>
-                  <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
-                    {translateWithVars(t("store.bulkOff", locale), { p: fmtInt(bulkDiscountPct, locale), m: fmtInt(bulkDiscountMin, locale) })}
-                  </span>
-                </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${p.current_stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                  {p.current_stock > 0 ? t("store.inStock", locale) : t("store.outOfStock", locale)}
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <ProductView
+          products={allProducts}
+          locale={locale}
+          bulkDiscountPct={bulkDiscountPct}
+          bulkDiscountMin={bulkDiscountMin}
+        />
       )}
     </div>
   );
