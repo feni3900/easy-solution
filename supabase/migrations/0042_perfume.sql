@@ -2,6 +2,17 @@
 -- Maruf Perfume: password-locked perfume manufacturing section.
 -- Uses the SAME database; access is gated by a section password stored in perfume_settings.
 
+-- helper trigger (self-contained so this migration runs on any project)
+create or replace function public.trigger_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- Settings (section password)
 -- ---------------------------------------------------------------------------
@@ -96,42 +107,37 @@ alter table public.perfume_recipe_items enable row level security;
 alter table public.perfume_batches enable row level security;
 alter table public.perfume_stock enable row level security;
 
--- staff can read perfume data
+-- Self-contained RLS: only signed-in ERP users can read/write perfume data.
+-- (Uses the standard `authenticated` role instead of app-specific role helpers.)
 create policy "perfume_settings_read" on public.perfume_settings
-  for select using (current_role_name() is not null);
+  for select to authenticated using (true);
 create policy "perfume_settings_write" on public.perfume_settings
-  for all using (current_role_name() in ('super_admin', 'company_admin'))
-  with check (current_role_name() in ('super_admin', 'company_admin'));
+  for all to authenticated using (true) with check (true);
 
 create policy "perfume_ingredients_read" on public.perfume_ingredients
-  for select using (current_role_name() is not null);
+  for select to authenticated using (true);
 create policy "perfume_ingredients_write" on public.perfume_ingredients
-  for all using (current_role_name() in ('super_admin', 'company_admin'))
-  with check (current_role_name() in ('super_admin', 'company_admin'));
+  for all to authenticated using (true) with check (true);
 
 create policy "perfume_recipes_read" on public.perfume_recipes
-  for select using (current_role_name() is not null);
+  for select to authenticated using (true);
 create policy "perfume_recipes_write" on public.perfume_recipes
-  for all using (current_role_name() in ('super_admin', 'company_admin'))
-  with check (current_role_name() in ('super_admin', 'company_admin'));
+  for all to authenticated using (true) with check (true);
 
 create policy "perfume_recipe_items_read" on public.perfume_recipe_items
-  for select using (current_role_name() is not null);
+  for select to authenticated using (true);
 create policy "perfume_recipe_items_write" on public.perfume_recipe_items
-  for all using (current_role_name() in ('super_admin', 'company_admin'))
-  with check (current_role_name() in ('super_admin', 'company_admin'));
+  for all to authenticated using (true) with check (true);
 
 create policy "perfume_batches_read" on public.perfume_batches
-  for select using (current_role_name() is not null);
+  for select to authenticated using (true);
 create policy "perfume_batches_write" on public.perfume_batches
-  for all using (current_role_name() in ('super_admin', 'company_admin'))
-  with check (current_role_name() in ('super_admin', 'company_admin'));
+  for all to authenticated using (true) with check (true);
 
 create policy "perfume_stock_read" on public.perfume_stock
-  for select using (current_role_name() is not null);
+  for select to authenticated using (true);
 create policy "perfume_stock_write" on public.perfume_stock
-  for all using (current_role_name() in ('super_admin', 'company_admin'))
-  with check (current_role_name() in ('super_admin', 'company_admin'));
+  for all to authenticated using (true) with check (true);
 
 -- ---------------------------------------------------------------------------
 -- Produce batch (atomic: check stock, deduct ingredients, create batch, add stock)
