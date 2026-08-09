@@ -2,6 +2,7 @@ export const ROLES = [
   { value: "Salesperson", label: "Salesperson", maxDiscount: 5, allowDue: false },
   { value: "Branch Manager", label: "Branch Manager", maxDiscount: 15, allowDue: true },
   { value: "Admin", label: "Admin", maxDiscount: 100, allowDue: true },
+  { value: "Guest", label: "Guest", maxDiscount: 0, allowDue: false },
 ] as const;
 
 export const PAYMENT_TYPES = [

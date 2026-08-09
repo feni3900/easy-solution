@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sha256Hex, safeEqual } from "@/lib/perfume";
+import { isGuest } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  if (await isGuest()) {
+    return NextResponse.json({ error: "Guest account is read-only" }, { status: 403 });
+  }
+
   let body: { current?: string; next?: string } = {};
   try {
     body = await req.json();
