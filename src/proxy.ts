@@ -39,6 +39,7 @@ export async function proxy(request: NextRequest) {
     request.nextUrl.pathname === "/contact" ||
     request.nextUrl.pathname === "/cart" ||
     request.nextUrl.pathname.startsWith("/product/") ||
+    request.nextUrl.pathname.startsWith("/checkout") ||
     request.nextUrl.pathname.startsWith("/api/place-order") ||
     request.nextUrl.pathname.startsWith("/api/store") ||
     request.nextUrl.pathname.startsWith("/store");
