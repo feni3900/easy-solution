@@ -123,6 +123,12 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    title: "Maruf Perfume",
+    titleKey: "nav.perfume",
+    href: "/perfume",
+    icon: "FlaskConical",
+  },
+  {
     title: "Gallery",
     titleKey: "nav.gallery",
     href: "/gallery",

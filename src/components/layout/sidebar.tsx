@@ -20,6 +20,7 @@ import {
   Image,
   BookOpen,
   ListPlus,
+  FlaskConical,
 } from "lucide-react";
 import { NAV_ITEMS, type NavItem, type NavChild } from "@/lib/constants";
 import { getClientLocale, t, type Locale } from "@/lib/i18n";
@@ -37,6 +38,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Image,
   BookOpen,
   ListPlus,
+  FlaskConical,
 };
 
 function NavChildLink({
