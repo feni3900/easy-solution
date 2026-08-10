@@ -10,8 +10,8 @@ import { PerfumeNav } from "@/components/perfume/perfume-nav";
 import { getClientLocale, t } from "@/lib/i18n";
 
 interface Supplier {
-  id: string;
-  name: string;
+  supplier_id: number;
+  supplier_name: string;
 }
 interface Ingredient {
   id: number;
@@ -36,7 +36,7 @@ interface Purchase {
   total: number;
   paid_amount: number;
   note: string | null;
-  suppliers: { name: string } | null;
+  suppliers: { supplier_name: string } | null;
   perfume_purchase_items: { item_type: string; item_id: number; quantity: number; unit_price: number }[];
 }
 
@@ -61,11 +61,11 @@ export default function PurchasesPage() {
     setLoading(true);
     const supabase = createClient();
     const [s, i, b, p] = await Promise.all([
-      supabase.from("suppliers").select("id, name").eq("status", "active").order("name"),
+      supabase.from("suppliers").select("supplier_id, supplier_name").order("supplier_name"),
       supabase.from("perfume_ingredients").select("id, name, unit").order("name"),
       supabase.from("perfume_bottles").select("id, name").order("name"),
       supabase.from("perfume_purchases")
-        .select("*, suppliers(name), perfume_purchase_items(item_type, item_id, quantity, unit_price)")
+        .select("*, suppliers(supplier_name), perfume_purchase_items(item_type, item_id, quantity, unit_price)")
         .order("purchase_date", { ascending: false }).limit(20),
     ]);
     setSuppliers(s.data ?? []);
@@ -154,7 +154,7 @@ export default function PurchasesPage() {
             >
               <option value="">{t("perfume.inv.selectSupplier", locale)}</option>
               {suppliers.map((x) => (
-                <option key={x.id} value={x.id}>{x.name}</option>
+                <option key={x.supplier_id} value={x.supplier_id}>{x.supplier_name}</option>
               ))}
             </select>
           </div>
@@ -235,7 +235,7 @@ export default function PurchasesPage() {
               {purchases.map((p) => (
                 <tr key={p.id} className="border-b">
                   <td className="p-3 font-medium">{p.purchase_no}</td>
-                  <td className="p-3">{p.suppliers?.name ?? "-"}</td>
+                  <td className="p-3">{p.suppliers?.supplier_name ?? "-"}</td>
                   <td className="p-3 text-muted-foreground">{new Date(p.purchase_date).toLocaleDateString()}</td>
                   <td className="p-3">
                     {p.perfume_purchase_items.map((it) => {

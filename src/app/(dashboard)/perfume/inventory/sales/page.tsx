@@ -10,9 +10,9 @@ import { PerfumeNav } from "@/components/perfume/perfume-nav";
 import { getClientLocale, t } from "@/lib/i18n";
 
 interface Customer {
-  id: string;
-  name: string;
-  mobile: string;
+  customer_id: number;
+  full_name: string;
+  mobile_number: string;
 }
 interface Recipe {
   id: number;
@@ -38,7 +38,7 @@ interface Sale {
   due_amount: number;
   payment_method: string;
   note: string | null;
-  customers: { name: string } | null;
+  customers: { full_name: string } | null;
   perfume_sale_items: { recipe_id: number; quantity: number; unit_price: number }[];
 }
 
@@ -65,11 +65,11 @@ export default function SalesPage() {
     setLoading(true);
     const supabase = createClient();
     const [c, r, s, sl] = await Promise.all([
-      supabase.from("customers").select("id, name, mobile").eq("status", "active").order("name"),
+      supabase.from("customers").select("customer_id, full_name, mobile_number").eq("account_status", "Active").order("full_name"),
       supabase.from("perfume_recipes").select("id, name").order("name"),
       supabase.from("perfume_stock").select("recipe_id, stock_qty, price"),
       supabase.from("perfume_sales")
-        .select("*, customers(name), perfume_sale_items(recipe_id, quantity, unit_price)")
+        .select("*, customers(full_name), perfume_sale_items(recipe_id, quantity, unit_price)")
         .order("sale_date", { ascending: false }).limit(20),
     ]);
     setCustomers(c.data ?? []);
@@ -162,7 +162,7 @@ export default function SalesPage() {
             >
               <option value="">{t("perfume.inv.selectCustomer", locale)}</option>
               {customers.map((x) => (
-                <option key={x.id} value={x.id}>{x.name} ({x.mobile})</option>
+                <option key={x.customer_id} value={x.customer_id}>{x.full_name} ({x.mobile_number})</option>
               ))}
             </select>
           </div>
@@ -274,7 +274,7 @@ export default function SalesPage() {
               {sales.map((s) => (
                 <tr key={s.id} className="border-b">
                   <td className="p-3 font-medium">{s.invoice_no}</td>
-                  <td className="p-3">{s.customers?.name ?? "-"}</td>
+                  <td className="p-3">{s.customers?.full_name ?? "-"}</td>
                   <td className="p-3 text-muted-foreground">{new Date(s.sale_date).toLocaleDateString()}</td>
                   <td className="p-3">
                     {s.perfume_sale_items.map((it) => {

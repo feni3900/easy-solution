@@ -1,6 +1,6 @@
 -- Smart Solution ERP - 0045_perfume_purchase_sell
 -- Maruf Perfume: raw-material purchases (ingredients + bottles) and finished-goods sales (invoices).
--- Reuses the ERP-wide suppliers/customers and their ledgers for due tracking.
+-- NOTE: adapted to the live DB schema (suppliers.supplier_id / customers.customer_id, no ledger tables).
 
 -- ---------------------------------------------------------------------------
 -- Purchases
@@ -8,7 +8,7 @@
 create table if not exists public.perfume_purchases (
   id bigint generated always as identity primary key,
   purchase_no text not null unique,
-  supplier_id uuid references public.suppliers(id) on delete set null,
+  supplier_id bigint references public.suppliers(supplier_id) on delete set null,
   purchase_date timestamptz not null default now(),
   total numeric(14,2) not null default 0,
   paid_amount numeric(14,2) not null default 0,
@@ -34,7 +34,7 @@ create table if not exists public.perfume_purchase_items (
 create table if not exists public.perfume_sales (
   id bigint generated always as identity primary key,
   invoice_no text not null unique,
-  customer_id uuid references public.customers(id) on delete set null,
+  customer_id bigint references public.customers(customer_id) on delete set null,
   sale_date timestamptz not null default now(),
   subtotal numeric(14,2) not null default 0,
   discount numeric(14,2) not null default 0,
@@ -94,7 +94,7 @@ grant select, insert, update, delete on public.perfume_sale_items to authenticat
 -- p_items jsonb: [{"type":"ingredient"|"bottle","id":..,"qty":..,"unit_price":..}, ...]
 -- ---------------------------------------------------------------------------
 create or replace function public.purchase_perfume_raw(
-  p_supplier_id uuid default null,
+  p_supplier_id bigint default null,
   p_items jsonb default null,
   p_paid numeric default 0,
   p_note text default null,
@@ -151,24 +151,18 @@ begin
   set total = round(v_total, 2)
   where purchase_no = v_purchase_no;
 
-  -- supplier due
-  if p_supplier_id is not null and (v_total - coalesce(p_paid, 0)) > 0 then
-    insert into public.supplier_ledger (supplier_id, transaction_type, amount, date, reference_id, note)
-    values (p_supplier_id, 'purchase', v_total - coalesce(p_paid, 0), p_purchase_date, v_purchase_no, 'Perfume purchase ' || v_purchase_no);
-  end if;
-
   return v_purchase_no;
 end;
 $$;
 
-grant execute on function public.purchase_perfume_raw(uuid, jsonb, numeric, text, timestamptz) to authenticated;
+grant execute on function public.purchase_perfume_raw(bigint, jsonb, numeric, text, timestamptz) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Sell finished perfume atomically.
 -- p_items jsonb: [{"recipe_id":..,"qty":..,"unit_price":..}, ...]
 -- ---------------------------------------------------------------------------
 create or replace function public.sell_perfume(
-  p_customer_id uuid default null,
+  p_customer_id bigint default null,
   p_items jsonb default null,
   p_paid numeric default 0,
   p_payment_method text default 'cash',
@@ -226,14 +220,8 @@ begin
       due_amount = round(v_due, 2)
   where invoice_no = v_invoice_no;
 
-  -- customer due
-  if p_customer_id is not null and v_due > 0 then
-    insert into public.customer_ledger (customer_id, transaction_type, amount, date, reference_id, note)
-    values (p_customer_id, 'sale', v_due, p_sale_date, v_invoice_no, 'Perfume invoice ' || v_invoice_no);
-  end if;
-
   return v_invoice_no;
 end;
 $$;
 
-grant execute on function public.sell_perfume(uuid, jsonb, numeric, text, numeric, text, timestamptz) to authenticated;
+grant execute on function public.sell_perfume(bigint, jsonb, numeric, text, numeric, text, timestamptz) to authenticated;
