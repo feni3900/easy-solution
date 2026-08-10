@@ -8,10 +8,10 @@ import { LayoutDashboard, Package, FlaskConical, Beaker, Lock, Boxes, PackagePlu
 const LINKS = [
   { href: "/perfume", label: "Dashboard", icon: LayoutDashboard },
   { href: "/perfume/ingredients", label: "Ingredients", icon: Beaker },
+  { href: "/perfume/bottles", label: "Bottles", icon: PackagePlus },
   { href: "/perfume/recipes", label: "Recipes (BOM)", icon: FlaskConical },
   { href: "/perfume/production", label: "Production", icon: Package },
   { href: "/perfume/stock", label: "Stock", icon: Boxes },
-  { href: "/perfume/bottles", label: "Bottles", icon: PackagePlus },
   { href: "/perfume/settings", label: "Settings", icon: Lock },
 ];
 
