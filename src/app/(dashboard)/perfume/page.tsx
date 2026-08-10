@@ -16,24 +16,33 @@ export default function PerfumePage() {
     stockValue: 0,
     batches: 0,
     lowStock: 0,
+    bottles: 0,
   });
   const [ingredients, setIngredients] = useState<{ name: string; stock_qty: number; low_stock_threshold: number }[]>([]);
+  const [bottles, setBottles] = useState<{ name: string; stock_qty: number; low_stock_threshold: number }[]>([]);
 
   const load = useCallback(async () => {
     const supabase = createClient();
-    const [{ count: ic }, { count: rc }, { count: bc }] = await Promise.all([
+    const [{ count: ic }, { count: rc }, { count: bc }, { count: bt }] = await Promise.all([
       supabase.from("perfume_ingredients").select("id", { count: "exact", head: true }),
       supabase.from("perfume_recipes").select("id", { count: "exact", head: true }),
       supabase.from("perfume_batches").select("id", { count: "exact", head: true }),
+      supabase.from("perfume_bottles").select("id", { count: "exact", head: true }),
     ]);
     const { data: stockRows } = await supabase.from("perfume_stock").select("stock_qty, price");
     const { data: ingRows } = await supabase
       .from("perfume_ingredients")
       .select("name, stock_qty, low_stock_threshold");
+    const { data: bottleRows } = await supabase
+      .from("perfume_bottles")
+      .select("name, stock_qty, low_stock_threshold");
 
     const stockQty = (stockRows ?? []).reduce((s, x) => s + Number(x.stock_qty), 0);
     const stockValue = (stockRows ?? []).reduce((s, x) => s + Number(x.stock_qty) * Number(x.price), 0);
     const lowStock = (ingRows ?? []).filter(
+      (x) => Number(x.stock_qty) <= Number(x.low_stock_threshold)
+    ).length;
+    const lowBottles = (bottleRows ?? []).filter(
       (x) => Number(x.stock_qty) <= Number(x.low_stock_threshold)
     ).length;
 
@@ -43,9 +52,11 @@ export default function PerfumePage() {
       stockQty,
       stockValue,
       batches: bc ?? 0,
-      lowStock,
+      lowStock: lowStock + lowBottles,
+      bottles: bt ?? 0,
     });
     setIngredients(ingRows ?? []);
+    setBottles(bottleRows ?? []);
     setLoading(false);
   }, []);
 
@@ -57,6 +68,7 @@ export default function PerfumePage() {
     { label: t("perfume.ingredients", locale), value: stats.ingredients },
     { label: t("perfume.recipes", locale), value: stats.recipes },
     { label: t("perfume.batches", locale), value: stats.batches },
+    { label: t("perfume.bottleTypes", locale), value: stats.bottles },
     { label: t("perfume.finishedBottles", locale), value: stats.stockQty },
     { label: t("perfume.stockValue", locale), value: `৳${Math.round(stats.stockValue)}` },
     { label: t("perfume.lowStock", locale), value: stats.lowStock },
@@ -85,6 +97,23 @@ export default function PerfumePage() {
             ) : (
               <ul className="space-y-2 text-sm">
                 {ingredients
+                  .filter((x) => x.stock_qty <= x.low_stock_threshold)
+                  .map((x) => (
+                    <li key={x.name} className="flex justify-between">
+                      <span>{x.name}</span>
+                      <span className="text-amber-600">{x.stock_qty} (min {x.low_stock_threshold})</span>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
+          <div className="rounded-lg border bg-card p-4">
+            <h2 className="mb-2 text-sm font-semibold">{t("perfume.bottleLowStockAlerts", locale)}</h2>
+            {bottles.filter((x) => x.stock_qty <= x.low_stock_threshold).length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t("app.noData", locale)}</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {bottles
                   .filter((x) => x.stock_qty <= x.low_stock_threshold)
                   .map((x) => (
                     <li key={x.name} className="flex justify-between">

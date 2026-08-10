@@ -13,6 +13,11 @@ interface Recipe {
   id: number;
   name: string;
 }
+interface BottleType {
+  id: number;
+  name: string;
+  stock_qty: number;
+}
 interface Batch {
   id: number;
   batch_no: string;
@@ -21,13 +26,16 @@ interface Batch {
   notes: string | null;
   produced_at: string;
   perfume_recipes: { name: string } | null;
+  perfume_bottles: { name: string } | null;
 }
 
 export default function ProductionPage() {
   const locale = getClientLocale();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [bottleTypes, setBottleTypes] = useState<BottleType[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [recipeId, setRecipeId] = useState("");
+  const [bottleId, setBottleId] = useState("");
   const [bottles, setBottles] = useState("10");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
@@ -38,11 +46,13 @@ export default function ProductionPage() {
   const load = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
-    const [{ data: r }, { data: b }] = await Promise.all([
+    const [{ data: r }, { data: bt }, { data: b }] = await Promise.all([
       supabase.from("perfume_recipes").select("id, name").order("name"),
-      supabase.from("perfume_batches").select("*, perfume_recipes(name)").order("produced_at", { ascending: false }).limit(20),
+      supabase.from("perfume_bottles").select("id, name, stock_qty").order("name"),
+      supabase.from("perfume_batches").select("*, perfume_recipes(name), perfume_bottles(name)").order("produced_at", { ascending: false }).limit(20),
     ]);
     setRecipes(r ?? []);
+    setBottleTypes(bt ?? []);
     setBatches(b ?? []);
     setLoading(false);
   }, []);
@@ -58,7 +68,7 @@ export default function ProductionPage() {
   };
 
   const produce = async () => {
-    if (!recipeId || !(Number(bottles) > 0)) {
+    if (!recipeId || !bottleId || !(Number(bottles) > 0)) {
       setError(t("perfume.prodRequired", locale));
       return;
     }
@@ -69,6 +79,7 @@ export default function ProductionPage() {
     const { data, error } = await supabase.rpc("produce_perfume_batch", {
       p_recipe_id: Number(recipeId),
       p_bottles: Number(bottles),
+      p_bottle_id: Number(bottleId),
       p_notes: notes.trim() || null,
     });
     setProducing(false);
@@ -103,10 +114,23 @@ export default function ProductionPage() {
             </select>
           </div>
           <div className="space-y-1">
+            <Label>{t("perfume.bottle", locale)} *</Label>
+            <select
+              value={bottleId}
+              onChange={(e) => { setBottleId(e.target.value); setError(null); setResult(null); }}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+            >
+              <option value="">{t("perfume.selectBottle", locale)}</option>
+              {bottleTypes.map((x) => (
+                <option key={x.id} value={x.id}>{x.name} ({x.stock_qty} {t("perfume.inStockShort", locale)})</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
             <Label>{t("perfume.bottles", locale)} *</Label>
             <Input type="number" value={bottles} onChange={(e) => setBottles(e.target.value)} />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1 sm:col-span-3">
             <Label>{t("perfume.notes", locale)}</Label>
             <Input value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
@@ -130,6 +154,7 @@ export default function ProductionPage() {
               <tr className="border-b bg-muted/50 text-left">
                 <th className="p-3 font-medium">{t("perfume.batchNo", locale)}</th>
                 <th className="p-3 font-medium">{t("perfume.recipe", locale)}</th>
+                <th className="p-3 font-medium">{t("perfume.bottle", locale)}</th>
                 <th className="p-3 font-medium">{t("perfume.bottles", locale)}</th>
                 <th className="p-3 font-medium">{t("perfume.ingredientCost", locale)}</th>
                 <th className="p-3 font-medium">{t("app.date", locale)}</th>
@@ -141,6 +166,7 @@ export default function ProductionPage() {
                 <tr key={b.id} className="border-b">
                   <td className="p-3 font-medium">{b.batch_no}</td>
                   <td className="p-3">{b.perfume_recipes?.name ?? "-"}</td>
+                  <td className="p-3">{b.perfume_bottles?.name ?? "-"}</td>
                   <td className="p-3">{b.bottles}</td>
                   <td className="p-3">৳{Number(b.ingredient_cost).toFixed(2)}</td>
                   <td className="p-3 text-muted-foreground">{new Date(b.produced_at).toLocaleDateString()}</td>
@@ -148,7 +174,7 @@ export default function ProductionPage() {
                 </tr>
               ))}
               {batches.length === 0 && (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{t("app.noData", locale)}</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">{t("app.noData", locale)}</td></tr>
               )}
             </tbody>
           </table>

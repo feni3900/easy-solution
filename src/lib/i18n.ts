@@ -598,6 +598,14 @@ export const translations = {
   "perfume.settings.failed": { en: "Failed to change password.", bn: "পাসওয়ার্ড পরিবর্তন ব্যর্থ।" },
   "perfume.settings.saved": { en: "Password updated.", bn: "পাসওয়ার্ড আপডেট হয়েছে।" },
   "perfume.settings.save": { en: "Save", bn: "সংরক্ষণ" },
+  "perfume.bottlesPage": { en: "Bottles", bn: "বোতল" },
+  "perfume.addBottle": { en: "Add Bottle Type", bn: "বোতলের ধরন যোগ করুন" },
+  "perfume.bottle": { en: "Bottle", bn: "বোতল" },
+  "perfume.selectBottle": { en: "Select bottle type", bn: "বোতলের ধরন নির্বাচন করুন" },
+  "perfume.bottleTypes": { en: "Bottle Types", bn: "বোতলের ধরন" },
+  "perfume.bottleLowStockAlerts": { en: "Bottle Low Stock Alerts", bn: "বোতল কম স্টক সতর্কতা" },
+  "perfume.inStockShort": { en: "in stock", bn: "স্টকে" },
+  "perfume.editBottle": { en: "Edit Bottle", bn: "বোতল সম্পাদনা" },
 
   // Inventory
   "inventory.products.title": { en: "Products", bn: "পণ্য" },

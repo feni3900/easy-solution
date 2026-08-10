@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, Package, FlaskConical, Beaker, Lock, Boxes } from "lucide-react";
+import { LayoutDashboard, Package, FlaskConical, Beaker, Lock, Boxes, PackagePlus } from "lucide-react";
 
 const LINKS = [
   { href: "/perfume", label: "Dashboard", icon: LayoutDashboard },
@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/perfume/recipes", label: "Recipes (BOM)", icon: FlaskConical },
   { href: "/perfume/production", label: "Production", icon: Package },
   { href: "/perfume/stock", label: "Stock", icon: Boxes },
+  { href: "/perfume/bottles", label: "Bottles", icon: PackagePlus },
   { href: "/perfume/settings", label: "Settings", icon: Lock },
 ];
 
