@@ -91,20 +91,6 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
-    title: "Add/Remove",
-    titleKey: "nav.addRemove",
-    href: "/inventory/add-remove",
-    icon: "ListPlus",
-    children: [
-      { title: "Suppliers", titleKey: "nav.addRemove.suppliers", href: "/inventory/add-remove/suppliers" },
-      { title: "Categories", titleKey: "nav.addRemove.categories", href: "/inventory/add-remove/categories" },
-      { title: "Brands", titleKey: "nav.addRemove.brands", href: "/inventory/add-remove/brands" },
-      { title: "Products", titleKey: "nav.addRemove.products", href: "/inventory/add-remove/products" },
-      { title: "Sizes", titleKey: "nav.addRemove.sizes", href: "/inventory/add-remove/sizes" },
-      { title: "Units", titleKey: "nav.addRemove.units", href: "/inventory/add-remove/units" },
-    ],
-  },
-  {
     title: "Purchases",
     titleKey: "nav.purchases",
     href: "/purchases",
@@ -183,6 +169,20 @@ export const NAV_ITEMS: NavItem[] = [
       { title: "Bulk Discount Rules", titleKey: "nav.admin.discountRules", href: "/admin/discount-rules" },
       { title: "Stock Alert Rules", titleKey: "nav.admin.stockAlerts", href: "/admin/stock-alerts" },
       { title: "Audit Log", titleKey: "nav.admin.auditLog", href: "/admin/audit-log" },
+    ],
+  },
+  {
+    title: "Add/Remove",
+    titleKey: "nav.addRemove",
+    href: "/inventory/add-remove",
+    icon: "ListPlus",
+    children: [
+      { title: "Suppliers", titleKey: "nav.addRemove.suppliers", href: "/inventory/add-remove/suppliers" },
+      { title: "Categories", titleKey: "nav.addRemove.categories", href: "/inventory/add-remove/categories" },
+      { title: "Brands", titleKey: "nav.addRemove.brands", href: "/inventory/add-remove/brands" },
+      { title: "Products", titleKey: "nav.addRemove.products", href: "/inventory/add-remove/products" },
+      { title: "Sizes", titleKey: "nav.addRemove.sizes", href: "/inventory/add-remove/sizes" },
+      { title: "Units", titleKey: "nav.addRemove.units", href: "/inventory/add-remove/units" },
     ],
   },
 ];
