@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getWebSettings } from "@/lib/store";
+import { HeroSlider } from "@/components/storefront/hero-slider";
 import Link from "next/link";
 import { ArrowRight, Truck, BadgePercent, Package, Clock, TrendingUp, Star } from "lucide-react";
 import { getLocale } from "@/lib/i18n-server";
@@ -9,13 +10,12 @@ export default async function StorefrontHome() {
   const supabase = await createClient();
   const locale = await getLocale();
 
-  const [{ data: section1 }, { data: purchased }, { data: topSelling }, webSettings] = await Promise.all([
+  const [{ data: homeSections }, { data: purchased }, { data: topSelling }, webSettings] = await Promise.all([
     supabase
       .from("page_sections")
       .select("*")
       .eq("page_name", "home")
-      .eq("section_number", 1)
-      .single(),
+      .order("section_number"),
     supabase.from("purchase_items").select("product_id"),
     supabase
       .from("stock_journal")
@@ -23,6 +23,8 @@ export default async function StorefrontHome() {
       .in("movement_type", ["Sale_POS", "Sale_Online"]),
     getWebSettings(),
   ]);
+
+  const section1 = (homeSections ?? []).find((s) => s.section_number === 1) ?? null;
 
   const purchasedIds = Array.from(new Set((purchased ?? []).map((r) => r.product_id)));
   let productQuery = supabase
@@ -65,57 +67,18 @@ export default async function StorefrontHome() {
 
   return (
     <div>
-      {/* Hero / Banner */}
-      <section className="relative">
-        {section1?.banner_image_url ? (
-          <>
-            <img
-              src={section1.banner_image_url}
-              alt={section1.hero_title ?? "Banner"}
-              className="h-[70vh] w-full object-cover object-bottom"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-            <div className="absolute inset-0 flex flex-col items-center justify-start pt-20 gap-4 px-4 text-center">
-                <h1 className="max-w-3xl text-3xl font-bold text-white sm:text-5xl">
-                  {section1.hero_title ?? t("store.home.welcome", locale)}
-                </h1>
-                <p className="max-w-xl text-xl sm:text-2xl text-white/90">
-                  {section1.hero_subtitle ?? t("store.home.tagline", locale)}
-                </p>
-                <div className="flex flex-wrap justify-center gap-3">
-                  <Link
-                    href="/shop"
-                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                  >
-                    {t("store.home.shopNow", locale)} <ArrowRight className="size-4" />
-                  </Link>
-                </div>
-            </div>
-          </>
-        ) : (
-          <div className="bg-gradient-to-br from-primary/10 via-background to-primary/5">
-            <div className="mx-auto max-w-7xl px-4 py-16 sm:py-24 text-center">
-              <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
-                {section1?.hero_title ?? t("store.home.welcome", locale)}
-              </h1>
-              <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-                {section1?.hero_subtitle ?? t("store.home.tagline", locale)}
-              </p>
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <Link
-                  href="/shop"
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                >
-                  {t("store.home.shopNow", locale)} <ArrowRight className="size-4" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Features */}
-      <section className="mx-auto max-w-7xl px-4 py-8">
+      {/* Hero / Banner Slider */}
+      <HeroSlider
+        slides={(homeSections ?? [])
+          .filter((s) => s.banner_image_url)
+          .map((s) => ({
+            image: s.banner_image_url,
+            title: s.hero_title,
+            subtitle: s.hero_subtitle,
+          }))}
+      />
+      {section1 && (
+<section className="mx-auto max-w-7xl px-4 py-8">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="flex items-start gap-3 rounded-lg border p-4">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -146,6 +109,7 @@ export default async function StorefrontHome() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Hot Sell */}
       {comingSoon.length > 0 && (

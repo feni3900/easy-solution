@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Package, Loader2, Search, Upload, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getClientLocale, t, fmtMoney } from "@/lib/i18n";
+import { getClientLocale, t } from "@/lib/i18n";
 
 interface Product {
   product_id: number;
@@ -57,6 +57,10 @@ export default function ProductsPage() {
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [ratioEdits, setRatioEdits] = useState<Record<number, string>>({});
   const [savingRatioId, setSavingRatioId] = useState<number | null>(null);
+  const [costEdits, setCostEdits] = useState<Record<number, string>>({});
+  const [savingCostId, setSavingCostId] = useState<number | null>(null);
+  const [sellEdits, setSellEdits] = useState<Record<number, string>>({});
+  const [savingSellId, setSavingSellId] = useState<number | null>(null);
   const [invoiceOpenFor, setInvoiceOpenFor] = useState<number | null>(null);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [invoiceNos, setInvoiceNos] = useState<{ id: number; no: string }[]>([]);
@@ -136,6 +140,58 @@ export default function ProductsPage() {
       setRatioEdits((s) => { const n = { ...s }; delete n[p.product_id]; return n; });
     }
     setSavingRatioId(null);
+  };
+
+  const saveCost = async (p: Product) => {
+    const raw = costEdits[p.product_id];
+    if (raw === undefined || raw.trim() === "") {
+      setCostEdits((s) => { const n = { ...s }; delete n[p.product_id]; return n; });
+      return;
+    }
+    const cost = parseFloat(raw);
+    if (isNaN(cost) || cost < 0) {
+      setCostEdits((s) => { const n = { ...s }; delete n[p.product_id]; return n; });
+      return;
+    }
+    setSavingCostId(p.product_id);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("products")
+      .update({ cost_price: cost })
+      .eq("product_id", p.product_id);
+    if (!error) {
+      setProducts((prev) =>
+        prev.map((x) => (x.product_id === p.product_id ? { ...x, cost_price: cost } : x))
+      );
+      setCostEdits((s) => { const n = { ...s }; delete n[p.product_id]; return n; });
+    }
+    setSavingCostId(null);
+  };
+
+  const saveSell = async (p: Product) => {
+    const raw = sellEdits[p.product_id];
+    if (raw === undefined || raw.trim() === "") {
+      setSellEdits((s) => { const n = { ...s }; delete n[p.product_id]; return n; });
+      return;
+    }
+    const sell = parseFloat(raw);
+    if (isNaN(sell) || sell < 0) {
+      setSellEdits((s) => { const n = { ...s }; delete n[p.product_id]; return n; });
+      return;
+    }
+    setSavingSellId(p.product_id);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("products")
+      .update({ selling_price: sell })
+      .eq("product_id", p.product_id);
+    if (!error) {
+      setProducts((prev) =>
+        prev.map((x) => (x.product_id === p.product_id ? { ...x, selling_price: sell } : x))
+      );
+      setSellEdits((s) => { const n = { ...s }; delete n[p.product_id]; return n; });
+    }
+    setSavingSellId(null);
   };
 
   const toggleInvoices = async (p: Product) => {
@@ -325,8 +381,22 @@ export default function ProductsPage() {
                   <td className="p-3 text-muted-foreground">{p.size || "-"}</td>
                   <td className="p-3 text-muted-foreground">{p.unit || "-"}</td>
                   <td className="p-3 text-muted-foreground">{p.storage_location || t("app.self", locale)}</td>
-                  <td className="p-3 text-right">{fmtMoney(Number(p.cost_price), locale)}</td>
                   <td className="p-3 text-right w-24">
+                    {savingCostId === p.product_id ? (
+                      <Loader2 className="size-4 animate-spin ml-auto" />
+                    ) : (
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        value={costEdits[p.product_id] ?? String(Number(p.cost_price))}
+                        onChange={(e) => setCostEdits((s) => ({ ...s, [p.product_id]: e.target.value }))}
+                        onBlur={() => saveCost(p)}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveCost(p); } }}
+                        className="ml-auto w-24 px-2 py-1 text-right text-sm"
+                      />
+                    )}
+                  </td>
+                  <td className="p-3 text-right w-20">
                     {savingRatioId === p.product_id ? (
                       <Loader2 className="size-4 animate-spin ml-auto" />
                     ) : (
@@ -341,7 +411,21 @@ export default function ProductsPage() {
                       />
                     )}
                   </td>
-                  <td className="p-3 text-right">{fmtMoney(Number(p.selling_price), locale)}</td>
+                  <td className="p-3 text-right w-28">
+                    {savingSellId === p.product_id ? (
+                      <Loader2 className="size-4 animate-spin ml-auto" />
+                    ) : (
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        value={sellEdits[p.product_id] ?? String(Number(p.selling_price))}
+                        onChange={(e) => setSellEdits((s) => ({ ...s, [p.product_id]: e.target.value }))}
+                        onBlur={() => saveSell(p)}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveSell(p); } }}
+                        className="ml-auto w-28 px-2 py-1 text-right text-sm"
+                      />
+                    )}
+                  </td>
                   <td className={`p-3 text-right font-medium ${p.current_stock <= p.min_stock_threshold ? "text-amber-600" : ""}`}>{p.current_stock}</td>
                   </tr>
                   {invoiceOpenFor === p.product_id && (
