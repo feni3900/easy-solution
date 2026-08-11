@@ -183,6 +183,7 @@ export const NAV_ITEMS: NavItem[] = [
       { title: "Products", titleKey: "nav.addRemove.products", href: "/inventory/add-remove/products" },
       { title: "Sizes", titleKey: "nav.addRemove.sizes", href: "/inventory/add-remove/sizes" },
       { title: "Units", titleKey: "nav.addRemove.units", href: "/inventory/add-remove/units" },
+      { title: "Colors", titleKey: "nav.addRemove.colors", href: "/inventory/add-remove/colors" },
     ],
   },
 ];

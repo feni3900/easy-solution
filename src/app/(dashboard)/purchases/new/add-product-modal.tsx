@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, X, Image as ImageIcon, Search, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,12 @@ export default function AddProductModal({ categories, brands, prefillCategory, p
   const [brandId, setBrandId] = useState<number>(prefillBrand || 0);
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
+  const [size, setSize] = useState("");
+  const [unit, setUnit] = useState("");
+  const [color, setColor] = useState("");
+  const [sizeOptions, setSizeOptions] = useState<string[]>([]);
+  const [unitOptions, setUnitOptions] = useState<string[]>([]);
+  const [colorOptions, setColorOptions] = useState<string[]>([]);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -84,6 +90,25 @@ export default function AddProductModal({ categories, brands, prefillCategory, p
     setImageSource("gallery");
     loadGallery();
   };
+
+  const loadVariants = async (catId: number) => {
+    const supabase = createClient();
+    const [sizesRes, unitsRes, colorsRes] = await Promise.all([
+      supabase.from("sizes").select("size_name").eq("status", "active").eq("category_id", catId).order("size_name"),
+      supabase.from("units").select("name").eq("status", "active").eq("category_id", catId).order("name"),
+      supabase.from("colors").select("color_name").eq("status", "active").eq("category_id", catId).order("color_name"),
+    ]);
+    setSizeOptions((sizesRes.data ?? []).map((r: { size_name: string }) => r.size_name));
+    setUnitOptions((unitsRes.data ?? []).map((r: { name: string }) => r.name));
+    setColorOptions((colorsRes.data ?? []).map((r: { color_name: string }) => r.color_name));
+    setSize("");
+    setUnit("");
+    setColor("");
+  };
+
+  useEffect(() => {
+    if (categoryId) loadVariants(categoryId);
+  }, [categoryId]);
 
   const filteredGallery = galleryImages.filter(
     (img) =>
@@ -142,6 +167,9 @@ export default function AddProductModal({ categories, brands, prefillCategory, p
         brand_id: brandId,
         product_name: name.trim(),
         sku: generatedSku,
+        size: size || null,
+        unit: unit || null,
+        color: color || null,
         storage_location: "Self",
         cost_price: 0,
         selling_price: 0,
@@ -149,7 +177,7 @@ export default function AddProductModal({ categories, brands, prefillCategory, p
         image_url: productImage,
         is_active: true,
       })
-      .select("product_id, product_name, sku, cost_price, selling_price, current_stock, category_id, brand_id, image_url")
+      .select("product_id, product_name, sku, cost_price, selling_price, current_stock, category_id, brand_id, image_url, size, unit, color")
       .single();
 
     setSaving(false);
@@ -198,6 +226,51 @@ export default function AddProductModal({ categories, brands, prefillCategory, p
           <div className="space-y-1">
             <Label>{t("app.sku", locale)}</Label>
             <Input value={sku} onChange={(e) => setSku(e.target.value)} placeholder={t("app.autoIfEmpty", locale)} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="space-y-1">
+              <Label>{t("app.size", locale)}</Label>
+              <select
+                value={size}
+                onChange={(e) => setSize(e.target.value)}
+                disabled={!categoryId}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{categoryId ? t("inventory.addRemove.selectCategory", locale) : t("app.none", locale)}</option>
+                {sizeOptions.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label>{t("app.unit", locale)}</Label>
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                disabled={!categoryId}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{categoryId ? t("inventory.addRemove.selectCategory", locale) : t("app.none", locale)}</option>
+                {unitOptions.map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label>{t("inventory.addRemove.colorName", locale)}</Label>
+              <select
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                disabled={!categoryId}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{categoryId ? t("inventory.addRemove.selectCategory", locale) : t("app.none", locale)}</option>
+                {colorOptions.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="space-y-1">
