@@ -57,8 +57,7 @@ export default function ProductsPage() {
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [ratioEdits, setRatioEdits] = useState<Record<number, string>>({});
   const [savingRatioId, setSavingRatioId] = useState<number | null>(null);
-  const [costEdits, setCostEdits] = useState<Record<number, string>>({});
-  const [savingCostId, setSavingCostId] = useState<number | null>(null);
+  const [latestCosts, setLatestCosts] = useState<Record<number, number>>({});
   const [sellEdits, setSellEdits] = useState<Record<number, string>>({});
   const [savingSellId, setSavingSellId] = useState<number | null>(null);
   const [invoiceOpenFor, setInvoiceOpenFor] = useState<number | null>(null);
@@ -70,12 +69,19 @@ export default function ProductsPage() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
-    const [{ data: purchasedRows }, catRes, brandRes] = await Promise.all([
+    const [{ data: purchasedRows }, costRowsRes, catRes, brandRes] = await Promise.all([
       supabase.from("purchase_items").select("product_id"),
+      supabase.from("purchase_items").select("product_id, unit_cost").order("purchase_item_id", { ascending: false }),
       supabase.from("categories").select("category_id, category_name").order("category_name"),
       supabase.from("brands").select("brand_id, brand_name").order("brand_name"),
     ]);
     const purchasedIds = Array.from(new Set((purchasedRows ?? []).map((r) => r.product_id)));
+
+    const latest: Record<number, number> = {};
+    for (const r of costRowsRes.data ?? []) {
+      if (latest[r.product_id] === undefined) latest[r.product_id] = Number(r.unit_cost);
+    }
+    setLatestCosts(latest);
 
     if (purchasedIds.length === 0) {
       setProducts([]);
@@ -106,10 +112,13 @@ export default function ProductsPage() {
     (brandFilter === 0 || p.brand_id === brandFilter)
   );
 
+  const latestCostFor = (p: Product) =>
+    latestCosts[p.product_id] ?? Number(p.cost_price);
+
   const ratioFor = (p: Product) => {
     const edited = ratioEdits[p.product_id];
     if (edited !== undefined && edited.trim() !== "") return edited;
-    const cost = Number(p.cost_price);
+    const cost = latestCostFor(p);
     const sell = Number(p.selling_price);
     if (cost > 0) return String(Math.round((sell / cost) * 100) / 100);
     return "1";
@@ -127,7 +136,7 @@ export default function ProductsPage() {
       return;
     }
     setSavingRatioId(p.product_id);
-    const sellingPrice = Math.round(Number(p.cost_price) * ratio * 100) / 100;
+    const sellingPrice = Math.round(latestCostFor(p) * ratio * 100) / 100;
     const supabase = createClient();
     const { error } = await supabase
       .from("products")
@@ -140,32 +149,6 @@ export default function ProductsPage() {
       setRatioEdits((s) => { const n = { ...s }; delete n[p.product_id]; return n; });
     }
     setSavingRatioId(null);
-  };
-
-  const saveCost = async (p: Product) => {
-    const raw = costEdits[p.product_id];
-    if (raw === undefined || raw.trim() === "") {
-      setCostEdits((s) => { const n = { ...s }; delete n[p.product_id]; return n; });
-      return;
-    }
-    const cost = parseFloat(raw);
-    if (isNaN(cost) || cost < 0) {
-      setCostEdits((s) => { const n = { ...s }; delete n[p.product_id]; return n; });
-      return;
-    }
-    setSavingCostId(p.product_id);
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("products")
-      .update({ cost_price: cost })
-      .eq("product_id", p.product_id);
-    if (!error) {
-      setProducts((prev) =>
-        prev.map((x) => (x.product_id === p.product_id ? { ...x, cost_price: cost } : x))
-      );
-      setCostEdits((s) => { const n = { ...s }; delete n[p.product_id]; return n; });
-    }
-    setSavingCostId(null);
   };
 
   const saveSell = async (p: Product) => {
@@ -382,19 +365,7 @@ export default function ProductsPage() {
                   <td className="p-3 text-muted-foreground">{p.unit || "-"}</td>
                   <td className="p-3 text-muted-foreground">{p.storage_location || t("app.self", locale)}</td>
                   <td className="p-3 text-right w-24">
-                    {savingCostId === p.product_id ? (
-                      <Loader2 className="size-4 animate-spin ml-auto" />
-                    ) : (
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        value={costEdits[p.product_id] ?? String(Number(p.cost_price))}
-                        onChange={(e) => setCostEdits((s) => ({ ...s, [p.product_id]: e.target.value }))}
-                        onBlur={() => saveCost(p)}
-                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveCost(p); } }}
-                        className="ml-auto w-24 px-2 py-1 text-right text-sm"
-                      />
-                    )}
+                    <span className="ml-auto text-sm">{latestCostFor(p)}</span>
                   </td>
                   <td className="p-3 text-right w-20">
                     {savingRatioId === p.product_id ? (
