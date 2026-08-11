@@ -50,7 +50,7 @@ export async function getWebSettings(): Promise<WebSettings> {
     .single();
 
   return (data as WebSettings) ?? {
-    store_name: "Smart ERP Store",
+    store_name: "Maruf Enterprise",
     tagline: null,
     logo_url: null,
     favicon_url: null,

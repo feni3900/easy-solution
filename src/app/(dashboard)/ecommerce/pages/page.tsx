@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+﻿import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { PagesClient } from "./pages-client";
 import { getLocale } from "@/lib/i18n-server";
 import { t } from "@/lib/i18n";
 
-export const metadata = { title: "Ecommerce Pages | Smart Solution ERP" };
+export const metadata = { title: "Ecommerce Pages | Maruf Enterprise" };
 
 export default async function EcommercePagesPage() {
   const locale = await getLocale();

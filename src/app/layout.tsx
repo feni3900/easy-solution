@@ -21,9 +21,9 @@ const hindSiliguri = Hind_Siliguri({
 });
 
 export const metadata: Metadata = {
-  title: "Smart Solution ERP",
+  title: "Maruf Enterprise",
   description:
-    "Unified ERP for multi-company, multi-branch inventory, POS, accounts and ecommerce.",
+    "Maruf Enterprise - Unified ERP for inventory, POS, accounts and ecommerce.",
 };
 
 export default async function RootLayout({

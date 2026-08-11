@@ -1,8 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+﻿import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { SettingsClient } from "./settings-client";
 
-export const metadata = { title: "Settings | Smart Solution ERP" };
+export const metadata = { title: "Settings | Maruf Enterprise" };
 
 export default async function SettingsPage() {
   const supabase = await createClient();

@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+﻿import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { ContactPageClient } from "./contact-client";
 import { getLocale } from "@/lib/i18n-server";
 import { t } from "@/lib/i18n";
 
-export const metadata = { title: "Contact Page | Smart Solution ERP" };
+export const metadata = { title: "Contact Page | Maruf Enterprise" };
 
 const KEYS = [
   "contact_heading", "contact_subhead",

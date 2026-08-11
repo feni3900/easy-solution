@@ -1,8 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+﻿import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { SearchResults } from "./search-results";
 
-export const metadata = { title: "Search | Smart Solution ERP" };
+export const metadata = { title: "Search | Maruf Enterprise" };
 
 export default async function SearchPage({
   searchParams,

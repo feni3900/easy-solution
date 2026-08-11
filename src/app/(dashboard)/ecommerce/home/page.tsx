@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+﻿import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { EcommerceHomeClient } from "./home-client";
 import { getLocale } from "@/lib/i18n-server";
 import { t } from "@/lib/i18n";
 
-export const metadata = { title: "Ecommerce Home | Smart Solution ERP" };
+export const metadata = { title: "Ecommerce Home | Maruf Enterprise" };
 
 const KEYS = [
   "home_hero_title", "home_hero_subhead", "home_banner_url",

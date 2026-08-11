@@ -53,7 +53,7 @@ export const translations = {
   "common.myAccount": { en: "My Account", bn: "আমার অ্যাকাউন্ট" },
   "common.login": { en: "Login", bn: "লগইন" },
   "common.admin": { en: "Admin", bn: "অ্যাডমিন" },
-  "common.brand": { en: "Smart ERP", bn: "স্মার্ট ইআরপি" },
+  "common.brand": { en: "Maruf Enterprise", bn: "মারুফ এন্টারপ্রাইজ" },
 
   // Sidebar nav
   "nav.dashboard": { en: "Dashboard", bn: "ড্যাশবোর্ড" },
@@ -111,7 +111,7 @@ export const translations = {
   "header.signOut": { en: "Sign Out", bn: "সাইন আউট" },
 
   // Login
-  "login.title": { en: "Smart Solution ERP", bn: "স্মার্ট সলিউশন ইআরপি" },
+  "login.title": { en: "Maruf Enterprise", bn: "মারুফ এন্টারপ্রাইজ" },
   "login.subtitle": { en: "Sign in to your workspace", bn: "আপনার ওয়ার্কস্পেসে সাইন ইন করুন" },
   "login.email": { en: "Email", bn: "ইমেইল" },
   "login.emailPlaceholder": { en: "you@company.com", bn: "you@company.com" },
@@ -126,7 +126,7 @@ export const translations = {
   "store.about": { en: "About", bn: "আমাদের সম্পর্কে" },
   "store.contact": { en: "Contact", bn: "যোগাযোগ" },
   "store.whatsapp": { en: "WhatsApp", bn: "হোয়াটসঅ্যাপ" },
-  "store.footer": { en: "Smart ERP Store", bn: "স্মার্ট ইআরপি স্টোর" },
+  "store.footer": { en: "Maruf Enterprise", bn: "মারুফ এন্টারপ্রাইজ" },
   "store.cart": { en: "Cart", bn: "কার্ট" },
 
   "store.home.welcome": { en: "Welcome to Maruf Enterprise", bn: "মারুফ এন্টারপ্রাইজে স্বাগতম" },

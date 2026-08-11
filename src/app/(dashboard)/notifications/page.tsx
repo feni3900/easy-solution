@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+﻿import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { NotificationsClient } from "./notifications-client";
 import { getLocale } from "@/lib/i18n-server";
 import { t } from "@/lib/i18n";
 
-export const metadata = { title: "Notifications | Smart Solution ERP" };
+export const metadata = { title: "Notifications | Maruf Enterprise" };
 
 export default async function NotificationsPage() {
   const locale = await getLocale();
